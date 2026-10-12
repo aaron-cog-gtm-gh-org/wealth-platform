@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/new-devin-design-system-b8092ffa-b561-4103-9e49-bf8e1d602440/colors_and_type.css">
+<link rel="stylesheet" href="_ds/new-devin-design-system-b8092ffa-b561-4103-9e49-bf8e1d602440/styles.css">
+<script src="_ds/new-devin-design-system-b8092ffa-b561-4103-9e49-bf8e1d602440/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f4f6f9;font-family:Inter,system-ui,sans-serif;color:#191919;-webkit-font-smoothing:antialiased}a{color:#005daa;text-decoration:none}a:hover{color:#003f7d;text-decoration:underline}*{box-sizing:border-box}</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;font-size:12px;line-height:16px;font-variant-numeric:tabular-nums">
+  <header style="height:48px;background:#005daa;color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:3px solid #ffd200;flex:none">
+    <div style="display:flex;align-items:center;gap:10px;flex:none">
+      <img src="assets/rbc-logo.png" alt="RBC" style="width:26px;height:34px;object-fit:cover">
+      <div style="font:600 14px/1 Inter,sans-serif;letter-spacing:-0.01em">Wealth Platform</div>
+      <div style="font:500 10px/1 'IBM Plex Mono',monospace;letter-spacing:.04em;padding:3px 6px;border:1px solid rgba(255,255,255,.5);border-radius:4px">UAT</div>
+    </div>
+    <div style="flex:1;min-width:0;max-width:520px;height:30px;background:rgba(255,255,255,.14);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;color:rgba(255,255,255,.85)">
+      <span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Search clients, accounts, instruments, exceptions</span>
+      <span style="font:500 11px 'IBM Plex Mono',monospace;flex:none">⌘K</span>
+    </div>
+    <div style="flex:0 1 auto;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:14px;font-size:11px;color:rgba(255,255,255,.9);margin-left:auto">
+      <span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">TSX open · data as of 14:47 ET · Mon 12-Oct-2026</span>
+      <div style="display:flex;align-items:center;gap:8px;flex:none">
+        <div style="width:26px;height:26px;border-radius:50%;background:#ffd200;color:#002d62;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">{{ userInitials }}</div>
+        <div style="display:flex;flex-direction:column;line-height:13px;white-space:nowrap"><span style="font-weight:600;color:#fff">{{ userName }}</span><span>{{ userRole }}</span></div>
+      </div>
+    </div>
+  </header>
+  <div style="flex:1;display:flex;min-height:0">
+    <nav style="width:208px;flex:none;background:#fff;border-right:1px solid #e1e5eb;padding:12px 0;display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ nav }}" as="g" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <div style="font:500 10.5px 'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:rgba(25,25,25,.5);padding:0 16px 6px">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <div onClick="{{ it.onClick }}" style="display:flex;align-items:center;justify-content:space-between;padding:7px 16px 7px 13px;cursor:pointer;border-left:3px solid {{ it.bar }};background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.weight }};font-size:12.5px" style-hover="background:#f1f5fa">
+              <span>{{ it.label }}</span>
+              <sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:9px;background:{{ it.badgeBg }};color:{{ it.badgeFg }}">{{ it.badge }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div style="padding:10px 16px;border-top:1px solid #eef0f3;font-size:11px;color:rgba(25,25,25,.56);display:flex;flex-direction:column;gap:3px">
+        <span>Hover any figure with a dotted underline to see its source.</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px">build 0.2.0-mock</span>
+      </div>
+    </nav>
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <sc-if value="{{ isClientView }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff8d6;border-bottom:1px solid #f0dd8a;padding:7px 20px;font-size:12px;color:#5c4a00;display:flex;justify-content:space-between">
+          <span><strong>Client portal preview</strong> — you are viewing what Eleanor Whitfield sees. Actions are simulated and nothing is submitted.</span>
+          <span>WCAG 2.2 AA layout</span>
+        </div>
+      </sc-if>
+      <div style="padding:14px 20px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="font-size:11px;color:rgba(25,25,25,.56)">{{ crumb }}</div>
+          <h1 style="margin:0;font:600 20px/26px Inter,sans-serif;letter-spacing:-0.02em">{{ title }}</h1>
+        </div>
+        <div style="font-size:11.5px;color:rgba(25,25,25,.56)">{{ subtitle }}</div>
+      </div>
+      <sc-if value="{{ showCtx }}" hint-placeholder-val="{{ true }}">
+        <div style="margin:12px 20px 0;background:#fff;border:1px solid #e1e5eb;border-radius:6px;display:flex;flex-wrap:wrap">
+          <sc-for list="{{ ctx }}" as="c" hint-placeholder-count="7">
+            <div style="padding:8px 14px;border-right:1px solid #eef0f3;display:flex;flex-direction:column;gap:2px;min-width:0">
+              <span style="font-size:10.5px;color:rgba(25,25,25,.5)">{{ c.k }}</span>
+              <span style="font-weight:600;color:{{ c.color }}">{{ c.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="padding:12px 20px 32px;flex:1">
+        <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:12px;color:rgba(25,25,25,.56)">{{ loadingMsg }}</div>
+            <sc-for list="{{ skeleton }}" as="s" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:16px">
+                <div style="height:12px;border-radius:3px;background:#eceff3;width:{{ s.w }}"></div>
+                <div style="height:12px;border-radius:3px;background:#f1f3f6"></div>
+                <div style="height:12px;border-radius:3px;background:#f1f3f6"></div>
+                <div style="height:12px;border-radius:3px;background:#f1f3f6"></div>
+                <div style="height:12px;border-radius:3px;background:#f1f3f6"></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:48px 24px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+            <div style="font:600 15px Inter,sans-serif">{{ emptyTitle }}</div>
+            <div style="max-width:460px;color:rgba(25,25,25,.6);text-wrap:pretty">{{ emptyBody }}</div>
+            <div style="margin-top:6px;padding:7px 12px;background:#005daa;color:#fff;border-radius:6px;font-weight:600">{{ emptyCta }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #f3c2c1;border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#d6302f"></span><span style="font:600 14px Inter,sans-serif">{{ errTitle }}</span></div>
+            <div style="color:rgba(25,25,25,.7);max-width:720px;text-wrap:pretty">{{ errBody }}</div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <div style="padding:6px 12px;background:#005daa;color:#fff;border-radius:6px;font-weight:600">Retry</div>
+              <div style="padding:6px 12px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500">{{ errAction }}</div>
+            </div>
+            <div style="font:11px 'IBM Plex Mono',monospace;color:rgba(25,25,25,.5)">{{ errRef }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.c360 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;align-items:start">
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Profile</span><a href="#">Edit</a></div>
+              <div style="display:grid;grid-template-columns:120px 1fr;row-gap:6px;padding:10px 12px">
+                <sc-for list="{{ profile }}" as="p" hint-placeholder-count="10">
+                  <span style="color:rgba(25,25,25,.56)">{{ p.k }}</span><span style="font-weight:500;color:{{ p.color }}">{{ p.v }}</span>
+                </sc-for>
+              </div>
+              <div style="padding:9px 12px;border-top:1px solid #eef0f3;border-bottom:1px solid #eef0f3;font-weight:600">Household · Whitfield family</div>
+              <sc-for list="{{ household }}" as="m" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:1fr auto;padding:6px 12px;border-bottom:1px solid #f3f4f6">
+                  <div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ m.n }}</span><span style="color:rgba(25,25,25,.56)">{{ m.r }}</span></div>
+                  <span style="text-align:right;color:rgba(25,25,25,.7)">{{ m.a }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Accounts</span><span style="color:rgba(25,25,25,.56)">Total <span title="{{ totalSrc }}" style="font-weight:600;color:#191919;border-bottom:1px dotted #8a94a3">{{ totalFmt }}</span></span></div>
+                <div style="display:grid;grid-template-columns:1fr 90px 64px;gap:8px;padding:6px 12px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px"><span>Account</span><span style="text-align:right">Market value</span><span style="text-align:right">Drift</span></div>
+                <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:1fr 90px 64px;gap:8px;padding:7px 12px;border-top:1px solid #f3f4f6;align-items:center">
+                    <div style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ a.name }}</span><span style="color:rgba(25,25,25,.56)">{{ a.meta }}</span></div>
+                    <span title="{{ a.src }}" style="text-align:right;font-weight:600;border-bottom:1px dotted #8a94a3;justify-self:end">{{ a.mvFmt }}</span>
+                    <span style="text-align:right;font-weight:600;color:{{ a.driftColor }}">{{ a.drift }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Drift vs Balanced Growth model</span><a href="#" onClick="{{ goOrders }}">Propose rebalance</a></div>
+                <div style="padding:10px 12px;display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ alloc }}" as="d" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:86px 1fr 92px;gap:10px;align-items:center">
+                      <span>{{ d.cls }}</span>
+                      <div style="position:relative;height:10px;background:#eef1f5;border-radius:2px">
+                        <div style="position:absolute;left:0;top:0;bottom:0;width:{{ d.actualW }};background:{{ d.color }};border-radius:2px"></div>
+                        <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#191919;left:{{ d.targetW }}"></div>
+                      </div>
+                      <span style="text-align:right"><span style="font-weight:600">{{ d.actual }}</span> <span style="color:{{ d.driftColor }}">{{ d.drift }}</span></span>
+                    </div>
+                  </sc-for>
+                  <div style="font-size:11px;color:rgba(25,25,25,.56)">Bar = actual weight · black tick = target · tolerance ±2.0 pts per class</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Tasks &amp; alerts</span><span style="color:rgba(25,25,25,.56)">5 open</span></div>
+                <sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:8px 1fr auto;gap:10px;padding:7px 12px;border-bottom:1px solid #f3f4f6;align-items:start">
+                    <span style="width:8px;height:8px;border-radius:50%;background:{{ t.color }};margin-top:4px"></span>
+                    <div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ t.t }}</span><span style="color:rgba(25,25,25,.56)">{{ t.next }}</span></div>
+                    <span style="color:{{ t.dueColor }};white-space:nowrap">{{ t.due }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600">Recent communication</div>
+                <sc-for list="{{ comms }}" as="c" hint-placeholder-count="4">
+                  <div style="padding:7px 12px;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:2px">
+                    <div style="display:flex;justify-content:space-between"><span style="font-weight:500">{{ c.t }}</span><span style="color:rgba(25,25,25,.56)">{{ c.d }}</span></div>
+                    <span style="color:rgba(25,25,25,.65)">{{ c.s }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Documents</span><a href="#">All 38</a></div>
+                <sc-for list="{{ docs }}" as="d" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 12px;border-bottom:1px solid #f3f4f6"><a href="#">{{ d.n }}</a><span style="color:rgba(25,25,25,.56)">{{ d.d }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.portfolio }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+                <div style="padding:10px 14px;border-right:1px solid #eef0f3;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.k }}</span>
+                  <span title="{{ k.src }}" style="font:600 17px/22px Inter,sans-serif;letter-spacing:-0.01em;color:{{ k.color }};align-self:flex-start;border-bottom:1px dotted #8a94a3">{{ k.v }}</span>
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:8px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-weight:600">Performance vs benchmark <span style="font-weight:400;color:rgba(25,25,25,.56)">· time-weighted, net of fees, CAD</span></span>
+                  <div style="display:flex;gap:2px;background:rgba(0,0,0,.06);border-radius:7px;padding:2px">
+                    <sc-for list="{{ periods }}" as="p" hint-placeholder-count="6">
+                      <div onClick="{{ p.onClick }}" style="padding:3px 9px;border-radius:5px;cursor:pointer;background:{{ p.bg }};box-shadow:{{ p.shadow }};font-weight:500">{{ p.id }}</div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="padding:10px 12px;display:flex;gap:18px;font-size:11.5px">
+                  <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:2px;background:#005daa"></span>Portfolio <strong>{{ perfP }}</strong></span>
+                  <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:0;border-top:2px dashed #8a94a3"></span>Benchmark (45% S&amp;P/TSX · 25% FTSE Universe · 20% MSCI World · 10% FTSE 91d T-bill) <strong>{{ perfB }}</strong></span>
+                </div>
+                <svg viewBox="0 0 600 170" preserveAspectRatio="none" style="width:100%;height:190px;display:block">
+                  <line x1="0" y1="42" x2="600" y2="42" stroke="#eef0f3"></line><line x1="0" y1="85" x2="600" y2="85" stroke="#eef0f3"></line><line x1="0" y1="128" x2="600" y2="128" stroke="#eef0f3"></line>
+                  <path d="{{ benchPath }}" fill="none" stroke="#8a94a3" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path>
+                  <path d="{{ perfPath }}" fill="none" stroke="#005daa" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+                </svg>
+                <div style="display:flex;justify-content:space-between;padding:4px 12px 10px;color:rgba(25,25,25,.5);font-size:10.5px"><span>{{ perfStart }}</span><span>12-Oct-2026</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                  <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600">Allocation</div>
+                  <div style="padding:10px 12px 4px"><div style="display:flex;height:12px;border-radius:2px;overflow:hidden;gap:1px">
+                    <sc-for list="{{ alloc }}" as="d" hint-placeholder-count="5"><div style="width:{{ d.actualW }};background:{{ d.color }}"></div></sc-for>
+                  </div></div>
+                  <sc-for list="{{ alloc }}" as="d" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:10px 1fr 80px 50px 50px;gap:8px;padding:5px 12px;align-items:center">
+                      <span style="width:10px;height:10px;border-radius:2px;background:{{ d.color }}"></span><span>{{ d.cls }}</span><span title="{{ d.src }}" style="text-align:right">{{ d.mvFmt }}</span><span style="text-align:right;font-weight:600">{{ d.actual }}</span><span style="text-align:right;color:rgba(25,25,25,.56)">{{ d.target }}</span>
+                    </div>
+                  </sc-for>
+                  <div style="padding:2px 12px 8px;font-size:10.5px;color:rgba(25,25,25,.5);text-align:right">value · actual · target</div>
+                </div>
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                  <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600">Fees, YTD</div>
+                  <sc-for list="{{ fees }}" as="f" hint-placeholder-count="4">
+                    <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:5px 12px;border-bottom:1px solid #f3f4f6"><span>{{ f.k }}</span><span style="color:rgba(25,25,25,.56)">{{ f.r }}</span><span style="font-weight:600;width:70px;text-align:right">{{ f.v }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="padding:8px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-weight:600">Holdings <span style="font-weight:400;color:rgba(25,25,25,.56)">· {{ holdCount }} positions across 3 accounts</span></span>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <sc-for list="{{ clsChips }}" as="c" hint-placeholder-count="6">
+                    <div onClick="{{ c.onClick }}" style="padding:3px 9px;border-radius:12px;cursor:pointer;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-weight:500">{{ c.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="overflow-x:auto"><div style="min-width:980px">
+                <div style="display:grid;grid-template-columns:minmax(220px,2.4fr) 92px 64px 96px 86px 104px 60px 100px 64px;gap:10px;padding:6px 12px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px">
+                  <span>Instrument</span><span>Class</span><span>Account</span><span style="text-align:right">Quantity</span><span style="text-align:right">Price</span><span style="text-align:right">Market value</span><span style="text-align:right">Weight</span><span style="text-align:right">Unrealized</span><span style="text-align:right">Day</span>
+                </div>
+                <sc-for list="{{ holdings }}" as="h" hint-placeholder-count="12">
+                  <div style="display:grid;grid-template-columns:minmax(220px,2.4fr) 92px 64px 96px 86px 104px 60px 100px 64px;gap:10px;padding:5px 12px;border-top:1px solid #f3f4f6;align-items:center" style-hover="background:#f7faff">
+                    <div style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.n }}</span><span style="color:rgba(25,25,25,.5);font-size:11px">{{ h.id }}</span></div>
+                    <span style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:2px;background:{{ h.color }}"></span>{{ h.cls }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ h.acct }}</span>
+                    <span style="text-align:right">{{ h.qtyFmt }}</span>
+                    <span style="text-align:right">{{ h.pxFmt }}</span>
+                    <span title="{{ h.src }}" style="text-align:right;font-weight:600;justify-self:end;border-bottom:1px dotted #8a94a3">{{ h.mvFmt }}</span>
+                    <span style="text-align:right">{{ h.wFmt }}</span>
+                    <span style="text-align:right;color:{{ h.uColor }}">{{ h.uFmt }}</span>
+                    <span style="text-align:right;color:{{ h.dColor }}">{{ h.dFmt }}</span>
+                  </div>
+                </sc-for>
+              </div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.orders }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span style="font-weight:600">Proposed trades <span style="font-weight:400;color:rgba(25,25,25,.56)">· generated from Balanced Growth model at 14:41 ET</span></span><span style="color:rgba(25,25,25,.56)">{{ tradeCountLabel }}</span></div>
+                <div style="overflow-x:auto"><div style="min-width:900px">
+                  <div style="display:grid;grid-template-columns:44px minmax(200px,1fr) 58px 96px 100px 70px 100px 110px 70px;gap:10px;padding:6px 12px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px"><span>Side</span><span>Instrument</span><span>Account</span><span style="text-align:right">Quantity</span><span style="text-align:right">Est. value</span><span style="text-align:right">Est. cost</span><span style="text-align:right">Realized gain</span><span>Route</span><span></span></div>
+                  <sc-for list="{{ trades }}" as="t" hint-placeholder-count="7">
+                    <div style="display:grid;grid-template-columns:44px minmax(200px,1fr) 58px 96px 100px 70px 100px 110px 70px;gap:10px;padding:6px 12px;border-top:1px solid #f3f4f6;align-items:center;opacity:{{ t.opacity }};background:{{ t.rowBg }}">
+                      <span style="font-weight:700;font-size:10.5px;padding:2px 0;text-align:center;border-radius:3px;background:{{ t.sideBg }};color:{{ t.sideFg }}">{{ t.side }}</span>
+                      <div style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:500">{{ t.n }}</span><span style="font-size:11px;color:{{ t.noteColor }}">{{ t.note }}</span></div>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ t.acct }}</span>
+                      <span style="text-align:right">{{ t.qty }}</span>
+                      <span style="text-align:right;font-weight:600">{{ t.valFmt }}</span>
+                      <span style="text-align:right">{{ t.costFmt }}</span>
+                      <span style="text-align:right;color:{{ t.gainColor }}">{{ t.gainFmt }}</span>
+                      <span style="color:rgba(25,25,25,.65)">{{ t.route }}</span>
+                      <a href="#" onClick="{{ t.toggle }}" style="text-align:right">{{ t.toggleLabel }}</a>
+                    </div>
+                  </sc-for>
+                </div></div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Pre-trade checks</span><span style="color:{{ checkSummaryColor }};font-weight:600">{{ checkSummary }}</span></div>
+                <sc-for list="{{ checks }}" as="c" hint-placeholder-count="8">
+                  <div style="display:grid;grid-template-columns:52px 220px 1fr;gap:12px;padding:6px 12px;border-bottom:1px solid #f3f4f6;align-items:start">
+                    <span style="font-size:10.5px;font-weight:700;text-align:center;padding:1px 0;border-radius:3px;background:{{ c.bg }};color:{{ c.fg }}">{{ c.status }}</span>
+                    <span style="font-weight:500">{{ c.n }}</span>
+                    <span style="color:rgba(25,25,25,.7)">{{ c.d }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600">Impact summary</div>
+                <sc-for list="{{ impact }}" as="i" hint-placeholder-count="7">
+                  <div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #f3f4f6"><span style="color:rgba(25,25,25,.65)">{{ i.k }}</span><span style="font-weight:600;color:{{ i.color }}">{{ i.v }}</span></div>
+                </sc-for>
+                <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:11px;color:rgba(25,25,25,.56)">Drift after trades</div>
+                  <sc-for list="{{ driftAfter }}" as="d" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:86px 1fr 1fr;gap:8px"><span>{{ d.cls }}</span><span style="color:{{ d.beforeColor }}">{{ d.before }}</span><span style="font-weight:600;color:{{ d.afterColor }}">→ {{ d.after }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
+                <div onClick="{{ approve }}" style="padding:9px 12px;border-radius:6px;text-align:center;font-weight:600;font-size:13px;background:{{ approveBg }};color:{{ approveFg }};cursor:{{ approveCursor }}">{{ approveLabel }}</div>
+                <div style="font-size:11px;color:rgba(25,25,25,.6);text-wrap:pretty">{{ approveNote }}</div>
+                <div style="display:flex;gap:6px"><div style="flex:1;padding:6px;text-align:center;border:1px solid #cfd5dd;border-radius:6px;font-weight:500">Save as draft</div><div style="flex:1;padding:6px;text-align:center;border:1px solid #cfd5dd;border-radius:6px;font-weight:500">Send proposal to client</div></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.alts }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <sc-for list="{{ altKpis }}" as="k" hint-placeholder-count="6">
+                <div style="padding:10px 14px;border-right:1px solid #eef0f3;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.k }}</span>
+                  <span title="{{ k.src }}" style="font:600 17px/22px Inter,sans-serif;align-self:flex-start;border-bottom:1px dotted #8a94a3">{{ k.v }}</span>
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600">Commitments</div>
+              <div style="overflow-x:auto"><div style="min-width:1040px">
+                <div style="display:grid;grid-template-columns:minmax(210px,1.6fr) 56px 96px 150px 96px 96px 120px 54px 54px;gap:10px;padding:6px 12px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px"><span>Fund · account</span><span>Vintage</span><span style="text-align:right">Committed</span><span>Called</span><span style="text-align:right">Unfunded</span><span style="text-align:right">Distributions</span><span style="text-align:right">Current value</span><span style="text-align:right">DPI</span><span style="text-align:right">TVPI</span></div>
+                <sc-for list="{{ commits }}" as="c" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:minmax(210px,1.6fr) 56px 96px 150px 96px 96px 120px 54px 54px;gap:10px;padding:8px 12px;border-top:1px solid #f3f4f6;align-items:center">
+                    <div style="display:flex;flex-direction:column"><span style="font-weight:600">{{ c.n }}</span><span style="color:rgba(25,25,25,.56)">{{ c.meta }}</span></div>
+                    <span>{{ c.vintage }}</span>
+                    <span style="text-align:right">{{ c.commitFmt }}</span>
+                    <div style="display:flex;flex-direction:column;gap:3px"><span>{{ c.calledFmt }} <span style="color:rgba(25,25,25,.56)">· {{ c.calledPct }}</span></span><div style="height:5px;background:#eef1f5;border-radius:2px"><div style="height:5px;background:#7a4fb5;border-radius:2px;width:{{ c.calledPct }}"></div></div></div>
+                    <span style="text-align:right;font-weight:600">{{ c.unfundedFmt }}</span>
+                    <span style="text-align:right">{{ c.distFmt }}</span>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end"><span title="{{ c.src }}" style="font-weight:600;border-bottom:1px dotted #8a94a3">{{ c.navFmt }}</span><span style="font-size:10.5px;color:{{ c.navColor }}">{{ c.navNote }}</span></div>
+                    <span style="text-align:right">{{ c.dpi }}</span>
+                    <span style="text-align:right;font-weight:600">{{ c.tvpi }}</span>
+                  </div>
+                </sc-for>
+              </div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Expected capital calls</span><span style="color:rgba(25,25,25,.56)">next 12 months · manager estimates</span></div>
+                <sc-for list="{{ calls }}" as="c" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:90px 1fr 90px 120px;gap:10px;padding:7px 12px;border-bottom:1px solid #f3f4f6;align-items:center">
+                    <span style="font-weight:500">{{ c.d }}</span><span>{{ c.f }}</span><span style="text-align:right;font-weight:600">{{ c.a }}</span>
+                    <span style="justify-self:end;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:9px;background:{{ c.bg }};color:{{ c.fg }}">{{ c.s }}</span>
+                  </div>
+                </sc-for>
+                <div style="padding:8px 12px;font-size:11px;color:rgba(25,25,25,.6)">Funding source for the 28-Oct call: Corporate account 4418-1157 CAD cash. Available after pending trades: $186,420.</div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:9px 12px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font-weight:600">Distributions received</span><span style="color:rgba(25,25,25,.56)">since inception</span></div>
+                <sc-for list="{{ dists }}" as="d" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:90px 1fr 120px 90px;gap:10px;padding:7px 12px;border-bottom:1px solid #f3f4f6">
+                    <span>{{ d.d }}</span><span>{{ d.f }}</span><span style="color:rgba(25,25,25,.6)">{{ d.t }}</span><span style="text-align:right;font-weight:600">{{ d.a }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.exceptions }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <sc-for list="{{ exKpis }}" as="k" hint-placeholder-count="5">
+                <div style="padding:10px 14px;border-right:1px solid #eef0f3;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.k }}</span>
+                  <span style="font:600 17px/22px Inter,sans-serif;color:{{ k.color }}">{{ k.v }}</span>
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">{{ k.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px;align-items:start">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;min-width:0">
+                <div style="padding:8px 12px;border-bottom:1px solid #eef0f3;display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+                  <span style="font-weight:600;margin-right:6px">Cause</span>
+                  <sc-for list="{{ causeChips }}" as="c" hint-placeholder-count="7">
+                    <div onClick="{{ c.onClick }}" style="padding:3px 9px;border-radius:12px;cursor:pointer;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-weight:500">{{ c.label }}</div>
+                  </sc-for>
+                </div>
+                <div style="overflow-x:auto"><div style="min-width:940px">
+                  <div style="display:grid;grid-template-columns:78px 44px 96px minmax(150px,1fr) 150px 150px 170px 96px;gap:10px;padding:6px 12px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px"><span>ID</span><span>Age</span><span style="text-align:right">Value (CAD)</span><span>Instrument · account</span><span>Counterparty</span><span>Cause</span><span>Suggested action</span><span>Owner</span></div>
+                  <sc-for list="{{ exRows }}" as="e" hint-placeholder-count="14">
+                    <div onClick="{{ e.onClick }}" style="display:grid;grid-template-columns:78px 44px 96px minmax(150px,1fr) 150px 150px 170px 96px;gap:10px;padding:5px 12px;border-top:1px solid #f3f4f6;align-items:center;cursor:pointer;background:{{ e.bg }}" style-hover="background:#f7faff">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ e.id }}</span>
+                      <span style="font-weight:600;color:{{ e.ageColor }}">{{ e.age }}</span>
+                      <span style="text-align:right;font-weight:600">{{ e.valFmt }}</span>
+                      <div style="display:flex;flex-direction:column;min-width:0"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.inst }}</span><span style="font-size:11px;color:rgba(25,25,25,.5)">{{ e.side }} · {{ e.acct }}</span></div>
+                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.cpty }}</span>
+                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.cause }}</span>
+                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#005daa">{{ e.action }}</span>
+                      <span style="color:{{ e.ownerColor }}">{{ e.owner }}</span>
+                    </div>
+                  </sc-for>
+                </div></div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;position:sticky;top:12px">
+                <div style="padding:10px 12px;border-bottom:1px solid #eef0f3;display:flex;flex-direction:column;gap:2px">
+                  <div style="display:flex;justify-content:space-between"><span style="font-family:'IBM Plex Mono',monospace;font-weight:600">{{ exSel.id }}</span><span style="font-weight:600;color:{{ exSel.ageColor }}">{{ exSel.ageLong }}</span></div>
+                  <span style="font:600 14px Inter,sans-serif">{{ exSel.cause }}</span>
+                </div>
+                <div style="display:grid;grid-template-columns:104px 1fr;row-gap:6px;padding:10px 12px;border-bottom:1px solid #eef0f3">
+                  <sc-for list="{{ exSel.fields }}" as="f" hint-placeholder-count="8"><span style="color:rgba(25,25,25,.56)">{{ f.k }}</span><span style="font-weight:500">{{ f.v }}</span></sc-for>
+                </div>
+                <div style="padding:10px 12px;border-bottom:1px solid #eef0f3;display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">Suggested next action</span>
+                  <span style="font-weight:600">{{ exSel.action }}</span>
+                  <span style="color:rgba(25,25,25,.7);text-wrap:pretty">{{ exSel.why }}</span>
+                  <div style="display:flex;gap:6px;margin-top:4px"><div style="flex:1;padding:7px;background:#005daa;color:#fff;border-radius:6px;text-align:center;font-weight:600">{{ exSel.actionShort }}</div><div style="padding:7px 10px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500">Assign</div><div style="padding:7px 10px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500">Escalate</div></div>
+                </div>
+                <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+                  <span style="font-size:11px;color:rgba(25,25,25,.56)">Timeline</span>
+                  <sc-for list="{{ exSel.timeline }}" as="t" hint-placeholder-count="4">
+                    <div style="display:grid;grid-template-columns:8px 1fr;gap:10px"><span style="width:8px;height:8px;border-radius:50%;margin-top:4px;background:{{ t.color }}"></span><div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ t.t }}</span><span style="color:rgba(25,25,25,.56)">{{ t.d }}</span></div></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.home }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(320px,1fr);gap:12px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#005daa;color:#fff;border-radius:6px;padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:12px;color:rgba(255,255,255,.85)">Total wealth · all accounts</span>
+                  <span title="{{ totalSrc }}" style="font:600 32px/38px Inter,sans-serif;letter-spacing:-0.02em">{{ totalFmt }}</span>
+                  <span style="font-size:12.5px"><span style="background:#ffd200;color:#002d62;font-weight:700;padding:1px 6px;border-radius:3px">{{ dayChg }}</span> today · {{ ytdChg }} this year</span>
+                </div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,.85);text-align:right">Includes private investments valued at 30-Jun-2026<br>Prices as of 14:47 ET</div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:10px 14px;border-bottom:1px solid #eef0f3;font:600 13px Inter,sans-serif">Your accounts</div>
+                <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:1fr auto auto;gap:18px;padding:11px 14px;border-bottom:1px solid #f3f4f6;align-items:center">
+                    <div style="display:flex;flex-direction:column"><span style="font-weight:600;font-size:13px">{{ a.name }}</span><span style="color:rgba(25,25,25,.56)">{{ a.short }}</span></div>
+                    <span style="color:{{ a.dayColor }}">{{ a.day }}</span>
+                    <span style="font:600 14px Inter,sans-serif;width:110px;text-align:right">{{ a.mvFmt }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:10px 14px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between"><span style="font:600 13px Inter,sans-serif">Recent activity</span><a href="#" onClick="{{ goActivity }}">See all activity</a></div>
+                <sc-for list="{{ recent }}" as="r" hint-placeholder-count="6">
+                  <div style="display:grid;grid-template-columns:72px 1fr auto;gap:12px;padding:8px 14px;border-bottom:1px solid #f3f4f6;align-items:center">
+                    <span style="color:rgba(25,25,25,.56)">{{ r.date }}</span>
+                    <div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ r.desc }}</span><span style="color:rgba(25,25,25,.56)">{{ r.acct }}</span></div>
+                    <span style="font-weight:600;color:{{ r.amtColor }}">{{ r.amtFmt }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+                <div style="padding:10px 14px;border-bottom:1px solid #eef0f3;font:600 13px Inter,sans-serif">In progress</div>
+                <sc-for list="{{ pending }}" as="p" hint-placeholder-count="4">
+                  <div style="padding:10px 14px;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-weight:600">{{ p.t }}</span><span style="font-weight:600">{{ p.a }}</span></div>
+                    <div style="display:flex;gap:3px"><sc-for list="{{ p.bars }}" as="b" hint-placeholder-count="4"><div style="flex:1;height:4px;border-radius:2px;background:{{ b.c }}"></div></sc-for></div>
+                    <div style="display:flex;justify-content:space-between;gap:8px;color:rgba(25,25,25,.65)"><span>{{ p.s }}</span><span>{{ p.eta }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div onClick="{{ goMoney }}" style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;cursor:pointer;font-weight:600;color:#005daa" style-hover="border-color:#005daa">Move money</div>
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;font-weight:600;color:#005daa">Statements &amp; tax slips</div>
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;font-weight:600;color:#005daa">Message your advisor</div>
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;font-weight:600;color:#005daa">Update my details</div>
+              </div>
+              <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;display:flex;gap:12px;align-items:center">
+                <div style="width:36px;height:36px;border-radius:50%;background:#e6eef8;color:#005daa;display:flex;align-items:center;justify-content:center;font-weight:700">AD</div>
+                <div style="display:flex;flex-direction:column"><span style="font-weight:600">Aaron Diamond, CFP · Your advisor</span><span style="color:rgba(25,25,25,.56)">Next review Wed 4-Nov-2026, 10:00 · 416-555-0148</span></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.activity }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+              <sc-for list="{{ pending }}" as="p" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;gap:8px"><span style="font-weight:600">{{ p.t }}</span><span style="font-weight:600">{{ p.a }}</span></div>
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <sc-for list="{{ p.steps }}" as="s" hint-placeholder-count="4">
+                      <div style="display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;border:2px solid {{ s.c }};background:{{ s.fill }}"></span><span style="font-weight:{{ s.w }};color:{{ s.fg }}">{{ s.n }}</span><span style="color:rgba(25,25,25,.56)">{{ s.d }}</span></div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="padding:10px 14px;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span style="font:600 13px Inter,sans-serif">Transactions</span><span style="color:rgba(25,25,25,.56)">All accounts · last 30 days · 18 transactions</span></div>
+              <div style="overflow-x:auto"><div style="min-width:860px">
+                <div style="display:grid;grid-template-columns:80px 80px minmax(220px,1fr) 70px 110px 150px;gap:12px;padding:6px 14px;background:#f8f9fb;color:rgba(25,25,25,.56);font-size:11px"><span>Trade date</span><span>Settle date</span><span>Description</span><span>Account</span><span style="text-align:right">Amount</span><span>Status</span></div>
+                <sc-for list="{{ txns }}" as="t" hint-placeholder-count="12">
+                  <div style="display:grid;grid-template-columns:80px 80px minmax(220px,1fr) 70px 110px 150px;gap:12px;padding:7px 14px;border-top:1px solid #f3f4f6;align-items:center">
+                    <span>{{ t.td }}</span><span style="color:rgba(25,25,25,.65)">{{ t.sd }}</span>
+                    <div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ t.desc }}</span><span style="font-size:11px;color:rgba(25,25,25,.56)">{{ t.det }}</span></div>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">{{ t.acct }}</span>
+                    <span style="text-align:right;font-weight:600;color:{{ t.amtColor }}">{{ t.amtFmt }}</span>
+                    <div style="display:flex;flex-direction:column;gap:1px"><span style="align-self:flex-start;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:9px;background:{{ t.bg }};color:{{ t.fg }}">{{ t.status }}</span><span style="font-size:10.5px;color:rgba(25,25,25,.56)">{{ t.next }}</span></div>
+                  </div>
+                </sc-for>
+              </div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ show.money }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;align-items:start;max-width:1100px">
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="display:flex;border-bottom:1px solid #eef0f3">
+                <sc-for list="{{ mSteps }}" as="s" hint-placeholder-count="3">
+                  <div style="flex:1;padding:10px 14px;border-bottom:3px solid {{ s.bar }};color:{{ s.fg }};font-weight:600">{{ s.n }}</div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ m1 }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column;gap:5px"><span style="font-weight:600">From</span>
+                    <div style="padding:9px 11px;border:1px solid #cfd5dd;border-radius:6px;display:flex;justify-content:space-between"><span>Non-registered investment · 4417-8821</span><span style="color:rgba(25,25,25,.56)">Available cash $184,220</span></div></div>
+                  <div style="display:flex;flex-direction:column;gap:5px"><span style="font-weight:600">To</span>
+                    <sc-for list="{{ benes }}" as="b" hint-placeholder-count="3">
+                      <div onClick="{{ b.onClick }}" style="padding:9px 11px;border:1px solid {{ b.border }};background:{{ b.bg }};border-radius:6px;display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;cursor:pointer">
+                        <span style="width:14px;height:14px;border-radius:50%;border:2px solid {{ b.ring }};background:{{ b.dot }}"></span>
+                        <div style="display:flex;flex-direction:column"><span style="font-weight:500">{{ b.n }}</span><span style="color:rgba(25,25,25,.56)">{{ b.d }}</span></div>
+                        <span style="color:rgba(25,25,25,.56)">{{ b.h }}</span>
+                      </div>
+                    </sc-for>
+                    <a href="#">Add a new payee</a></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-weight:600">Amount (CAD)</span>
+                      <input value="{{ amount }}" onChange="{{ onAmount }}" style="padding:9px 11px;border:1px solid #cfd5dd;border-radius:6px;font:600 14px Inter,sans-serif"></label>
+                    <div style="display:flex;flex-direction:column;gap:5px"><span style="font-weight:600">Date</span><div style="padding:9px 11px;border:1px solid #cfd5dd;border-radius:6px;font-size:13px">Today, Mon 12-Oct-2026</div></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:5px"><span style="font-weight:600">Send by</span>
+                    <div style="display:flex;gap:2px;background:rgba(0,0,0,.06);border-radius:7px;padding:2px;align-self:flex-start">
+                      <sc-for list="{{ rails }}" as="r" hint-placeholder-count="3"><div onClick="{{ r.onClick }}" style="padding:5px 12px;border-radius:5px;cursor:pointer;background:{{ r.bg }};box-shadow:{{ r.shadow }};font-weight:500">{{ r.n }}</div></sc-for>
+                    </div>
+                    <span style="color:rgba(25,25,25,.6)">{{ railNote }}</span></div>
+                  <sc-if value="{{ amountError }}" hint-placeholder-val="{{ false }}"><div style="padding:8px 11px;border-radius:6px;background:#fdecec;color:#a8201f">{{ amountError }}</div></sc-if>
+                  <div style="display:flex;justify-content:flex-end"><div onClick="{{ toReview }}" style="padding:9px 18px;background:#005daa;color:#fff;border-radius:6px;font-weight:600;cursor:pointer">Review payment</div></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m2 }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+                  <div style="display:grid;grid-template-columns:140px 1fr;row-gap:8px">
+                    <sc-for list="{{ review }}" as="r" hint-placeholder-count="6"><span style="color:rgba(25,25,25,.56)">{{ r.k }}</span><span style="font-weight:600">{{ r.v }}</span></sc-for>
+                  </div>
+                  <sc-if value="{{ needsApproval }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 11px;border-radius:6px;background:#fff8d6;color:#5c4a00">Payments over $25,000 are checked by a second RBC approver. We'll confirm with you by text before 4:00 PM ET today.</div></sc-if>
+                  <div style="display:flex;justify-content:space-between"><div onClick="{{ toEdit }}" style="padding:9px 14px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500;cursor:pointer">Edit</div><div onClick="{{ toConfirm }}" style="padding:9px 18px;background:#005daa;color:#fff;border-radius:6px;font-weight:600;cursor:pointer">Confirm and send</div></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ m3 }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 15px Inter,sans-serif">{{ confirmTitle }}</span><span style="color:rgba(25,25,25,.6)">Reference PMT-2026-1012-08841 · You can leave this page; status updates appear in Activity.</span></div>
+                  <sc-for list="{{ tracking }}" as="s" hint-placeholder-count="5">
+                    <div style="display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:start"><span style="width:12px;height:12px;border-radius:50%;margin-top:2px;border:2px solid {{ s.c }};background:{{ s.fill }}"></span><div style="display:flex;flex-direction:column"><span style="font-weight:{{ s.w }};color:{{ s.fg }}">{{ s.n }}</span><span style="color:rgba(25,25,25,.56)">{{ s.sub }}</span></div><span style="color:rgba(25,25,25,.56)">{{ s.d }}</span></div>
+                  </sc-for>
+                  <div style="display:flex;gap:8px"><div onClick="{{ toEdit }}" style="padding:8px 14px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500;cursor:pointer">Make another payment</div><div onClick="{{ goActivity }}" style="padding:8px 14px;border:1px solid #cfd5dd;border-radius:6px;font-weight:500;cursor:pointer">View in Activity</div></div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="background:#fff;border:1px solid #e1e5eb;border-radius:6px">
+              <div style="padding:10px 14px;border-bottom:1px solid #eef0f3;font-weight:600">Limits &amp; checks</div>
+              <sc-for list="{{ limits }}" as="l" hint-placeholder-count="5">
+                <div style="padding:8px 14px;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:2px"><div style="display:flex;justify-content:space-between"><span>{{ l.k }}</span><span style="font-weight:600;color:{{ l.color }}">{{ l.v }}</span></div><span style="font-size:11px;color:rgba(25,25,25,.56)">{{ l.sub }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;c360&quot;,&quot;portfolio&quot;,&quot;orders&quot;,&quot;alts&quot;,&quot;exceptions&quot;,&quot;home&quot;,&quot;activity&quot;,&quot;money&quot;],&quot;default&quot;:&quot;c360&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dataState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Populated&quot;,&quot;Loading&quot;,&quot;Empty&quot;,&quot;Error&quot;],&quot;default&quot;:&quot;Populated&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { screen: null, cls: 'All', period: '1Y', excluded: {}, approved: false, exSel: null, exCause: 'All', mStep: 1, amount: '40000', bene: 0, rail: 'Wire' };
+
+  data() {
+    if (this._d) return this._d;
+    const FX = 1.3683;
+    const H = [
+      ['CAD cash', 'Ledger balance', 'Cash', 'NR', 184220, 1, 184220, 184220, 0, 'CAD'],
+      ['USD cash', 'USD sub-account', 'Cash', 'CO', 96397, FX, 131900, 131900, 0, 'USD'],
+      ['CAD cash', 'Ledger balance', 'Cash', 'RR', 42150, 1, 42150, 42150, 0, 'CAD'],
+      ['Royal Bank of Canada', 'RY · TSX', 'Equities', 'NR', 2400, 192.40, 461760, 298400, 0.84, 'CAD'],
+      ['Enbridge Inc.', 'ENB · TSX', 'Equities', 'NR', 5200, 61.85, 321620, 268000, -0.41, 'CAD'],
+      ['Canadian National Railway', 'CNR · TSX', 'Equities', 'RR', 1800, 158.20, 284760, 301500, 0.22, 'CAD'],
+      ['Shopify Inc. Cl A', 'SHOP · TSX', 'Equities', 'CO', 1500, 152.30, 228450, 141000, 2.13, 'CAD'],
+      ['Brookfield Corp.', 'BN · TSX', 'Equities', 'NR', 3600, 84.10, 302760, 211000, 0.65, 'CAD'],
+      ['Microsoft Corp.', 'MSFT · NASDAQ · USD', 'Equities', 'CO', 520, 512.40, 364580, 248000, -0.18, 'USD'],
+      ['Alimentation Couche-Tard', 'ATD · TSX', 'Equities', 'RR', 3100, 79.45, 246295, 230100, -0.32, 'CAD'],
+      ['Johnson & Johnson', 'JNJ · NYSE · USD', 'Equities', 'CO', 900, 178.20, 219450, 196000, 0.11, 'USD'],
+      ['Govt of Canada 3.25% 01-Dec-2034', 'CA135087R895 · AA+ · accrued $2,180', 'Bonds', 'RR', 600000, 98.42, 590520, 584000, 0.06, 'CAD'],
+      ['Province of Ontario 3.65% 02-Jun-2033', 'CA68333ZAV98 · AA- · accrued $5,120', 'Bonds', 'NR', 400000, 99.15, 396600, 401200, 0.04, 'CAD'],
+      ['Province of Quebec 4.40% 01-Dec-2055', 'CA74814ZFK24 · AA- · accrued $1,240', 'Bonds', 'RR', 250000, 96.80, 242000, 255000, -0.12, 'CAD'],
+      ['Bell Canada 5.15% 14-Nov-2031', 'CA07813ZCN18 · BBB · accrued $6,980', 'Bonds', 'CO', 300000, 103.10, 309300, 300900, 0.02, 'CAD'],
+      ['RBC Deposit Note 4.63% 01-May-2028', 'CA780086XC51 · AA · accrued $1,560', 'Bonds', 'NR', 250000, 101.45, 253625, 250000, 0.01, 'CAD'],
+      ['US Treasury 4.25% 15-Nov-2030', 'US91282CJL64 · AA+ · USD', 'Bonds', 'CO', 200000, 100.62, 275360, 271000, 0.03, 'USD'],
+      ['RBC Canadian Dividend Fund Sr F', 'RBF6270 · Fundserv', 'Funds', 'NR', 8420.112, 98.14, 826350, 640000, 0.38, 'CAD'],
+      ['PH&N Bond Fund Sr F', 'RBF1330 · Fundserv', 'Funds', 'RR', 41230.5, 10.12, 417252, 430000, 0.05, 'CAD'],
+      ['RBC Global Equity Focus Fund Sr F', 'RBF6670 · Fundserv', 'Funds', 'RR', 12880.4, 31.66, 407794, 322000, 0.47, 'CAD'],
+      ['BlueBay Global Inv. Grade Corp Bond Sr F', 'RBF1910 · Fundserv', 'Funds', 'CO', 28450, 10.84, 308398, 300000, 0.03, 'CAD'],
+      ['RBC Short Term Canadian Bond ETF', 'RBO · TSX', 'Funds', 'NR', 12000, 19.62, 235440, 236000, 0.02, 'CAD'],
+      ['RBC U.S. Dividend Fund Sr F', 'RBF6280 · Fundserv', 'Funds', 'CO', 6210, 52.18, 324038, 270000, 0.21, 'CAD'],
+      ['Northgate Infrastructure Partners IV', 'Commitment $1,000,000 · 62% called', 'Alternatives', 'CO', 620000, 1.149, 712400, 620000, 0, 'CAD'],
+      ['Lakeshore Private Credit Fund II', 'Commitment $750,000 · 64% called', 'Alternatives', 'NR', 480000, 0.977, 468900, 480000, 0, 'CAD'],
+    ];
+    const SRC = { Cash: 'Ledger balance · sum of 214 ledger entries since account open', Equities: 'Last trade 14:45 ET (15-min delayed) · custodian: RBC Investor Services', Bonds: 'Evaluated price 14:30 ET · ICE · clean price + accrued per Act/365', Funds: 'NAV 09-Oct-2026 from Fundserv · forward-priced', Alternatives: 'Manager NAV 30-Jun-2026 + calls/distributions since · approved by R. Osei 14-Aug-2026' };
+    const COLORS = { Cash: '#8a94a3', Equities: '#005daa', Bonds: '#00a558', Funds: '#2fa0c8', Alternatives: '#7a4fb5' };
+    const total = H.reduce((s, h) => s + h[6], 0);
+    const holdings = H.map(h => ({ n: h[0], id: h[1], cls: h[2], acct: h[3], qty: h[4], px: h[5], mv: h[6], cost: h[7], day: h[8], ccy: h[9] }));
+    const ACC = {
+      NR: { name: 'Non-registered investment', no: '4417-8821', meta: '4417-8821 · Joint (Eleanor & David) · Discretionary · CAD', drift: '+1.8 pts', driftColor: '#b86a00', day: 0.31 },
+      RR: { name: 'RRSP', no: '4417-9034', meta: '4417-9034 · Eleanor · Advisory · CAD', drift: '−2.6 pts', driftColor: '#d6302f', day: 0.12 },
+      CO: { name: 'Whitfield Holdings Ltd.', no: '4418-1157', meta: '4418-1157 · Corporate · Advisory · CAD + USD', drift: '+1.1 pts', driftColor: 'rgba(25,25,25,.65)', day: 0.42 },
+    };
+    const accounts = Object.keys(ACC).map(k => {
+      const mv = holdings.filter(h => h.acct === k).reduce((s, h) => s + h.mv, 0);
+      const n = holdings.filter(h => h.acct === k).length;
+      return { ...ACC[k], key: k, mv, short: `${ACC[k].no} · ${n} holdings`, src: `Sum of ${n} positions in ${ACC[k].no} · see Portfolio detail`, day: '+' + ACC[k].day.toFixed(2) + '% today', dayColor: '#00804a' };
+    });
+    const TARGET = { Cash: 3, Equities: 30, Bonds: 26, Funds: 28, Alternatives: 13 };
+    const classes = Object.keys(TARGET);
+    const alloc = classes.map(c => { const mv = holdings.filter(h => h.cls === c).reduce((s, h) => s + h.mv, 0); return { cls: c, mv, a: mv / total * 100, t: TARGET[c], color: COLORS[c] }; });
+    this._d = { holdings, total, accounts, alloc, SRC, COLORS, classes };
+    return this._d;
+  }
+
+  exceptions() {
+    if (this._ex) return this._ex;
+    let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; const pick = a => a[Math.floor(r() * a.length)];
+    const causes = [
+      ['Insufficient securities', 'Borrow or recall from stock-loan desk', 'Recall loan', 'Counterparty did not have the shares available on settlement date. RBC has 1,200 shares on loan that can be recalled to cover delivery.'],
+      ['SSI mismatch', 'Re-send instruction with corrected SSI', 'Re-send SSI', 'Counterparty BIC on our instruction does not match their standing settlement instructions on file. Their updated SSI was received 08-Oct.'],
+      ['Late affirmation', 'Chase broker to affirm in CTM', 'Chase broker', 'Trade was not affirmed by the broker before the cut-off. Affirmation usually lands within one business day once chased.'],
+      ['Cash shortfall', 'Fund from sweep account or approve overdraft', 'Fund from sweep', 'Cash in the settling account is below the amount due. The linked sweep account has sufficient balance to cover it.'],
+      ['Unmatched instruction', 'Contact counterparty to match trade details', 'Contact counterparty', 'No matching instruction from the counterparty at the depository. Usually caused by a booking delay on their side.'],
+      ['Quantity / price mismatch', 'Verify fill against broker confirm', 'Verify confirm', 'Our booked quantity or price differs from the counterparty confirmation. Compare against the broker fill before amending.'],
+      ['Corporate action pending', 'Hold until event processed', 'Place on hold', 'A corporate action on this instrument affects entitlements. Settlement should wait until the event is processed.'],
+    ];
+    const cpty = ['CDS Clearing', 'DTC / Pershing', 'Euroclear', 'RBC Investor Services', 'Fidelity Clearing Canada', 'Fundserv · PH&N', 'BNY Mellon', 'Goldman Sachs & Co.'];
+    const inst = ['Royal Bank of Canada', 'Enbridge Inc.', 'Shopify Inc. Cl A', 'Microsoft Corp.', 'Brookfield Corp.', 'Govt of Canada 3.25% 2034', 'Province of Ontario 3.65% 2033', 'Bell Canada 5.15% 2031', 'US Treasury 4.25% 2030', 'PH&N Bond Fund Sr F', 'RBC Canadian Dividend Fund Sr F', 'Canadian National Railway', 'Apple Inc.', 'Telus Corp.', 'Manulife Financial'];
+    const owners = ['A. Nguyen', 'M. Tremblay', 'S. Okafor', 'L. Chen', 'Unassigned', 'Unassigned', 'R. Singh'];
+    const rows = [];
+    for (let i = 0; i < 40; i++) {
+      const c = pick(causes); const age = Math.floor(Math.pow(r(), 1.8) * 12);
+      rows.push({ id: 'SF-' + (48120 + i * 7), age, val: Math.round((5000 + Math.pow(r(), 2) * 2400000) / 10) * 10, inst: pick(inst), side: r() > 0.5 ? 'Deliver' : 'Receive', acct: (4400 + Math.floor(r() * 99)) + '-' + (1000 + Math.floor(r() * 8999)), cpty: pick(cpty), cause: c[0], action: c[1], actionShort: c[2], why: c[3], owner: pick(owners) });
+    }
+    rows.sort((a, b) => b.age - a.age || b.val - a.val);
+    this._ex = { rows, causes: causes.map(c => c[0]) };
+    return this._ex;
+  }
+
+  renderVals() {
+    const st = this.state; const ds = this.props.dataState ?? 'Populated';
+    const screen = st.screen ?? this.props.startScreen ?? 'c360';
+    const go = id => () => this.setState({ screen: id });
+    const D = this.data();
+    const fmt = (n, d = 0) => Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const money = (n, d = 0) => (n < 0 ? '−$' : '$') + fmt(n, d);
+    const sgn = (n, d = 0) => (n > 0 ? '+$' : n < 0 ? '−$' : '$') + fmt(n, d);
+    const pc = (n, d = 2) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(n, d) + '%';
+    const green = '#00804a', red = '#d6302f', amber = '#b86a00', mute = 'rgba(25,25,25,.56)';
+    const pill = k => ({ ok: ['#e3f5ec', '#00703f'], warn: ['#fdf0dd', '#94520a'], bad: ['#fdecec', '#b3201f'], info: ['#e6eef8', '#00498a'], mute: ['#eef0f3', '#4b5563'] }[k]);
+
+    const nav = [
+      { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
+      { label: 'Operations', items: [['exceptions', 'Settlement exceptions', '40']] },
+      { label: 'Client portal preview', items: [['home', 'Client home'], ['activity', 'Activity & status'], ['money', 'Move money']] },
+    ].map(g => ({ label: g.label, items: g.items.map(([id, label, badge]) => { const a = id === screen; return { label, badge: badge || null, onClick: go(id), bar: a ? '#005daa' : 'transparent', bg: a ? '#eaf1fa' : 'transparent', fg: a ? '#00427a' : '#191919', weight: a ? 600 : 500, badgeBg: id === 'exceptions' ? '#fdecec' : '#e6eef8', badgeFg: id === 'exceptions' ? '#b3201f' : '#00498a' }; }) }));
+
+    const META = {
+      c360: ['Advisers / Book of business / Whitfield household', 'Client 360', 'Last viewed by you 09-Oct · 3 accounts · 25 holdings'],
+      portfolio: ['Advisers / Whitfield household / All accounts', 'Portfolio detail', 'Consolidated · base currency CAD · USD at 1.3683 (WM/Reuters 14:00 ET)'],
+      orders: ['Advisers / Whitfield household / Rebalance', 'Order ticket & rebalance', 'Proposal RB-2026-0412 · Draft · created 14:41 ET by A. Diamond'],
+      alts: ['Advisers / Whitfield household / Alternatives', 'Alternatives holdings', '2 commitments · valuations are manager-reported and lag by one quarter'],
+      exceptions: ['Operations / Settlement', 'Settlement exceptions', 'Wealth Ops – Toronto · queue refreshed 14:46 ET'],
+      home: ['Client portal / Home', 'Good afternoon, Eleanor', 'Last sign-in 08-Oct-2026 from iPhone'],
+      activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
+      money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
+    }[screen];
+    const isOps = screen === 'exceptions';
+    const isClientView = ['home', 'activity', 'money'].includes(screen);
+
+    const ctx = [
+      ['Household', 'Whitfield family'], ['Primary', 'Eleanor Whitfield'], ['AUA', money(D.total)], ['Risk profile', 'Balanced growth (6/10)'], ['KYC', 'Current · reviewed 14-Mar-2026', green], ['Mandate', 'Discretionary + Advisory'], ['Next review', 'Wed 04-Nov-2026'], ['Advisor', 'Aaron Diamond, CFP'],
+    ].map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
+
+    const pop = ds === 'Populated';
+    const show = {}; ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'].forEach(k => show[k] = pop && k === screen);
+    const EMPTY = {
+      c360: ['No accounts open yet', 'Eleanor Whitfield is onboarded but has no funded accounts. Open an account to see holdings, drift and tasks here.', 'Open an account'],
+      portfolio: ['No holdings to show', 'These accounts are open but have no positions or cash yet. Holdings appear once the first deposit or transfer settles.', 'Start a transfer in'],
+      orders: ['Portfolio is within tolerance', 'Every asset class is within ±2.0 pts of the Balanced Growth model, so no trades are proposed. You can still place a single order.', 'New order ticket'],
+      alts: ['No private investments', 'This household has no commitments to alternative funds. Subscriptions are captured by Operations once the manager accepts them.', 'Request a subscription'],
+      exceptions: ['Queue clear', 'There are no open settlement exceptions for Wealth Ops – Toronto. New fails appear here as custodians report them.', 'View settled today'],
+      home: ['Welcome to RBC Wealth', 'Your accounts will appear here once your first deposit arrives. Most transfers take 3–5 business days.', 'Make a deposit'],
+      activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
+      money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
+    }[screen];
+    const ERR = {
+      c360: ['Couldn’t load client profile', 'The Clients and accounts service did not respond within 5 seconds. Balances shown elsewhere may still be current. Retry, or open the client in read-only mode from the last snapshot (12-Oct 06:00 ET).', 'Open last snapshot'],
+      portfolio: ['Prices are unavailable', 'Market data from the pricing service stopped at 13:58 ET. Holdings and quantities are correct but values would be stale, so they are hidden. Retry, or show values at the 13:58 ET prices with a stale flag.', 'Show stale prices'],
+      orders: ['Pre-trade checks could not run', 'The mandate limits service is unreachable, so this proposal cannot be approved. Your draft is saved. Retry in a minute, or contact Wealth Tech support (ext. 4-2200) if it persists.', 'Save and exit'],
+      alts: ['Valuation feed failed', 'The quarterly NAV file from Northgate’s administrator failed validation (2 rows missing commitment IDs). Values shown use the prior quarter. Operations has been notified (ticket DQ-11842).', 'View ticket'],
+      exceptions: ['Custodian feed delayed', 'The 14:30 ET status file from CDS Clearing has not arrived. Exceptions from CDS may be up to 2 hours old. Other custodians are current.', 'Show CDS as stale'],
+      home: ['We can’t show your balances right now', 'Something went wrong on our side. Your money is safe and no transactions are affected. Try again in a few minutes, or call 1-800-555-0199.', 'Call us'],
+      activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
+      money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
+    }[screen];
+
+    const out = {
+      nav, crumb: META[0], title: META[1], subtitle: META[2], showCtx: !isOps && !isClientView, ctx, isClientView, show,
+      userInitials: isOps ? 'AN' : 'AD', userName: isOps ? 'A. Nguyen' : 'Aaron Diamond', userRole: isOps ? 'Wealth Ops · Settlement' : 'Investment Advisor · Toronto–Bay St',
+      isLoading: ds === 'Loading', isEmpty: ds === 'Empty', isError: ds === 'Error',
+      loadingMsg: 'Loading ' + META[1].toLowerCase() + '…', skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
+      emptyTitle: EMPTY[0], emptyBody: EMPTY[1], emptyCta: EMPTY[2], errTitle: ERR[0], errBody: ERR[1], errAction: ERR[2], errRef: 'Ref ' + screen.toUpperCase() + '-503-7f2a · 14:47:12 ET',
+      totalFmt: money(D.total), totalSrc: `Sum of 25 positions across 3 accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun`,
+      goOrders: go('orders'), goActivity: go('activity'), goMoney: go('money'),
+    };
+
+    // Client 360
+    out.accounts = D.accounts.map(a => ({ ...a, mvFmt: money(a.mv) }));
+    out.alloc = D.alloc.map(a => { const d = a.a - a.t; return { cls: a.cls, color: a.color, mvFmt: money(a.mv), actual: a.a.toFixed(1) + '%', target: a.t.toFixed(1) + '%', actualW: (a.a * 100 / 35).toFixed(1) + '%', targetW: (a.t * 100 / 35).toFixed(1) + '%', drift: (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1), driftColor: Math.abs(d) > 2 ? red : Math.abs(d) > 1 ? amber : mute, src: `${D.holdings.filter(h => h.cls === a.cls).length} positions · ${D.SRC[a.cls]}` }; });
+    out.profile = [['Legal name', 'Eleanor Margaret Whitfield'], ['Client ID', 'C-00418823'], ['Born', '17-Apr-1961 (65)'], ['Tax residency', 'Canada (ON) · SIN on file'], ['Occupation', 'Retired · former CFO'], ['Risk profile', 'Balanced growth · 6/10'], ['Time horizon', '10+ years'], ['KYC / AML', 'Current · next refresh 14-Mar-2027', green], ['Suitability', 'Signed 14-Mar-2026'], ['Preferred contact', 'Email · weekday mornings'], ['Power of attorney', 'Claire Whitfield (property)']].map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
+    out.household = [['Eleanor Whitfield', 'Primary · client since 2009', 'NR (joint), RRSP'], ['David Whitfield', 'Spouse · joint owner', 'NR (joint)'], ['Whitfield Holdings Ltd.', 'Holding company · Eleanor 60%, David 40%', 'Corporate'], ['Claire Whitfield', 'Daughter · POA (property)', 'No accounts']].map(([n, r, a]) => ({ n, r, a }));
+    out.tasks = [
+      ['RRSP underweight bonds by 2.6 pts', 'Review proposed rebalance RB-2026-0412', 'Today', red, red],
+      ['Capital call notice · Northgate IV', '$85,000 due 28-Oct · confirm funding from corporate account', '16 days', amber, amber],
+      ['Annual review prep', 'Agenda, performance pack and IPS check', '04-Nov', '#005daa', mute],
+      ['RRIF conversion planning', 'Eleanor turns 71 in 2032 · add to review agenda', '04-Nov', '#8a94a3', mute],
+      ['Beneficiary update requested', 'Signed form received 06-Oct · Ops verifying', 'With Ops', '#8a94a3', mute],
+    ].map(([t, next, due, color, dueColor]) => ({ t, next, due, color, dueColor }));
+    out.comms = [['Email · Eleanor', '08-Oct', 'Asked about the Northgate capital call and whether USD cash can cover it.'], ['Call · 22 min · David', '29-Sep', 'Discussed Shopify gain and timing a partial sale in the corporate account.'], ['Secure message sent', '15-Sep', 'Q2 private investments statement and NAV explanation.'], ['Meeting · in person', '12-Jun', 'Mid-year review. Agreed to trim Canadian dividend fund toward target.']].map(([t, d, s]) => ({ t, d, s }));
+    out.docs = [['Q3 2026 consolidated statement', '06-Oct-2026'], ['Northgate IV capital call notice #9', '05-Oct-2026'], ['Investment Policy Statement v4', '14-Mar-2026'], ['KYC & suitability record', '14-Mar-2026'], ['2025 T5 / T3 tax pack', '28-Feb-2026']].map(([n, d]) => ({ n, d }));
+
+    // Portfolio
+    const cls = st.cls;
+    const hs = D.holdings.filter(h => cls === 'All' || h.cls === cls);
+    out.holdCount = hs.length;
+    out.clsChips = ['All', ...D.classes].map(c => { const a = c === cls; const n = c === 'All' ? 25 : D.holdings.filter(h => h.cls === c).length; return { label: `${c} ${n}`, onClick: () => this.setState({ cls: c }), bg: a ? '#005daa' : '#fff', fg: a ? '#fff' : '#191919', border: a ? '#005daa' : '#d5dbe3' }; });
+    out.holdings = hs.map(h => { const u = h.mv - h.cost; const isB = h.cls === 'Bonds', isA = h.cls === 'Alternatives', isC = h.cls === 'Cash'; return {
+      n: h.n, id: h.id, cls: h.cls, color: D.COLORS[h.cls], acct: h.acct,
+      qtyFmt: isC ? '—' : isB ? fmt(h.qty) + ' face' : isA ? 'paid-in' : fmt(h.qty, h.qty % 1 ? 3 : 0),
+      pxFmt: isC ? (h.ccy === 'USD' ? 'FX 1.3683' : '—') : isB ? h.px.toFixed(2) : isA ? 'NAV ' + h.px.toFixed(3) + 'x' : (h.ccy === 'USD' ? 'US$' : '$') + h.px.toFixed(2),
+      mvFmt: money(h.mv), wFmt: (h.mv / D.total * 100).toFixed(2) + '%', uFmt: isC ? '—' : sgn(u), uColor: u > 0 ? green : u < 0 ? red : mute, dFmt: h.day ? pc(h.day) : '—', dColor: h.day > 0 ? green : h.day < 0 ? red : mute,
+      src: `${isC ? '' : fmt(h.qty, h.qty % 1 ? 3 : 0) + ' × ' + h.px + (h.ccy === 'USD' && !isC ? ' USD × FX 1.3683' : '') + ' · '}${D.SRC[h.cls]} · cost basis ${money(h.cost)} (ACB)` }; });
+    const dayAmt = D.holdings.reduce((s, h) => s + h.mv * h.day / 100, 0);
+    out.dayChg = pc(dayAmt / D.total * 100) + ' (' + sgn(dayAmt) + ')'; out.ytdChg = '+7.84%';
+    out.kpis = [
+      ['Market value', money(D.total), 'CAD · 3 accounts', '#191919', out.totalSrc],
+      ['Today', sgn(dayAmt), pc(dayAmt / D.total * 100), green, 'Σ position value × day change · listed prices only'],
+      ['YTD return (TWR)', '+7.84%', 'Benchmark +7.12% · +0.72 pts', green, 'Modified Dietz daily, linked · net of fees · 01-Jan to 12-Oct-2026'],
+      ['Unrealized gain', sgn(D.holdings.reduce((s, h) => s + h.mv - h.cost, 0)), 'vs adjusted cost base', green, 'Market value − ACB per tax lot · 61 lots'],
+      ['Income, next 90 days', '$58,420', 'coupons $31,880 · dividends $26,540', '#191919', 'Coupon schedules + declared/estimated dividends'],
+      ['Unfunded commitments', '$650,000', '2 alternative funds', '#191919', 'Committed $1,750,000 − called $1,100,000'],
+    ].map(([k, v, sub, color, src]) => ({ k, v, sub, color, src }));
+    const P = { '1M': [22, 0.4, 0.35], '3M': [26, 2.1, 1.8], 'YTD': [40, 7.84, 7.12], '1Y': [52, 11.6, 10.4], '3Y': [36, 28.9, 26.2], 'Since inception': [60, 142.3, 128.7] };
+    const [n, pr, br] = P[st.period];
+    let seed = n * 7 + 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const ps = [0], bs = [0];
+    for (let i = 1; i <= n; i++) { const shock = (rnd() - 0.5) * pr * 0.18; ps.push(ps[i - 1] + pr / n + shock); bs.push(bs[i - 1] + br / n + shock * 0.85 + (rnd() - 0.5) * br * 0.05); }
+    ps[n] = pr; bs[n] = br;
+    const all = ps.concat(bs); const mn = Math.min(...all, 0), mx = Math.max(...all);
+    const path = arr => arr.map((v, i) => (i ? 'L' : 'M') + (i / n * 600).toFixed(1) + ' ' + (160 - (v - mn) / (mx - mn || 1) * 150).toFixed(1)).join(' ');
+    out.perfPath = path(ps); out.benchPath = path(bs); out.perfP = pc(pr); out.perfB = pc(br);
+    out.perfStart = { '1M': '12-Sep-2026', '3M': '12-Jul-2026', 'YTD': '01-Jan-2026', '1Y': '12-Oct-2025', '3Y': '12-Oct-2023', 'Since inception': '02-Mar-2009' }[st.period];
+    out.periods = Object.keys(P).map(id => ({ id, onClick: () => this.setState({ period: id }), bg: id === st.period ? '#fff' : 'transparent', shadow: id === st.period ? '0 1px 2px rgba(0,0,0,.08)' : 'none' }));
+    out.fees = [['Management fee', '0.85% tiered', '$51,240'], ['Fund MER (embedded)', '0.21% avg', '$11,980'], ['Trading commissions', '14 trades', '$1,390'], ['Total', '1.07% annualized', '$64,610']].map(([k, r, v]) => ({ k, r, v }));
+
+    // Orders
+    const ex = st.excluded;
+    const T = [
+      ['SELL', 'RBC Canadian Dividend Fund Sr F', 'NR', '1,200.000 units', 117768, 0, 26560, 'Fundserv · NAV 12-Oct', 'Forward-priced · cut-off 16:00 ET'],
+      ['SELL', 'Shopify Inc. Cl A', 'CO', '400 sh', 60920, 9.95, 23320, 'RBC DS Equity desk', 'Limit $151.80 · day'],
+      ['SELL', 'Alimentation Couche-Tard', 'RR', '1,400 sh', 111230, 9.95, 0, 'RBC DS Equity desk', 'Registered · no tax impact'],
+      ['BUY', 'Govt of Canada 3.25% 01-Dec-2034', 'RR', '100,000 face', 98420, 150, 0, 'RBC CM Fixed Income', 'Indicative 98.42 + accrued $363'],
+      ['BUY', 'Province of Ontario 3.65% 02-Jun-2033', 'NR', '50,000 face', 49575, 90, 0, 'RBC CM Fixed Income', 'Indicative 99.15 + accrued $640'],
+      ['BUY', 'Canadian National Railway', 'RR', '300 sh', 47460, 9.95, 0, 'RBC DS Equity desk', 'Market · day'],
+      ['BUY', 'Microsoft Corp.', 'RR', '80 sh', 56100, 9.95, 0, 'RBC DS US Equity', 'USD · FX converted at execution'],
+    ];
+    const active = T.map((t, i) => !ex[i]);
+    const rrCash = 42150 + (active[2] ? 111230 : 0); const rrBuys = [3, 5, 6].reduce((s, i) => s + (active[i] ? T[i][4] : 0), 0);
+    const cashFail = rrBuys > rrCash;
+    out.trades = T.map((t, i) => ({ side: t[0], n: t[1], acct: t[2], qty: t[3], valFmt: money(t[4]), costFmt: t[5] ? '$' + t[5].toFixed(2) : 'nil', gainFmt: t[6] ? '+$' + fmt(t[6]) : '—', gainColor: t[6] ? amber : mute, route: t[7], note: (i === 6 && cashFail) ? 'Fails cash availability in RRSP' : t[8], noteColor: (i === 6 && cashFail) ? red : mute,
+      sideBg: t[0] === 'BUY' ? '#e3f5ec' : '#fdecec', sideFg: t[0] === 'BUY' ? '#00703f' : '#b3201f', opacity: ex[i] ? 0.4 : 1, rowBg: (i === 6 && cashFail) ? '#fff6f6' : 'transparent',
+      toggle: e => { e && e.preventDefault && e.preventDefault(); this.setState(s => ({ excluded: { ...s.excluded, [i]: !s.excluded[i] }, approved: false })); }, toggleLabel: ex[i] ? 'Include' : 'Exclude' }));
+    const nAct = active.filter(Boolean).length;
+    out.tradeCountLabel = `${nAct} of 7 included`;
+    const checks = [
+      ['Mandate limits', 'pass', 'All accounts within IPS bands after trades (equity 25–35%, fixed income 20–32%).'],
+      ['Single-issuer concentration', 'pass', 'Largest issuer after trades: Govt of Canada 8.0% (limit 10%).'],
+      ['Restricted & watch lists', 'pass', 'No instruments on RBC restricted list. RY: employee pre-clearance not required for client accounts.'],
+      ['Cash availability', cashFail ? 'fail' : 'pass', cashFail ? `RRSP 4417-9034 short ${money(rrBuys - rrCash)}: buys ${money(rrBuys)} vs cash + sale proceeds ${money(rrCash)}. Exclude the MSFT buy or add a sell.` : `RRSP 4417-9034: buys ${money(rrBuys)} covered by cash + sale proceeds ${money(rrCash)}.`],
+      ['Suitability vs risk profile', 'pass', 'Portfolio risk score 5.8 after trades vs client profile 6/10.'],
+      ['Fund dealing cut-off', 'warn', 'Fund order placed 14:47 ET prices at 12-Oct NAV if submitted before 16:00 ET. 1h 13m remaining.'],
+      ['Tax impact', 'warn', 'Realized capital gains $49,880 ($26,560 joint NR, $23,320 corporate). Client informed on 29-Sep call.'],
+      ['Superficial loss', 'pass', 'No repurchases of instruments sold at a loss in the last 30 days.'],
+    ];
+    const fails = checks.filter(c => c[1] === 'fail').length, warns = checks.filter(c => c[1] === 'warn').length;
+    out.checks = checks.map(([n, s, d]) => { const p = pill(s === 'pass' ? 'ok' : s === 'warn' ? 'warn' : 'bad'); return { n, d, status: s.toUpperCase(), bg: p[0], fg: p[1] }; });
+    out.checkSummary = fails ? `${fails} failed · ${warns} warnings` : `All passed · ${warns} warnings`; out.checkSummaryColor = fails ? red : green;
+    const sells = T.reduce((s, t, i) => s + (active[i] && t[0] === 'SELL' ? t[4] : 0), 0), buys = T.reduce((s, t, i) => s + (active[i] && t[0] === 'BUY' ? t[4] : 0), 0);
+    out.impact = [['Sells', money(sells)], ['Buys', money(buys)], ['Net cash', sgn(sells - buys), sells - buys >= 0 ? green : red], ['Turnover', (Math.max(sells, buys) / D.total * 100).toFixed(2) + '% of AUA'], ['Est. trading costs', '$' + T.reduce((s, t, i) => s + (active[i] ? t[5] : 0), 0).toFixed(2)], ['Realized gains (taxable)', '$' + fmt(T.reduce((s, t, i) => s + (active[i] ? t[6] : 0), 0)), amber], ['Tracking error vs model', '1.9% → 0.6%']].map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
+    out.driftAfter = [['Cash', '+1.2', '+0.9'], ['Equities', '−1.6', '−0.4'], ['Bonds', '−1.8', '−0.3'], ['Funds', '+1.4', '+0.0'], ['Alternatives', '+0.8', '+0.8']].map(([cls, b, a]) => ({ cls, before: b + ' pts', after: a + ' pts', beforeColor: mute, afterColor: green }));
+    const canApprove = !fails && !st.approved;
+    out.approveBg = st.approved ? '#e3f5ec' : canApprove ? '#005daa' : '#e5e8ec'; out.approveFg = st.approved ? '#00703f' : canApprove ? '#fff' : 'rgba(25,25,25,.45)'; out.approveCursor = canApprove ? 'pointer' : 'default';
+    out.approveLabel = st.approved ? `${nAct} orders sent to routing · 14:48 ET` : fails ? 'Resolve 1 failed check to approve' : `Approve and route ${nAct} orders`;
+    out.approveNote = st.approved ? 'Fills will book to the ledger as they arrive. Settlement instructions are created automatically (equities T+1, bonds T+1, funds T+2).' : 'Approval requires step-up authentication. Warnings are recorded in the audit trail with your ID.';
+    out.approve = () => { if (canApprove) this.setState({ approved: true }); };
+
+    // Alternatives
+    out.commits = [
+      { n: 'Northgate Infrastructure Partners IV', meta: 'Whitfield Holdings Ltd. · 4418-1157 · CAD', vintage: '2021', commit: 1000000, called: 620000, dist: 92000, nav: 712400, navNote: 'Manager NAV 30-Jun-2026 · approved', navColor: green },
+      { n: 'Lakeshore Private Credit Fund II', meta: 'Non-registered · 4417-8821 · CAD', vintage: '2023', commit: 750000, called: 480000, dist: 61200, nav: 468900, navNote: 'Manager NAV 30-Jun-2026 · approved', navColor: green },
+    ].map(c => ({ ...c, commitFmt: money(c.commit), calledFmt: money(c.called), calledPct: Math.round(c.called / c.commit * 100) + '%', unfundedFmt: money(c.commit - c.called), distFmt: money(c.dist), navFmt: money(c.nav), dpi: (c.dist / c.called).toFixed(2) + 'x', tvpi: ((c.dist + c.nav) / c.called).toFixed(2) + 'x', src: `Manager NAV 30-Jun-2026 (administrator: SS&C) + calls since − distributions since · entered by M. Tremblay, approved by R. Osei 14-Aug-2026` }));
+    out.altKpis = [['Committed', '$1,750,000', '2 funds · CAD'], ['Called to date', '$1,100,000', '62.9% of committed'], ['Unfunded', '$650,000', '7.6% of household AUA'], ['Current value', '$1,181,300', 'as of 30-Jun-2026 NAVs'], ['Distributions received', '$153,200', 'DPI 0.14x'], ['Net TVPI', '1.21x', 'IRR 9.8% since first call']].map(([k, v, sub]) => ({ k, v, sub, src: 'Commitment register · capital call and distribution notices · manager NAVs' }));
+    out.calls = [['28-Oct-2026', 'Northgate IV · call #10', '$85,000', 'Notice received', 'info'], ['Jan-2027', 'Lakeshore II · est.', '$60,000', 'Estimate', 'mute'], ['Mar-2027', 'Northgate IV · est.', '$110,000', 'Estimate', 'mute'], ['Jun-2027', 'Lakeshore II · est.', '$75,000', 'Estimate', 'mute']].map(([d, f, a, s, k]) => { const p = pill(k); return { d, f, a, s, bg: p[0], fg: p[1] }; });
+    out.dists = [['15-Sep-2026', 'Lakeshore II', 'Income', '$14,800'], ['30-Jun-2026', 'Northgate IV', 'Return of capital', '$38,000'], ['15-Jun-2026', 'Lakeshore II', 'Income', '$13,900'], ['31-Mar-2026', 'Northgate IV', 'Income', '$22,000'], ['15-Mar-2026', 'Lakeshore II', 'Income', '$12,600']].map(([d, f, t, a]) => ({ d, f, t, a }));
+
+    // Exceptions
+    const E = this.exceptions();
+    const rows = E.rows.filter(r => st.exCause === 'All' || r.cause === st.exCause);
+    const selId = st.exSel ?? E.rows[0].id; const sel = E.rows.find(r => r.id === selId) || E.rows[0];
+    const ageC = a => a >= 5 ? red : a >= 2 ? amber : '#191919';
+    out.causeChips = ['All', ...E.causes].map(c => { const a = c === st.exCause; const n = c === 'All' ? 40 : E.rows.filter(r => r.cause === c).length; return { label: `${c} ${n}`, onClick: () => this.setState({ exCause: c }), bg: a ? '#005daa' : '#fff', fg: a ? '#fff' : '#191919', border: a ? '#005daa' : '#d5dbe3' }; });
+    out.exRows = rows.map(r => ({ ...r, age: r.age + 'd', ageColor: ageC(r.age), valFmt: money(r.val), ownerColor: r.owner === 'Unassigned' ? red : '#191919', bg: r.id === sel.id ? '#eaf1fa' : 'transparent', onClick: () => this.setState({ exSel: r.id }) }));
+    const totV = E.rows.reduce((s, r) => s + r.val, 0);
+    out.exKpis = [['Open exceptions', '40', '7 opened today', '#191919'], ['Value at risk', money(totV), 'gross settlement value', '#191919'], ['Aged 5+ days', String(E.rows.filter(r => r.age >= 5).length), 'buy-in risk from day 7 (CSDR/CDS)', red], ['Unassigned', String(E.rows.filter(r => r.owner === 'Unassigned').length), 'auto-assign at 15:00 ET', amber], ['Cleared today', '23', 'median 3h 10m to resolve', green]].map(([k, v, sub, color]) => ({ k, v, sub, color }));
+    out.exSel = { ...sel, ageColor: ageC(sel.age), ageLong: sel.age === 0 ? 'Opened today' : `Open ${sel.age} business day${sel.age > 1 ? 's' : ''}`,
+      fields: [['Value', money(sel.val)], ['Instrument', sel.inst], ['Direction', sel.side], ['Account', sel.acct], ['Counterparty', sel.cpty], ['Intended settle', sel.age ? `${sel.age}d ago` : 'Today'], ['Owner', sel.owner], ['Linked trade', 'TR-' + sel.id.slice(3) + '-01']].map(([k, v]) => ({ k, v })),
+      timeline: [['Fail reported by ' + sel.cpty, sel.age ? `${sel.age}d ago · 09:12 ET` : 'Today · 09:12 ET', red], ['Exception created, cause classified', 'auto · rule SET-FAIL-04', '#8a94a3'], [sel.owner === 'Unassigned' ? 'Awaiting owner' : 'Assigned to ' + sel.owner, sel.owner === 'Unassigned' ? 'auto-assign 15:00 ET' : 'Wealth Ops – Toronto', sel.owner === 'Unassigned' ? amber : '#8a94a3'], ['Next: ' + sel.actionShort, 'suggested', '#005daa']].map(([t, d, color]) => ({ t, d, color })) };
+
+    // Client home / activity
+    out.recent = [['09-Oct', 'Dividend · Royal Bank of Canada', 'Non-registered', 2208], ['09-Oct', 'Bought PH&N Bond Fund Sr F', 'RRSP', -25000], ['06-Oct', 'Interest · CAD cash', 'Non-registered', 612.4], ['01-Oct', 'Coupon · Bell Canada 5.15%', 'Whitfield Holdings', 7725], ['30-Sep', 'Management fee · Q3', 'All accounts', -17080], ['15-Sep', 'Distribution · Lakeshore II', 'Non-registered', 14800]].map(([date, desc, acct, amt]) => ({ date, desc, acct, amtFmt: sgn(amt, 2), amtColor: amt > 0 ? green : '#191919' }));
+    const mk = (names, at, dates) => ({ bars: names.map((_, i) => ({ c: i < at ? '#005daa' : i === at ? '#ffd200' : '#e5e8ec' })), steps: names.map((n, i) => ({ n, d: dates[i] || '', c: i <= at ? '#005daa' : '#cfd5dd', fill: i < at ? '#005daa' : i === at ? '#ffd200' : '#fff', w: i === at ? 600 : 400, fg: i > at ? 'rgba(25,25,25,.5)' : '#191919' })) });
+    out.pending = [
+      { t: 'Wire to TD Canada Trust ···4471', a: '$40,000.00', s: 'Second approval in progress', eta: 'Expected today by 4:00 PM', ...mk(['Submitted', 'Screening', 'Approval', 'Sent', 'Received'], 2, ['13:12', '13:13', 'by 16:00', '', 'by 17:30']) },
+      { t: 'Buy PH&N Bond Fund Sr F', a: '$25,000.00', s: 'Waiting for fund price', eta: 'Price known tonight · settles 14-Oct', ...mk(['Placed', 'Priced', 'Settled'], 1, ['09-Oct', '12-Oct eve', '14-Oct']) },
+      { t: 'Capital call · Northgate IV', a: '$85,000.00', s: 'Notice received · funding from corporate account', eta: 'Due 28-Oct-2026', ...mk(['Notice', 'Funding', 'Paid', 'Matched'], 1, ['05-Oct', 'by 26-Oct', '28-Oct', '']) },
+      { t: 'Beneficiary designation · RRSP', a: '', s: 'Form received · being verified', eta: 'Usually 3–5 business days', ...mk(['Received', 'Verified', 'Updated'], 1, ['06-Oct', '', '']) },
+    ];
+    out.txns = [
+      ['12-Oct', '14-Oct', 'Buy · PH&N Bond Fund Sr F', '2,470.4 units at NAV tbc', 'RR', -25000, 'Awaiting price', 'warn', 'NAV published ~19:00 ET'],
+      ['12-Oct', '12-Oct', 'Wire out · TD Canada Trust ···4471', 'Ref PMT-2026-1012-08841', 'NR', -40000, 'In approval', 'warn', 'Second approver by 16:00 ET'],
+      ['09-Oct', '09-Oct', 'Dividend · Royal Bank of Canada', '2,400 sh × $1.48 · eligible', 'NR', 3552, 'Settled', 'ok', ''],
+      ['08-Oct', '10-Oct', 'Sell · Enbridge Inc.', '800 sh at $62.10', 'NR', 49670, 'Settlement failed', 'bad', 'Retrying 13-Oct · no action needed'],
+      ['08-Oct', '09-Oct', 'Buy · Govt of Canada 3.25% 2034', '50,000 face at 98.30 + accrued', 'RR', -49332, 'Settled', 'ok', ''],
+      ['06-Oct', '06-Oct', 'Interest · CAD cash', 'Sept accrual at 2.15%', 'NR', 612.4, 'Settled', 'ok', ''],
+      ['05-Oct', '28-Oct', 'Capital call · Northgate IV #10', 'Notice received', 'CO', -85000, 'Scheduled', 'info', 'Paid 28-Oct from USD/CAD cash'],
+      ['01-Oct', '01-Oct', 'Coupon · Bell Canada 5.15%', '300,000 face · semi-annual', 'CO', 7725, 'Settled', 'ok', ''],
+      ['30-Sep', '30-Sep', 'Management fee · Q3 2026', '0.85% tiered on avg AUA', 'NR', -17080, 'Settled', 'ok', ''],
+      ['29-Sep', '30-Sep', 'Sell · Shopify Inc. Cl A', '200 sh at $149.80', 'CO', 29950, 'Settled', 'ok', ''],
+      ['24-Sep', '24-Sep', 'FX · USD → CAD', 'US$20,000 at 1.3651', 'CO', 27302, 'Settled', 'ok', ''],
+      ['15-Sep', '15-Sep', 'Distribution · Lakeshore II', 'Income · Q3', 'NR', 14800, 'Settled', 'ok', ''],
+    ].map(([td, sd, desc, det, acct, amt, status, k, next]) => { const p = pill(k); return { td, sd, desc, det, acct, amtFmt: sgn(amt, 2), amtColor: amt > 0 ? green : '#191919', status, bg: p[0], fg: p[1], next }; });
+
+    // Move money
+    const amt = parseFloat(String(st.amount).replace(/[^0-9.]/g, '')) || 0;
+    const B = [['TD Canada Trust ···4471', 'David Whitfield · chequing', 'Paid 6× since 2023'], ['Ontario Land Registry Trust', 'Lawyer trust account · Hughes LLP', 'New · added 02-Oct'], ['RBC Royal Bank ···0093', 'Eleanor · chequing', 'Paid 41×']];
+    out.benes = B.map(([n, d, h], i) => { const a = i === st.bene; return { n, d, h, onClick: () => this.setState({ bene: i }), border: a ? '#005daa' : '#cfd5dd', bg: a ? '#f3f8fd' : '#fff', ring: a ? '#005daa' : '#9aa3af', dot: a ? '#005daa' : '#fff' }; });
+    out.amount = st.amount; out.onAmount = e => this.setState({ amount: e.target.value });
+    out.rails = ['Wire', 'EFT', 'Interac e-Transfer'].map(n => ({ n, onClick: () => this.setState({ rail: n }), bg: n === st.rail ? '#fff' : 'transparent', shadow: n === st.rail ? '0 1px 2px rgba(0,0,0,.08)' : 'none' }));
+    const lim = { Wire: 250000, EFT: 100000, 'Interac e-Transfer': 3000 }[st.rail];
+    out.railNote = { Wire: 'Same day if approved by 4:00 PM ET · $25 fee · limit $250,000/day', EFT: '1–2 business days · no fee · limit $100,000/day', 'Interac e-Transfer': 'Within 30 minutes · no fee · limit $3,000/day' }[st.rail];
+    out.amountError = amt <= 0 ? 'Enter an amount greater than $0.' : amt > 184220 ? `That’s more than the available cash of $184,220. Lower the amount or sell investments first.` : amt > lim ? `${st.rail} limit is ${money(lim)} per day. Choose Wire or lower the amount.` : null;
+    out.needsApproval = amt > 25000;
+    out.mSteps = ['1  Details', '2  Review', '3  Confirmation'].map((n, i) => ({ n, bar: i + 1 === st.mStep ? '#005daa' : i + 1 < st.mStep ? '#9fc0e3' : 'transparent', fg: i + 1 <= st.mStep ? '#191919' : 'rgba(25,25,25,.45)' }));
+    out.m1 = st.mStep === 1; out.m2 = st.mStep === 2; out.m3 = st.mStep === 3;
+    out.toReview = () => { if (!out.amountError) this.setState({ mStep: 2 }); }; out.toEdit = () => this.setState({ mStep: 1 }); out.toConfirm = () => this.setState({ mStep: 3 });
+    out.review = [['From', 'Non-registered investment · 4417-8821'], ['To', B[st.bene][0] + ' · ' + B[st.bene][1]], ['Amount', money(amt, 2)], ['Fee', st.rail === 'Wire' ? '$25.00' : '$0.00'], ['Send by', st.rail], ['Arrives', st.rail === 'Wire' ? 'Today by 5:30 PM ET' : st.rail === 'EFT' ? 'Wed 14-Oct-2026' : 'Within 30 minutes']].map(([k, v]) => ({ k, v }));
+    out.confirmTitle = out.needsApproval ? 'Submitted. A second approver is reviewing your payment.' : 'Sent. Your payment is on its way.';
+    const at = out.needsApproval ? 2 : 3;
+    out.tracking = [['Submitted', 'You confirmed with 2-step verification', '14:47'], ['Sanctions and fraud screening', 'Passed · payee history checked', '14:47'], ['Second approval', out.needsApproval ? 'Over $25,000 · RBC Payments team' : 'Not required under $25,000', out.needsApproval ? 'by 16:00' : '—'], ['Sent via ' + st.rail, 'Funds leave your account', ''], ['Confirmed by receiving bank', 'We’ll notify you by email and text', '']].map(([n, sub, d], i) => ({ n, sub, d, c: i <= at ? '#005daa' : '#cfd5dd', fill: i < at ? '#005daa' : i === at ? '#ffd200' : '#fff', w: i === at ? 600 : 400, fg: i > at ? 'rgba(25,25,25,.5)' : '#191919' }));
+    out.limits = [['Available cash', '$184,220', 'Non-registered 4417-8821 · settled cash only', '#191919'], ['Daily limit remaining', money(lim), st.rail + ' · resets midnight ET', '#191919'], ['Payee', B[st.bene][2], st.bene === 1 ? 'New payee: first payment held for a callback' : 'Known payee', st.bene === 1 ? amber : green], ['Second approval', amt > 25000 ? 'Required' : 'Not required', 'Payments over $25,000', amt > 25000 ? amber : green], ['Screening', 'Runs on submit', 'Sanctions, fraud and AML rules', '#191919']].map(([k, v, sub, color]) => ({ k, v, sub, color }));
+
+    return out;
+  }
+}
+</script>
+</body>
+</html>

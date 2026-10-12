@@ -1,0 +1,6 @@
+/* ============================================================================
+   Devin Design System — root stylesheet
+   Single entry point for consumers: link this one file and you get the whole
+   token + font system. It simply re-exports colors_and_type.css.
+============================================================================ */
+@import url("colors_and_type.css");
