@@ -5,22 +5,36 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api": "tsx server/index.ts",
+    "dev:full": "concurrently -n api,web -c blue,green \"npm:api\" \"npm:dev\"",
+    "db:up": "docker run -d --rm --name wealth-oracle -p 1521:1521 -e ORACLE_PASSWORD=oracle -e APP_USER=wealth -e APP_USER_PASSWORD=wealth gvenzl/oracle-free:23-slim-faststart",
+    "db:wait": "tsx server/db/wait.ts",
+    "db:setup": "tsx server/db/setup.ts",
+    "db:down": "docker stop wealth-oracle",
+    "test:db": "tsx server/db/container-check.ts",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p server",
     "visual-diff": "node scripts/visual-diff.mjs"
   },
   "dependencies": {
+    "express": "^4.22.3",
+    "oracledb": "^6.10.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/oracledb": "^6.10.4",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.5",
     "pixelmatch": "^6.0.0",
     "playwright-core": "1.48",
     "pngjs": "^7.0.0",
+    "testcontainers": "^10.28.0",
+    "tsx": "~4.19",
     "typescript": "5.6",
     "vite": "^5.4.21"
   }

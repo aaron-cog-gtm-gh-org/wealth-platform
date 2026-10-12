@@ -2,3 +2,4 @@ node_modules
 dist
 *.tsbuildinfo
 visual-diff-output
+.vite/
