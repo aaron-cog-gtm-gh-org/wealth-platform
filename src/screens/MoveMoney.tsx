@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import type { Model } from '../model';
 
 export function MoveMoney({ m }: { m: Model }) {
-  const { amount, amountError, benes, confirmTitle, goActivity, limits, m1, m2, m3, mSteps, needsApproval, onAmount, railNote, rails, review, toConfirm, toEdit, toReview, tracking } = m;
+  const { amount, amountError, availableCashFmt, benes, confirmTitle, fromLabel, goActivity, limits, m1, m2, m3, mSteps, needsApproval, onAmount, railNote, rails, review, toConfirm, toEdit, toReview, tracking } = m;
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 320px", gap: "12px", alignItems: "start", maxWidth: "1100px" }}>
@@ -15,7 +15,7 @@ export function MoveMoney({ m }: { m: Model }) {
           {m1 && (<>
             <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>From</span>
-                <div style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", display: "flex", justifyContent: "space-between" }}><span>Non-registered investment · 4417-8821</span><span style={{ color: "rgba(25,25,25,.56)" }}>Available cash $184,220</span></div></div>
+                <div style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", display: "flex", justifyContent: "space-between" }}><span>{fromLabel}</span><span style={{ color: "rgba(25,25,25,.56)" }}>Available cash {availableCashFmt}</span></div></div>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>To</span>
                 {benes.map((b, b_i) => (<Fragment key={b_i}>
                   <div onClick={b.onClick} style={{ padding: "9px 11px", border: `1px solid ${b.border}`, background: b.bg, borderRadius: "6px", display: "grid", gridTemplateColumns: "14px 1fr auto", gap: "10px", alignItems: "center", cursor: "pointer" }}>

@@ -1,5 +1,8 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
+import { loadWealthData } from './api/client';
+import { deriveData } from './data';
+import type { Data } from './data';
 import { buildModel } from './model';
 import { Client360 } from './screens/Client360';
 import { PortfolioDetail } from './screens/PortfolioDetail';
@@ -14,13 +17,14 @@ import type { DataState, Screen, SetUiState } from './types';
 
 interface Location {
   screen: Screen;
-  dataState: DataState;
+  /** Forced via `?state=` for design review; otherwise derived from the API request. */
+  dataState: DataState | null;
 }
 
 function readLocation(): Location {
   const q = new URLSearchParams(window.location.search);
   const screen = SCREENS.find(s => s === q.get('screen')) ?? 'c360';
-  const dataState = DATA_STATES.find(s => s === q.get('state')) ?? 'Populated';
+  const dataState = DATA_STATES.find(s => s === q.get('state')) ?? null;
   return { screen, dataState };
 }
 
@@ -31,6 +35,19 @@ function preventHashLinks(e: MouseEvent) {
 export function App() {
   const [loc, setLoc] = useState(readLocation);
   const [ui, setUi] = useState(INITIAL_UI_STATE);
+  const [data, setData] = useState<Data | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  const load = useCallback(() => {
+    setLoadFailed(false);
+    setData(null);
+    loadWealthData().then(
+      raw => setData(deriveData(raw)),
+      err => { console.error(err); setLoadFailed(true); },
+    );
+  }, []);
+
+  useEffect(load, [load]);
 
   useEffect(() => {
     const onPop = () => setLoc(readLocation());
@@ -47,7 +64,9 @@ export function App() {
     setLoc(l => ({ ...l, screen }));
   }, []);
 
-  const m = buildModel(loc.screen, loc.dataState, ui, setState, go);
+  const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
+  const dataState = loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load);
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -141,7 +160,7 @@ export function App() {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#d6302f" }}></span><span style={{ font: "600 14px Inter,sans-serif" }}>{errTitle}</span></div>
                 <div style={{ color: "rgba(25,25,25,.7)", maxWidth: "720px", textWrap: "pretty" }}>{errBody}</div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                  <div style={{ padding: "6px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>Retry</div>
+                  <div onClick={m.retry} style={{ padding: "6px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>Retry</div>
                   <div style={{ padding: "6px 12px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>{errAction}</div>
                 </div>
                 <div style={{ font: "11px 'IBM Plex Mono',monospace", color: "rgba(25,25,25,.5)" }}>{errRef}</div>

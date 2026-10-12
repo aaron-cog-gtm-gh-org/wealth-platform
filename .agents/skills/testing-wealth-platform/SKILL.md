@@ -29,3 +29,24 @@ description: Test the RBC Wealth Platform React implementation against its inter
 
 # Devin Secrets Needed
 None for local mockup/application parity testing.
+
+## Oracle backend
+
+The app loads its data from the API (`server/`), which reads Oracle. Before any visual test:
+
+1. `docker ps` — if `wealth-oracle` is not running: `npm run db:up && npm run db:wait`.
+2. `npm run db:setup` to reset the schema and seed (deterministic; needed for zero-pixel diffs).
+3. Start the API (`npm run api`, port 3001) **and** Vite (`npm run dev`); Vite proxies `/api`.
+   `curl localhost:3001/api/health` should return `{"status":"ok"}`.
+4. Without the API, every screen shows the Error state, which is expected.
+
+Reuse one Oracle container: never stop/restart `wealth-oracle` between test runs. `npm run db:setup`
+(~10 s) restores the deterministic seed, which is all a fresh container would give you.
+
+`npm run test:db` checks the stack end to end in its own Testcontainers Oracle (2–3 min). Run it once
+at the end (or in CI), not per iteration. If it hangs:
+- After "Pulling image testcontainers/ryuk": the Docker credential helper is stuck; run
+  `docker pull testcontainers/ryuk:0.11.0` and retry.
+- At "Acquiring lock file": an earlier run is still alive (`kill_shell` does not kill its node
+  child). Stop node processes whose command line contains `container-check`, then retry.
+On this Windows VM, run npm scripts via `node <npm-cli.js> run <script>` (see above).

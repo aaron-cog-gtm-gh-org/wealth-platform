@@ -1,11 +1,11 @@
-import { totalValue } from '../data';
-import { GREEN, INK, money } from '../format';
+import type { Data } from '../data';
+import { GREEN, INK, dayMonthYear, money, weekdayDate } from '../format';
 import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
-  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', '40']] },
+  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', '']] },
   { label: 'Client portal preview', items: [['home', 'Client home'], ['activity', 'Activity & status'], ['money', 'Move money']] },
 ];
 
@@ -44,9 +44,13 @@ const ERR: Record<Screen, [string, string, string]> = {
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
 
-export const TOTAL_SOURCE = 'Sum of 25 positions across 3 accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun';
+/** Business date the seeded book is valued at. */
+export const AS_OF = '2026-10-12';
 
-export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void) {
+export const totalSource = (d: Data) =>
+  `Sum of ${d.holdings.length} positions across ${d.accounts.length} accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun`;
+
+export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null) {
   const isOps = screen === 'exceptions';
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const [crumb, title, subtitle] = META[screen];
@@ -58,7 +62,7 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
       return {
         id,
         label,
-        badge: badge || null,
+        badge: id === 'exceptions' ? (data ? String(data.settlementExceptions.rows.length) : null) : badge || null,
         onClick: () => go(id),
         bar: active ? '#005daa' : 'transparent',
         bg: active ? '#eaf1fa' : 'transparent',
@@ -70,10 +74,11 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     }),
   }));
 
-  const ctx = ([
-    ['Household', 'Whitfield family'], ['Primary', 'Eleanor Whitfield'], ['AUA', money(totalValue)], ['Risk profile', 'Balanced growth (6/10)'],
-    ['KYC', 'Current · reviewed 14-Mar-2026', GREEN], ['Mandate', 'Discretionary + Advisory'], ['Next review', 'Wed 04-Nov-2026'], ['Advisor', 'Aaron Diamond, CFP'],
-  ] as [string, string, string?][]).map(([k, v, c]) => ({ k, v, color: c || INK }));
+  const hh = data?.raw.household, c = hh?.primaryClient;
+  const ctx = ((data && hh && c ? [
+    ['Household', hh.name], ['Primary', c.displayName], ['AUA', money(data.totalValue)], ['Risk profile', `${c.riskProfile} (${c.riskScore}/10)`],
+    ['KYC', `${c.kycStatus} · reviewed ${dayMonthYear(c.kycReviewedDate)}`, GREEN], ['Mandate', hh.mandate], ['Next review', weekdayDate(hh.nextReviewDate)], ['Advisor', hh.advisorName],
+  ] : []) as [string, string, string?][]).map(([k, v, c]) => ({ k, v, color: c || INK }));
 
   return {
     nav,
