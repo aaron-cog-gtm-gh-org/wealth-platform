@@ -40,5 +40,13 @@ The app loads its data from the API (`server/`), which reads Oracle. Before any 
    `curl localhost:3001/api/health` should return `{"status":"ok"}`.
 4. Without the API, every screen shows the Error state, which is expected.
 
-`npm run test:db` checks the stack end to end in its own Testcontainers Oracle (2–3 min).
+Reuse one Oracle container: never stop/restart `wealth-oracle` between test runs. `npm run db:setup`
+(~10 s) restores the deterministic seed, which is all a fresh container would give you.
+
+`npm run test:db` checks the stack end to end in its own Testcontainers Oracle (2–3 min). Run it once
+at the end (or in CI), not per iteration. If it hangs:
+- After "Pulling image testcontainers/ryuk": the Docker credential helper is stuck; run
+  `docker pull testcontainers/ryuk:0.11.0` and retry.
+- At "Acquiring lock file": an earlier run is still alive (`kill_shell` does not kill its node
+  child). Stop node processes whose command line contains `container-check`, then retry.
 On this Windows VM, run npm scripts via `node <npm-cli.js> run <script>` (see above).

@@ -57,6 +57,19 @@ npm run dev:full       # API on :3001, app on http://localhost:5173
 npm run db:down
 ```
 
+### Fast test loop (recommended)
+
+Booting Oracle is the slow part, so do it once. Leave `wealth-oracle` running for the whole working
+session and reset only the data between test runs:
+
+```sh
+docker ps --filter name=wealth-oracle   # already running? skip db:up / db:wait
+npm run db:setup                        # drops, recreates and reseeds every table (~10 s)
+```
+
+`db:setup` gives the same clean, deterministic state as a fresh container, so there is no need to
+run `db:down` / `db:up` between tests. Stop the container only when you are finished for the day.
+
 On Apple Silicon Macs the image runs natively (it is multi-arch); no Rosetta flags are needed.
 
 ### Keeping the data files in RAM
@@ -80,7 +93,8 @@ new database on first boot (a few minutes) instead.
 `npm run test:db` (`server/db/container-check.ts`) starts its own Oracle container with
 [Testcontainers](https://node.testcontainers.org/), loads the schema and seed, boots the API on a
 random port, asserts on the seeded data, and removes the container. It needs only Docker, not a
-database that is already running, so it suits CI.
+database that is already running, so it suits CI. Because it boots a new database each time (2–3 min),
+run it in CI or before merging, not after every change; use the fast loop above while iterating.
 
 ## Data states in the UI
 
