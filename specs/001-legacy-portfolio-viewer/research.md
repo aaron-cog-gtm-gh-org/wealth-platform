@@ -30,8 +30,8 @@
 - **Rationale**: Legacy is a UK GBP book; converting history to CAD would invent FX data.
 - **Alternatives considered**: convert to CAD at migration (rejected: not custodian-reported);
   `string` currency (rejected: Constitution II).
-- **Open for product owner**: confirm the legacy book is in scope as a business line on Wealth
-  Platform (vs. reference-only archive).
+- **Confirmed 2026-10-12**: the legacy system is GBP and the updated app must support GBP end to
+  end (storage, `src/format.ts` £ formatting, GBP totals).
 
 ## R-4 Client/account identity
 
@@ -74,14 +74,13 @@
 - **Alternatives considered**: scheduled watcher — deferred until the file-drop location on the
   new platform is known.
 
-## R-9 Identity and roles
+## R-9 Identity and access (confirmed 2026-10-12)
 
-- **Decision**: `custody_users` (user name, role, active) migrated without password hashes.
-  `server/auth/roles.ts` resolves the current user; until platform auth exists it reads
-  `X-Sim-User` (sent by the client from `?as=`) only when `SIMULATED_AUTH=1`. Routes declare
-  required roles; violations return HTTP 403 `{ error: 'Forbidden' }`.
-- **Open for product owner**: real authentication (SSO) timing; whether advisers are scoped to their
-  own clients (legacy is not — D-10).
+- **Decision**: No login; every screen and every client is available to every user. `custody_users`
+  is migrated (no password hashes) only as reference data for adviser names. Break-note edits carry
+  an `author` entered by the user (remembered in the browser) and stored as `updated_by`.
+- **Rationale**: Product owner decision; Wealth Platform is a simulated client with no auth.
+- **Later**: when platform auth arrives, apply legacy role boundaries server-side (constitution).
 
 ## R-10 Reconciliation notes
 
@@ -90,11 +89,15 @@
 - **Corporate actions**: remain manual notes (BR-10); a `cause` tag (`CORP_ACTION`,
   `MISSING_CONFIRM`, `OTHER`) is added to make them reportable.
 
-## R-11 Placement in the UI
+## R-11 Placement in the UI (confirmed 2026-10-12)
 
-- **Decision**: Advisers reach Custody Holdings/Settlements from Client 360 and Client Search;
-  operations reach Position Check and Message Browser from the operations workspace next to
-  Settlement Exceptions; Admin under an admin nav entry. Existing screens are unchanged except for
-  entry links.
-- **Rationale**: Settlement Exceptions are trade-lifecycle exceptions; position breaks are
-  custody-statement differences — related but different queues.
+- **Decision**: A client picker in the app shell lists platform households and custody clients
+  (`GET /api/clients`). Picking a custody client makes the existing Client 360 and Portfolio Detail
+  screens render it via `server/custody/platform-view.ts`, which maps custody data to the existing
+  `HouseholdDto`/`PortfolioDto` (GBP values, latest effective statement as holdings); panels with no
+  legacy source (drift, rebalance, performance, alternatives) show "not available". Holdings
+  history and settlements are linked from those screens; Position Check and Message Browser sit in
+  the operations workspace next to Settlement Exceptions; Ingestion admin under an admin nav entry.
+- **Rationale**: Separate custody tables keep the household model clean while the UI stays one app.
+- **Data load**: `npm run db:setup` loads migrated legacy reference data and ingests the committed
+  archive, so legacy clients appear without manual steps.

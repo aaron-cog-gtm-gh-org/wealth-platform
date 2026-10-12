@@ -3,24 +3,27 @@
 **Feature**: [../spec.md](../spec.md) | DTOs are added to `src/api/types.ts`.
 
 Conventions follow `server/app.ts`: JSON responses; dates `YYYY-MM-DD`; decimals as **strings**
-(R-6). Errors: `403 { error: 'Forbidden' }` (role), `404 { error: 'Not found' }`,
+(R-6). Errors: `404 { error: 'Not found' }`,
 `400 { error: string }` (validation), `503 { error: 'Service unavailable' }` (unexpected).
-Identity: see research R-9.
+No login: every route is open to every user (research R-9).
 
-| Method & path | Roles | Response DTO | Story |
-|---|---|---|---|
-| `GET /api/custody/clients?q=&page=` | ADVISER, OPS, ADMIN | `CustodyClientPage` (25/page) | US6 |
-| `GET /api/custody/clients/:clientId` | ADVISER, OPS, ADMIN | `CustodyClientSummary` | US6 |
-| `GET /api/custody/accounts/:accountId/statements` | ADVISER, OPS, ADMIN | `CustodyStatementDate[]` (newest first) | US1 |
-| `GET /api/custody/accounts/:accountId/statements/:date` | ADVISER, OPS, ADMIN | `CustodyStatement` | US1 |
-| `GET /api/custody/accounts/:accountId/confirmations?from=&to=` | ADVISER, OPS, ADMIN | `CustodyConfirmation[]` | US2 |
-| `GET /api/custody/position-checks?date=&accountId=&mode=` | OPS, ADMIN | `PositionCheckResult` | US3 |
-| `PATCH /api/custody/breaks/:accountId/:isin/:date` | OPS, ADMIN | `BreakNote` | US3 |
-| `GET /api/custody/breaks/:accountId/:isin/:date/history` | OPS, ADMIN | `BreakNoteHistory[]` | US3 |
-| `GET /api/custody/messages?type=&date=&safe=&page=` | OPS, ADMIN | `CustodyMessagePage` | US4 |
-| `GET /api/custody/messages/:messageId` | OPS, ADMIN | `CustodyMessage` | US4 |
-| `GET /api/custody/admin/ingestion` | ADMIN | `IngestionStatus` | US5 |
-| `POST /api/custody/admin/ingest-runs` | ADMIN | `IngestRun` | US5 |
+| Method & path | Response DTO | Story |
+|---|---|---|
+| `GET /api/clients?q=&page=` | `ClientPickerPage` (households + custody clients, 25/page) | US6 |
+| `GET /api/custody/clients/:clientId/household` | `HouseholdDto` (mapped, GBP) | US1 |
+| `GET /api/custody/clients/:clientId/portfolio` | `PortfolioDto` (latest effective statement, GBP) | US1 |
+| `GET /api/custody/clients?q=&page=` | `CustodyClientPage` (25/page) | US6 |
+| `GET /api/custody/clients/:clientId` | `CustodyClientSummary` | US6 |
+| `GET /api/custody/accounts/:accountId/statements` | `CustodyStatementDate[]` (newest first) | US1 |
+| `GET /api/custody/accounts/:accountId/statements/:date` | `CustodyStatement` | US1 |
+| `GET /api/custody/accounts/:accountId/confirmations?from=&to=` | `CustodyConfirmation[]` | US2 |
+| `GET /api/custody/position-checks?date=&accountId=&mode=` | `PositionCheckResult` | US3 |
+| `PATCH /api/custody/breaks/:accountId/:isin/:date` | `BreakNote` | US3 |
+| `GET /api/custody/breaks/:accountId/:isin/:date/history` | `BreakNoteHistory[]` | US3 |
+| `GET /api/custody/messages?type=&date=&safe=&page=` | `CustodyMessagePage` | US4 |
+| `GET /api/custody/messages/:messageId` | `CustodyMessage` | US4 |
+| `GET /api/custody/admin/ingestion` | `IngestionStatus` | US5 |
+| `POST /api/custody/admin/ingest-runs` | `IngestRun` | US5 |
 
 `mode` = `corrected` (default) | `legacy` (BR-1..BR-5 unchanged, for sign-off). `accountId`
 omitted ⇒ all accounts ("Check All").
@@ -28,6 +31,8 @@ omitted ⇒ all accounts ("Check All").
 ## DTOs
 
 ```ts
+export interface ClientPickerItem { kind: 'household' | 'custody'; id: string; name: string; clientRef: string | null; reportingCurrency: Currency }
+export interface ClientPickerPage { items: ClientPickerItem[]; page: number; total: number }
 export type Currency = 'CAD' | 'USD' | 'GBP' | 'EUR';          // widened (R-3)
 export type CustodyRole = 'ADVISER' | 'OPS' | 'ADMIN';
 export type CustodyAccountType = 'ISA' | 'SIPP' | 'GIA';
@@ -62,7 +67,7 @@ export interface PositionBreak { accountId: number; safeNo: number; isin: string
   updatedBy: string | null; updatedAt: string | null; sourceMessageIds: number[] }
 export interface PositionCheckResult { date: string; mode: 'corrected' | 'legacy';
   accountsChecked: number; breaks: PositionBreak[] }
-export interface BreakNotePatch { status?: Exclude<BreakStatus, 'NEW'>; cause?: BreakCause | null; note?: string | null }
+export interface BreakNotePatch { author: string; status?: Exclude<BreakStatus, 'NEW'>; cause?: BreakCause | null; note?: string | null }
 export interface BreakNote { status: BreakStatus; cause: BreakCause | null; note: string | null;
   updatedBy: string; updatedAt: string }
 export interface BreakNoteHistory extends BreakNote { source: 'LEGACY_MIGRATION' | 'USER' }

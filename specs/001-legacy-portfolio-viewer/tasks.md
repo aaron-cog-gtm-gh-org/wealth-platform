@@ -26,7 +26,7 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Purpose**: Scripts, fixtures and the legacy harness
 
-- [ ] T001 Add `test:unit` (`tsx --test server/custody/__tests__/*.test.ts`), `custody:ingest` and `custody:migrate-legacy` scripts to package.json
+- [ ] T001 Add `test:unit` (`tsx --test server/custody/__tests__/*.test.ts`), `custody:ingest` and `custody:migrate-legacy` scripts to package.json, and vendor the legacy `db/seed/` and `archive/` into data/legacy-pv/ (read by db:setup; `LEGACY_PV_DIR` override)
 - [ ] T002 [P] Copy one archive file per edge case in spec.md "Edge Cases" (RPLC + NEWM/DUPL for 16558/2026-06-26, cross-day CANC for 16056, 8-digit safes 11397/10554, 1-dp amount, FAMT, ACTI//N, SUBSAFE, LF-only, unknown ISIN GB00ZZ004322) from `$LEGACY/archive` into fixtures/custody/archive-sample/ with a provenance README.md
 - [ ] T003 [P] Create .NET 4.8 console harness tools/legacy-parity/ (csproj referencing `$LEGACY/src/PV.Core`, Program.cs emitting JSON for every statement, confirmation list and position check) with README.md build/run instructions
 
@@ -34,13 +34,13 @@ make parser, rules and parity tests mandatory for this feature.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Schema, parser, rules, ingestion, roles and parity fixtures shared by all stories
+**Purpose**: Schema, parser, rules, ingestion, Oracle load, client selection and parity fixtures shared by all stories
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [ ] T004 Add all `custody_*` tables, constraints and indexes from data-model.md to server/db/schema.sql (including drops so the script stays re-runnable)
 - [ ] T005 [P] Add a small deterministic custody seed (one user per role, 3 clients, 4 accounts, instruments, one break note) to server/db/seed.sql
-- [ ] T006 [P] Widen `Currency` to add `GBP`/`EUR` and add all custody DTOs from contracts/api.md to src/api/types.ts; fix any exhaustiveness errors in src/format.ts
+- [ ] T006 [P] Widen `Currency` to add `GBP`/`EUR` and add all custody DTOs from contracts/api.md to src/api/types.ts; add GBP (£) and EUR formatting and GBP totals in src/format.ts (FR-024)
 - [ ] T007 [P] Implement SWIFT block/field tokenizer, decimal (string fixed-point, reject thousands separators) and date parsing in server/custody/swift/parse.ts, handling CRLF and LF-only files and continuation lines
 - [ ] T008 [P] Unit tests for T007 in server/custody/__tests__/parse.test.ts (`21637,5`→`21637.50`, `1250,`, `0,5`, `1.250,50` rejected, LF-only)
 - [ ] T009 Implement MT535 mapping (23G, 98A::STAT, 97A::SAFE→number, SUBSAFE flattening, ACTI//N empty flag, 35B description, 90A/90B, 93B::AGGR UNIT/FAMT, 19A::HOLD value + reporting value) in server/custody/swift/mt535.ts
@@ -50,28 +50,28 @@ make parser, rules and parity tests mandatory for this feature.
 - [ ] T013 [P] Unit tests for T012 in server/custody/__tests__/rules.test.ts covering D-1..D-4 in both `corrected` and `legacy` modes
 - [ ] T014 Implement idempotent ingester in server/custody/ingest.ts (walk archive layout, SHA-256, per-file transaction into custody_messages + derived tables, recompute effective statements and cancellations, add unknown ISINs to custody_instruments with source `CUSTODIAN`, write custody_ingest_runs) with CLI entry `--archive <dir>`
 - [ ] T015 [P] Implement legacy reference migration in server/custody/migrate-legacy.ts reading `$LEGACY/db/seed/01..05_*.sql` into custody_users (no hashes), custody_clients, custody_accounts (type normalization), custody_instruments, custody_break_notes + LEGACY_MIGRATION history (`O`→OPEN, `C`→RESOLVED)
-- [ ] T016 [P] Implement role resolution and `requireRole()` middleware (SIMULATED_AUTH + `X-Sim-User`, 403 `{ error: 'Forbidden' }`) in server/auth/roles.ts
+- [ ] T016 Implement server/custody/platform-view.ts mapping a custody client to `HouseholdDto`/`PortfolioDto` (GBP, latest effective statement, no-source panels flagged unavailable) and wire `npm run db:setup` (server/db/setup.ts) to run migrate-legacy and ingest the committed archive (FR-025)
 - [ ] T017 Create server/repositories/custody.ts skeleton and mount `/api/custody` routes with 400/404 handling in server/app.ts
-- [ ] T018 [P] Send `X-Sim-User` from the `?as=` query parameter and add custody fetch helpers in src/api/client.ts
+- [ ] T018 [P] Replace the fixed `HOUSEHOLD_ID` with the selected client from `?client=` and add custody fetch helpers in src/api/client.ts
 - [ ] T019 Run tools/legacy-parity over `$LEGACY/archive` + seed and commit outputs to fixtures/custody/legacy/ (statements.json, confirmations.json, position-checks.json); confirm 7 legacy breaks
 - [ ] T020 Parity test in server/custody/__tests__/parity.test.ts: run parser + rules over `$LEGACY_ARCHIVE` (skip if unset) and diff against fixtures/custody/legacy/, allowing only the D-1..D-5 deviations enumerated in legacy-as-built.md §8
 - [ ] T021 Oracle integration test in server/custody/__tests__/ingest.int.test.ts: full archive → SC-001 counts; second run → 0 new (SC-007)
 
-**Checkpoint**: Foundation ready — archive in Oracle, parity proven, roles enforced
+**Checkpoint**: Foundation ready — `npm run db:setup` loads all legacy data into Oracle, parity proven
 
 ---
 
-## Phase 3: User Story 1 - Adviser reviews custodian holdings history (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Adviser reviews custodian holdings history (Priority: P1) 🎯 MVP (with US6)
 
 **Goal**: Effective weekly statements with lines and totals for any migrated account
 
 **Independent Test**: quickstart.md §3 statement rows + §4 steps 1–2
 
 - [ ] T022 [US1] Implement `listStatementDates` and `getStatement` (custodian-name fallback, `nameVerified`, `missingReportingValues`) in server/repositories/custody.ts
-- [ ] T023 [US1] Add `GET /api/custody/accounts/:accountId/statements[/:date]` (ADVISER, OPS, ADMIN) in server/app.ts
+- [ ] T023 [US1] Add `GET /api/custody/accounts/:accountId/statements[/:date]` in server/app.ts
 - [ ] T024 [P] [US1] Build src/screens/CustodyHoldings.tsx (statement-date picker, holdings table, totals, "no statement" vs "empty statement" states, unverified-instrument marker)
 - [ ] T025 [US1] Register `custody-holdings` in src/types.ts SCREENS, src/model/screens.ts, src/model/shell.ts and src/App.tsx with Loading/Error states
-- [ ] T026 [US1] Add a "Custodian statements" entry from src/screens/Client360.tsx for clients with a linked `platform_client_id`
+- [ ] T026 [US1] Render a picked custody client in src/screens/Client360.tsx and src/screens/PortfolioDetail.tsx via `/api/custody/clients/:clientId/household|portfolio` (GBP, "not available" panels) with a "Custodian statements" link to custody-holdings
 - [ ] T027 [US1] Add custody-holdings states to scripts/visual-diff.mjs and capture baselines
 
 **Checkpoint**: Advisers can stop using Holdings.aspx
@@ -103,9 +103,9 @@ make parser, rules and parity tests mandatory for this feature.
 - [ ] T033 [US3] Implement `positionCheck(date, accountId?, mode)` using rules.ts over Oracle data, joined to custody_break_notes, in server/repositories/custody.ts
 - [ ] T034 [US3] Implement `patchBreakNote` (partial update + history row in one transaction) and `getBreakHistory` in server/repositories/custody.ts
 - [ ] T035 [US3] Add `GET /api/custody/position-checks`, `PATCH /api/custody/breaks/...`, `GET .../history` (OPS, ADMIN) in server/app.ts
-- [ ] T036 [P] [US3] Build src/screens/PositionCheck.tsx (account or Check All, inline status/cause/note edit pre-filled with current values, history drawer, legacy-mode toggle for ADMIN)
+- [ ] T036 [P] [US3] Build src/screens/PositionCheck.tsx (account or Check All, inline status/cause/note edit pre-filled with current values, author name field remembered in localStorage, history drawer, legacy-mode toggle)
 - [ ] T037 [US3] Register `position-check` in the operations nav next to Settlement Exceptions in src/model/shell.ts
-- [ ] T038 [US3] Integration test in server/custody/__tests__/position-check.int.test.ts: 2 corrected / 7 legacy breaks over full archive, adviser 403, note-only PATCH keeps status, 13 migrated notes
+- [ ] T038 [US3] Integration test in server/custody/__tests__/position-check.int.test.ts: 2 corrected / 7 legacy breaks over full archive, author stored, note-only PATCH keeps status, 13 migrated notes
 - [ ] T039 [US3] Add position-check states to scripts/visual-diff.mjs
 
 **Checkpoint**: PositionCheck.aspx replaced with audit history
@@ -141,16 +141,16 @@ make parser, rules and parity tests mandatory for this feature.
 
 ---
 
-## Phase 8: User Story 6 - Adviser finds legacy clients and their accounts (Priority: P6)
+## Phase 8: User Story 6 - User picks any client (Priority: P1, ship with US1)
 
-**Goal**: Search migrated clients and view account summary
+**Goal**: A shell client picker lists every household and migrated client; picking one drives all screens (no login)
 
 **Independent Test**: quickstart.md §4 step 1; 50 clients findable by reference
 
-- [ ] T047 [US6] Implement `searchClients(q, page)` (surname, forename, client_ref; 25/page) and `getClientSummary` (latest effective statement value per account, closed flag) in server/repositories/custody.ts
-- [ ] T048 [US6] Add `GET /api/custody/clients[/:clientId]` in server/app.ts
-- [ ] T049 [P] [US6] Build src/screens/CustodyClients.tsx (search, results, summary linking to custody-holdings)
-- [ ] T050 [US6] Register `custody-clients` screen and nav; add visual-diff states
+- [ ] T047 [US6] Implement `searchClients(q, page)` (households + custody clients by name or client_ref; 25/page) and `getClientSummary` in server/repositories/custody.ts
+- [ ] T048 [US6] Add `GET /api/clients`, `GET /api/custody/clients/:clientId[/household|/portfolio]` in server/app.ts
+- [ ] T049 [P] [US6] Build src/ClientPicker.tsx (header search, results showing reporting currency) in the app shell
+- [ ] T050 [US6] Wire the picker into src/App.tsx/src/model/shell.ts setting `?client=`; add picker and GBP Client 360 states to scripts/visual-diff.mjs
 
 **Checkpoint**: ClientSearch.aspx and ClientSummary.aspx replaced — all legacy screens covered
 
@@ -158,7 +158,7 @@ make parser, rules and parity tests mandatory for this feature.
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T051 [P] Write docs/custody.md (ingest runbook, file-drop location, roles, legacy-parity mode)
+- [ ] T051 [P] Write docs/custody.md (db:setup load, ingest runbook, file-drop location, no-login note, legacy-parity mode)
 - [ ] T052 [P] Add custody paths to the table in docs/oracle-setup.md and screens to README.md
 - [ ] T053 Apply one date format from src/format.ts across all custody screens (FR-023)
 - [ ] T054 Measure full ingest (< 2 min) and screen latency (< 2 s) with the full archive; tune indexes in server/db/schema.sql if needed
@@ -171,24 +171,24 @@ make parser, rules and parity tests mandatory for this feature.
 
 - **Setup (T001–T003)** → **Foundational (T004–T021)** → user stories.
 - Within Foundational: T007 → T009/T010 → T012 → T014; T004 → T014/T015/T017; T003 → T019 → T020.
-- **US1** needs Foundational only. **US2** needs Foundational (links to US1 screen in T031).
+- **US1** needs Foundational; its T026 needs US6 T049–T050 (picker). **US2** needs Foundational (links to US1 screen in T031).
   **US3** needs Foundational; most useful after US1/US2 exist. **US4** T043 links into US1–US3
-  screens. **US5** and **US6** need Foundational only.
+  screens. **US5** and **US6** need Foundational only; build US6 first.
 - Polish after the stories being shipped.
 
 ## Parallel Opportunities
 
 ```text
 Setup:        T002 ‖ T003
-Foundational: T005 ‖ T006 ‖ T007 ‖ T016 ‖ T018, then T008 ‖ T011 ‖ T013 ‖ T015
+Foundational: T005 ‖ T006 ‖ T007 ‖ T018, then T008 ‖ T011 ‖ T013 ‖ T015
 US1:          T024 (screen) while T022–T023 (API) are built
 US3:          T036 (screen) while T033–T035 (API) are built
-Stories:      after Foundational, US1, US5 and US6 can proceed in parallel by different people
+Stories:      after Foundational, US6 then US1, alongside US5, by different people
 ```
 
 ## Implementation Strategy
 
-1. **MVP** = Setup + Foundational + US1: archive in Oracle with parity proven, advisers see
-   statements. Stop and validate with quickstart.md §1–§3.
+1. **MVP** = Setup + Foundational + US6 + US1: legacy data in Oracle with parity proven, any client
+   pickable and shown in Client 360/Portfolio in GBP. Stop and validate with quickstart.md §1–§3.
 2. Add US2 then US3 — together they retire the operational use of Portfolio Viewer.
-3. Add US4–US6, then Polish and decommission (T055–T056).
+3. Add US4–US5, then Polish and decommission (T055–T056).

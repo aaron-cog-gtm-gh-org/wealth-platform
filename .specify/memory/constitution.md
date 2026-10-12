@@ -56,8 +56,10 @@ Rationale: reproducible data and gates let any engineer (or agent) verify a chan
 
 ## Security and Access Constraints
 
-- Role-restricted capabilities (e.g. raw message browsing, reconciliation edits, archive
-  administration) MUST be enforced by the API, not only hidden in the UI.
+- Wealth Platform is a simulated client with no login: every screen and client is open to the
+  user. When authentication is introduced, any role-restricted capability MUST be enforced by the
+  API, not only hidden in the UI. Until then, records of who changed an operational record use the
+  name the user enters, and MUST NOT be presented as authenticated identity.
 - Secrets (database credentials, connection strings) MUST come from environment variables and
   MUST NOT be committed.
 - Passwords, if ever stored by this platform, MUST use a modern salted adaptive hash; legacy hashes
@@ -84,4 +86,4 @@ clarifications. Every plan MUST include a Constitution Check against these princ
 MUST be justified in the plan's Complexity Tracking table. Runtime development guidance lives in
 `README.md`, `docs/`, and `.agents/skills/`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-12 | **Last Amended**: 2026-10-12
+**Version**: 2.0.0 | **Ratified**: 2026-10-12 | **Last Amended**: 2026-10-12

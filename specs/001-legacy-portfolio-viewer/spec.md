@@ -15,6 +15,17 @@ team was around to build, and plan how to integrate it into the newer wealth-pla
 > Wealth Platform must do to absorb and retire it. Requirements tagged **[parity]** reproduce
 > legacy behavior; requirements tagged **[fix D-n]** are intentional corrections (Constitution III).
 
+## Clarifications
+
+### Session 2026-10-12
+
+- Q: How should the legacy GBP book be handled? → A: The legacy system is GBP; Wealth Platform
+  MUST support GBP as a first-class currency (storage, display, totals).
+- Q: Login and access control? → A: No login for now. Any user can pick any client and open any
+  screen.
+- Q: Where does legacy client/account data live? → A: In separate custody tables, migrated into
+  Oracle as part of standard database setup, feeding the existing app UI seamlessly.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Actors: **Adviser** (looks at client holdings and settlements), **Operations analyst** (reconciles
@@ -22,7 +33,8 @@ custodian positions, reads raw messages), **Platform administrator** (monitors i
 
 ### User Story 1 - Adviser reviews custodian holdings history (Priority: P1)
 
-An adviser opens a client's account in Wealth Platform and sees the custodian-reported holdings for
+An adviser picks any migrated client from the client picker, opens Client 360 and the Portfolio
+screen for that client exactly as for platform households, and sees the custodian-reported holdings for
 the latest statement, can pick any earlier weekly statement, and sees per-line ISIN, instrument
 name, quantity, price, currency, market value and reporting-currency value, with totals.
 
@@ -43,6 +55,8 @@ statement date and line against the legacy parity fixture.
    from the custodian message is displayed with an "unverified instrument" marker **[fix D-5]**.
 4. **Given** a statement flagged "no holdings", **When** viewed, **Then** the user sees an explicit
    empty-statement message distinct from "no statement on file for this date".
+5. **Given** a GBP-reporting account, **When** values are shown, **Then** amounts are formatted as
+   GBP (£) and totals are in GBP, never converted to CAD.
 
 ---
 
@@ -90,8 +104,8 @@ documented in legacy-as-built §9 are returned; with legacy-parity mode, the 7 l
    2026-07-31).
 2. **Given** a break with status `CHASED`, **When** the analyst edits the note only, **Then** the
    status remains `CHASED` **[fix D-6]** and the previous version is retained in history.
-3. **Given** an adviser user, **When** they request a position check, **Then** access is refused
-   by the server.
+3. **Given** no login, **When** the analyst saves a note, **Then** the name they entered is stored
+   as the author.
 4. **Given** a migrated legacy note with status `O` or `C`, **When** shown, **Then** it displays as
    `OPEN` or `RESOLVED` respectively.
 
@@ -110,9 +124,10 @@ reachable from the derived record.
 
 **Acceptance Scenarios**:
 
-1. **Given** an OPS user, **When** they open a message, **Then** its raw text is displayed escaped
+1. **Given** any user, **When** they open a message, **Then** its raw text is displayed escaped
    and unchanged (including original line endings).
-2. **Given** an adviser user, **When** they request raw messages, **Then** access is refused.
+2. **Given** a derived record, **When** its source link is followed, **Then** the matching raw
+   message opens.
 
 ---
 
@@ -136,13 +151,14 @@ nothing is duplicated.
 
 ---
 
-### User Story 6 - Adviser finds legacy clients and their accounts (Priority: P6)
+### User Story 6 - User picks any client (Priority: P1, prerequisite of US1)
 
-An adviser searches legacy clients by name or client reference and opens a client summary showing
-adviser, status, accounts with latest statement date and value, and total.
+Any user opens a client picker listing every client (platform households and migrated legacy
+clients), searches by name or client reference, and selects one; the existing screens then show
+that client, with a summary of adviser, status, accounts, latest statement date and value, and total.
 
-**Why this priority**: Wealth Platform already has Client 360; this only matters once legacy
-clients are migrated, so it comes last.
+**Why this priority**: Wealth Platform is hard-wired to one household today; picking a client is
+how legacy data reaches the UI, so it ships with US1.
 
 **Independent Test**: Search for each of the 50 migrated clients by reference; summary totals equal
 the sum of US1 latest-statement totals.
@@ -218,10 +234,10 @@ the sum of US1 latest-statement totals.
 
 **Raw messages and administration (US4, US5)**
 
-- **FR-017**: OPS and ADMIN users MUST be able to filter stored messages by type, date and account
+- **FR-017**: Users MUST be able to filter stored messages by type, date and account
   and view the raw text, escaped; messages MUST be retrieved by identifier, never by file path.
 - **FR-018**: Every holding line, confirmation and break MUST link to its source message(s).
-- **FR-019**: ADMIN users MUST be able to see ingestion statistics (files by type, statements,
+- **FR-019**: Users MUST be able to see ingestion statistics (files by type, statements,
   confirmations, parse errors with file names, last run, duration) and trigger an incremental
   re-ingest without interrupting readers.
 
@@ -229,10 +245,16 @@ the sum of US1 latest-statement totals.
 
 - **FR-020**: System MUST migrate legacy clients, accounts (with safekeeping code, type,
   currency, open/close dates) and adviser assignments, normalizing account types to a closed list.
-- **FR-021**: Users MUST be able to search migrated clients by name fragment or client reference,
-  25 results per page **[parity]**.
-- **FR-022**: Access MUST be enforced by the server per role: ADVISER → US1, US2, US6; OPS →
-  plus US3, US4; ADMIN → all. Legacy password hashes MUST NOT be migrated **[fix D-10]**.
+- **FR-021**: Users MUST be able to pick any client from a picker listing platform households and
+  migrated clients, searchable by name fragment or client reference, 25 results per page.
+- **FR-022**: There MUST be no login; every screen and client is available to every user. Break-note
+  edits MUST record the name the user enters. Legacy password hashes MUST NOT be migrated
+  **[fix D-10]**.
+- **FR-024**: GBP MUST be a supported currency end to end: stored, formatted (£) and totalled in
+  GBP for GBP-reporting accounts, with no implicit conversion to CAD.
+- **FR-025**: Migrated custody data MUST be loaded into Oracle by the standard database setup, and
+  the existing Client 360 and Portfolio screens MUST render a picked legacy client from it, showing
+  panels with no legacy source (drift, rebalance, performance) as "not available".
 - **FR-023**: Dates MUST be displayed in one consistent format across all new screens **[fix D-11]**.
 
 ### Key Entities *(include if feature involves data)*
@@ -275,16 +297,14 @@ the sum of US1 latest-statement totals.
 
 ## Assumptions
 
-- The legacy book (UK clients, GBP-reporting accounts, GBP/EUR/USD instruments) is migrated as a
-  distinct business line; Wealth Platform's currency set is widened rather than converting
-  history to CAD.
+- The legacy book (UK clients, GBP-reporting accounts, GBP/EUR/USD instruments) is migrated as-is;
+  Wealth Platform's currency set is widened rather than converting history to CAD (confirmed).
 - Custodian files continue to arrive in the same archive layout; a file-drop based ingest is
   acceptable (no live SWIFT connectivity in scope).
 - Raw messages are retained in the platform (Constitution IV); the flat-file archive can be
   retired after SC-001 sign-off.
-- Wealth Platform currently has no real authentication; role enforcement will use the platform's
-  user/role identity once introduced. Until then a server-side simulated identity is acceptable
-  for test environments only.
+- No login and no role restrictions in this feature (confirmed); legacy roles are kept only as
+  reference data for a future auth feature.
 - Corporate actions remain a manual reconciliation outcome in this feature; an automated
   corporate-action feed is out of scope.
 - Legacy `INSTRUMENT` data is migrated as instrument reference data; FX conversion is not

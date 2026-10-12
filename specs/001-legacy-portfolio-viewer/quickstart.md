@@ -25,9 +25,10 @@ CANC, FAMT vs UNIT, LF-only files, SUBSAFE; parity suite compares against
 ## 2. Load schema, legacy reference data and full archive
 
 ```bash
-npm run db:up && npm run db:wait && npm run db:setup
-npm run custody:migrate-legacy -- --seed "$LEGACY/db/seed"
-npm run custody:ingest -- --archive "$LEGACY/archive"
+npm run db:up && npm run db:wait && npm run db:setup   # also migrates data/legacy-pv seed + archive
+# re-run pieces on their own:
+npm run custody:migrate-legacy -- --seed data/legacy-pv/seed
+npm run custody:ingest -- --archive data/legacy-pv/archive
 ```
 
 Expected ingest summary: 6,044 files seen, 6,044 new, 0 parse errors, 3,073 statements,
@@ -36,10 +37,10 @@ Expected ingest summary: 6,044 files seen, 6,044 new, 0 parse errors, 3,073 stat
 ## 3. API checks
 
 ```bash
-npm run api   # SIMULATED_AUTH=1
-curl -H 'X-Sim-User: OPSUSER' 'localhost:3001/api/custody/position-checks?date=2026-07-17'
-curl -H 'X-Sim-User: OPSUSER' 'localhost:3001/api/custody/position-checks?date=2026-07-17&mode=legacy'
-curl -H 'X-Sim-User: JSMITH'  'localhost:3001/api/custody/position-checks?date=2026-07-17'   # 403
+npm run api
+curl 'localhost:3001/api/clients?q=' # households + 50 custody clients
+curl 'localhost:3001/api/custody/position-checks?date=2026-07-17'
+curl 'localhost:3001/api/custody/position-checks?date=2026-07-17&mode=legacy'
 ```
 
 | Check | Expected |
@@ -50,7 +51,9 @@ curl -H 'X-Sim-User: JSMITH'  'localhost:3001/api/custody/position-checks?date=2
 | Any one-decimal amount, e.g. `GBP21637,5` | `"21637.50"` |
 | Statement 16558 / 2026-06-26 | `functionCode: "RPLC"`, `superseded: 2` |
 | Statement line for `GB00ZZ004322` | custodian name, `nameVerified: false` |
-| Adviser calling `/messages` or `/admin/*` | 403 |
+| `/api/clients` | lists HH-WHITFIELD and all 50 migrated clients |
+| `/api/custody/clients/:id/portfolio` for a GBP account | values as GBP strings, `currency: "GBP"` |
+| `PATCH` break note without `author` | 400 |
 
 ## 4. UI walk-through
 
@@ -58,15 +61,16 @@ curl -H 'X-Sim-User: JSMITH'  'localhost:3001/api/custody/position-checks?date=2
 npm run dev:full
 ```
 
-1. `?screen=custody-clients&as=JSMITH` → search a surname → open client → totals shown in GBP.
-2. Open an account → Custody Holdings → change statement date → lines and totals update.
-3. Custody Settlements → default 90-day window; FOP rows labelled.
-4. `?screen=position-check&as=OPSUSER` → Check All for 2026-07-17 → edit the break note only →
-   status unchanged; history shows the change.
-5. Click a break's source link → Message Browser shows raw MT535 text.
-6. `?screen=custody-admin&as=PVADMIN` → counts match step 2; run ingest → 0 new.
-
-Visual regression: `npm run visual-diff` for each new screen in Populated / Loading / Error states.
+1. Open the client picker in the header → search a legacy surname → pick the client (no login).
+2. Client 360 shows the legacy client with GBP (£) totals; Portfolio shows the latest effective
+   statement; drift/rebalance/performance panels read "not available".
+3. From Portfolio open Custody Holdings → change statement date → lines and totals update.
+4. Custody Settlements → default 90-day window; FOP rows labelled.
+5. `?screen=position-check` → Check All for 2026-07-17 → enter your name, edit the break note only →
+   status unchanged; history shows the change and your name.
+6. Click a break's source link → Message Browser shows raw MT535 text.
+7. `?screen=custody-admin` → counts match §2; run ingest → 0 new.
+8. Pick HH-WHITFIELD again → existing CAD household screens unchanged.
 
 ## 5. Decommission sign-off
 

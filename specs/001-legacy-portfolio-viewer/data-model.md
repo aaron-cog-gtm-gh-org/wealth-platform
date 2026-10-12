@@ -9,7 +9,7 @@ unchanged. Types are 19c-compatible.
 
 | Table | Columns | Notes |
 |---|---|---|
-| `custody_users` | `user_name` PK, `display_name`, `role` CHECK IN (`ADVISER`,`OPS`,`ADMIN`), `is_active` | No password column (FR-022) |
+| `custody_users` | `user_name` PK, `display_name`, `role` CHECK IN (`ADVISER`,`OPS`,`ADMIN`), `is_active` | Reference only (adviser names); no login, no password column (FR-022) |
 | `custody_clients` | `client_id` NUMBER PK (legacy `CLIENT_ID`), `client_ref` UNIQUE, `surname`, `forename`, `adviser` → `custody_users` NULL, `status`, `platform_client_id` → `clients` NULL | 50 rows |
 | `custody_accounts` | `account_id` NUMBER PK (legacy), `client_id` → `custody_clients`, `safe_no` NUMBER(10) UNIQUE, `account_type` CHECK IN (`ISA`,`SIPP`,`GIA`), `legacy_account_type`, `reporting_ccy` CHAR(3), `open_date`, `close_date` NULL | 120 rows; `safe_no` numeric fixes D-2 |
 | `custody_instruments` | `isin` CHAR(12) PK, `name`, `source` CHECK IN (`LEGACY_REF`,`CUSTODIAN`) | 302 legacy + unknowns added from `35B` (D-5) |
@@ -61,3 +61,12 @@ confirmations, so a parser fix or late cancellation updates them automatically.
 | `INSTRUMENT` | `custody_instruments` (`LEGACY_REF`) |
 | `RECON_NOTE` (`O`/`C` mapped) | `custody_break_notes` + one `LEGACY_MIGRATION` history row |
 | `archive\**\*.txt` | `custody_messages` + derived tables |
+
+## Loading and UI feed (confirmed 2026-10-12)
+
+- `npm run db:setup` (server/db/setup.ts) creates the `custody_*` tables, loads migrated legacy
+  reference data and ingests the committed archive, so Oracle holds all legacy data after setup.
+- `custody_break_notes.updated_by` / history `updated_by` hold the user-entered author name (no login).
+- Reporting currency for all migrated accounts is GBP; values are never converted to CAD.
+- `server/custody/platform-view.ts` reads these tables to serve `HouseholdDto`/`PortfolioDto` for a
+  picked custody client; no rows are written to `households`/`clients`/`accounts`.

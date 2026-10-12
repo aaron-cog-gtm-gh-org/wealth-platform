@@ -33,7 +33,7 @@
 
 - SWIFT message types and field tags (MT535, `23G`, `RPLC`…) appear in the spec deliberately: they
   are business-domain vocabulary of the custodian interface, not implementation choices.
-- Three scope decisions were resolved as documented assumptions instead of clarification markers
-  (currency set widened, raw messages retained, simulated identity until platform auth exists).
-  Revisit with `/speckit:clarify` if any is wrong.
+- Scope decisions confirmed by the product owner on 2026-10-12 (see spec.md "Clarifications"):
+  GBP is a first-class currency; no login and any client can be picked; custody data lives in
+  separate Oracle tables and feeds the existing screens.
 - Iteration 1 found no failing items.
