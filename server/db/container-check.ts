@@ -22,7 +22,7 @@ const { createApp } = await import('../app');
 
 const server = createApp().listen(0);
 const base = `http://localhost:${(server.address() as AddressInfo).port}/api`;
-const get = async (path: string) => (await fetch(base + path)).json();
+const get = async (path: string): Promise<any> => (await fetch(base + path)).json();
 
 function check(label: string, actual: unknown, expected: unknown) {
   if (actual !== expected) throw new Error(`${label}: expected ${expected}, got ${actual}`);
