@@ -1,0 +1,221 @@
+/* ============================================================================
+   DEVIN DESIGN SYSTEM — Colors & Type
+   Cognition / Devin — the AI software engineer
+   ----------------------------------------------------------------------------
+   Two surfaces share this system:
+     • Devin Desktop (the product UI)  → workhorse font is Inter, neutral & dense
+     • Marketing site (devin.ai)       → display grotesk + IBM Plex Mono labels,
+                                          black / white / warm-beige, blue accent
+   Fonts shipped here: PP Mori (brand display), IBM Plex Mono (mono/labels).
+   Inter is loaded from Google Fonts (it is the product UI face).
+   See README → VISUAL FOUNDATIONS for the why behind every token.
+============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ---- Marketing display + body face (shipped) ----------------------------- */
+@font-face {
+  font-family: "NB International Pro";
+  src: url("fonts/NBInternationalPro-Light.otf") format("opentype");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "NB International Pro";
+  src: url("fonts/NBInternationalPro-Regular.otf") format("opentype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "NB International Pro";
+  src: url("fonts/NBInternationalPro-Medium.otf") format("opentype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "NB International Pro";
+  src: url("fonts/NBInternationalPro-Bold.otf") format("opentype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+/* ---- Editorial serif accent (shipped) ------------------------------------ */
+@font-face {
+  font-family: "STK Bureau Serif";
+  src: url("fonts/STKBureauSerif-Book.woff") format("woff"),
+       url("fonts/STKBureauSerif-Book.otf") format("opentype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "STK Bureau Serif";
+  src: url("fonts/STKBureauSerif-BookItalic.otf") format("opentype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "STK Bureau Serif";
+  src: url("fonts/STKBureauSerif-Medium.otf") format("opentype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+
+/* ---- Alt brand display (shipped) — Cognition brand, used sparingly -------- */
+@font-face {
+  font-family: "PP Mori";
+  src: url("fonts/PPMori-Regular.otf") format("opentype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "PP Mori";
+  src: url("fonts/PPMori-Semibold.otf") format("opentype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+
+/* ---- Brand text face (shipped, variable) --------------------------------- */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-VariableFont_wdth_wght.ttf") format("truetype-variations");
+  font-weight: 100 700; font-stretch: 75% 100%; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-Italic-VariableFont_wdth_wght.ttf") format("truetype-variations");
+  font-weight: 100 700; font-stretch: 75% 100%; font-style: italic; font-display: swap;
+}
+
+/* ---- Mono / labels (shipped) --------------------------------------------- */
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-Medium.ttf") format("truetype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-SemiBold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+
+:root {
+  /* ====================================================================
+     COLOR — Neutrals (the spine of the system: near-black → white)
+     ==================================================================== */
+  --black:        #000000;   /* marketing headlines, primary buttons       */
+  --ink:          #191919;   /* rgb(25,25,25) — brand near-black, body text */
+  --ink-900:      #141414;
+  --ink-800:      #1f1f1f;
+  --ink-700:      #363636;
+  --ink-500:      #6b6b6b;   /* muted gray label text                      */
+
+  /* Ink at opacity — the app expresses hierarchy with alpha, not new hues */
+  --fg-1:         #191919;            /* primary                            */
+  --fg-2:         rgba(25,25,25,0.56);/* secondary / metadata               */
+  --fg-3:         rgba(25,25,25,0.40);/* tertiary / placeholder             */
+  --fg-disabled:  rgba(25,25,25,0.28);
+
+  /* Surfaces */
+  --white:        #ffffff;
+  --surface-app:  #fcfcfc;   /* desktop app canvas (rgb 252)               */
+  --surface-2:    #f8f8f8;   /* subtle gray fill                           */
+  --surface-3:    #f5f5f5;
+  --beige:        #f7f6f5;   /* marketing page background                  */
+  --beige-2:      #f5f3f2;   /* warmer beige panel                         */
+
+  /* Borders / hairlines */
+  --border:       #e7e7e7;   /* rgb(231) — default light border            */
+  --border-2:     #f2f2f2;
+  --border-3:     #d9d9d9;
+  --border-on-light: rgba(0,0,0,0.08);  /* card outline inside the app     */
+  --border-faint:    rgba(0,0,0,0.06);  /* segmented-control track         */
+
+  /* ====================================================================
+     COLOR — Accent & semantic
+     ==================================================================== */
+  --blue:         #317cff;   /* rgb(49,124,255) — primary accent / labels  */
+  --blue-alt:     #337df4;
+  --blue-300:     #4489ff;
+  --green:        #00a558;   /* success / "ready to merge"                 */
+  --red:          #f53b3a;   /* error / destructive / conflicts            */
+  --orange:       #f58e3a;   /* warning / running                          */
+  --taupe:        #ac9983;   /* warm brand accent (illustration tint)      */
+
+  /* ====================================================================
+     ELEVATION — soft, low-contrast, neutral. No colored shadows.
+     ==================================================================== */
+  --shadow-xs: 0 1px 2px 0 rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.06), 0 1px 3px 0 rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -2px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 24px -6px rgba(0,0,0,0.12), 0 4px 8px -4px rgba(0,0,0,0.08);
+  --shadow-pop: 0 8px 28px rgba(0,0,0,0.16);          /* menus / popovers   */
+
+  /* ====================================================================
+     RADIUS — small & restrained. Marketing CTAs are SQUARE (radius 0).
+     ==================================================================== */
+  --r-0:   0px;     /* marketing buttons, hero media blocks                */
+  --r-xs:  4px;     /* app frame, inline media                            */
+  --r-sm:  6px;     /* session cards, menu items, segmented buttons        */
+  --r-md:  8px;     /* inputs, segmented track, popovers                  */
+  --r-lg:  10px;    /* kanban columns                                     */
+  --r-xl:  12px;    /* large panels / window                              */
+  --r-full: 999px;  /* pills, avatars                                     */
+
+  /* ====================================================================
+     SPACING — 4px base grid
+     ==================================================================== */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 120px;
+
+  /* ====================================================================
+     TYPE — families
+     ==================================================================== */
+  --font-display: "NB International Pro", "PP Mori", "Helvetica Neue", Arial, sans-serif; /* marketing headlines + body */
+  --font-sans:    "IBM Plex Sans", "Inter", system-ui, -apple-system, sans-serif;        /* brand text / long-form */
+  --font-serif:   "STK Bureau Serif", "Iowan Old Style", Georgia, serif;                 /* editorial accent */
+  --font-ui:      "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;              /* Devin Desktop product UI */
+  --font-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display-alt: "PP Mori", "NB International Pro", sans-serif;                      /* Cognition display */
+
+  /* TYPE — semantic roles (size / line-height / weight / tracking)
+     Marketing display roles use --font-display; product roles use --font-ui. */
+  --display-1:  600 96px/1.05 var(--font-display);   /* hero numerals / huge */
+  --display-2:  600 60px/1.05 var(--font-display);
+  --h1:         500 40px/1.10 var(--font-display);   /* page hero headline   */
+  --h2:         500 32px/1.12 var(--font-display);
+  --h3:         500 24px/1.20 var(--font-display);
+  --h4:         500 20px/1.25 var(--font-display);
+
+  --body-lg:    400 20px/1.45 var(--font-ui);
+  --body:       400 16px/1.45 var(--font-ui);   /* default reading size      */
+  --body-sm:    400 14px/1.45 var(--font-ui);
+
+  --ui:         500 13px/18px var(--font-ui);   /* DEFAULT product UI text   */
+  --ui-rg:      400 13px/18px var(--font-ui);
+  --ui-sm:      400 12px/16px var(--font-ui);   /* metadata, captions        */
+
+  --mono-label: 400 12px/1 var(--font-mono);    /* §-labels (uppercase)      */
+  --code:       400 13px/1.5 var(--font-mono);
+
+  /* tracking helpers */
+  --track-tight:  -0.03em;   /* display headlines                          */
+  --track-label:   0.03em;   /* mono section labels                        */
+}
+
+/* ============================================================================
+   Optional element defaults — opt in by adding class="ds" to a wrapper.
+   Keeps the tokens portable without forcing global resets on host pages.
+============================================================================ */
+.ds { color: var(--fg-1); font: var(--body); -webkit-font-smoothing: antialiased; }
+.ds h1 { font: var(--h1);  letter-spacing: var(--track-tight); margin: 0; }
+.ds h2 { font: var(--h2);  letter-spacing: var(--track-tight); margin: 0; }
+.ds h3 { font: var(--h3);  margin: 0; }
+.ds h4 { font: var(--h4);  margin: 0; }
+.ds p  { margin: 0; }
+.ds code, .ds kbd { font: var(--code); }
+
+/* Mono section label: blue 8px square + uppercase mono caption */
+.ds-label {
+  display: inline-flex; align-items: center; gap: 16px;
+  font: var(--mono-label); letter-spacing: var(--track-label);
+  text-transform: uppercase; color: var(--fg-2);
+}
+.ds-label::before {
+  content: ""; width: 8px; height: 8px; background: var(--blue); flex: none;
+}

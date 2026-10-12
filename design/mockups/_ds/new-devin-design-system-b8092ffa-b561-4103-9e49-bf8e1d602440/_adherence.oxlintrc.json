@@ -1,0 +1,210 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "ui_kits/desktop/**",
+              "ui_kits/marketing/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:NB International Pro|STK Bureau Serif|PP Mori|IBM Plex Sans|IBM Plex Mono|Inter))/i]",
+        "message": "Font not provided by the design system. Available: NB International Pro, STK Bureau Serif, PP Mori, IBM Plex Sans, IBM Plex Mono, Inter."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--beige",
+      "--beige-2",
+      "--black",
+      "--blue",
+      "--blue-300",
+      "--blue-alt",
+      "--body",
+      "--body-lg",
+      "--body-sm",
+      "--border",
+      "--border-2",
+      "--border-3",
+      "--border-faint",
+      "--border-on-light",
+      "--code",
+      "--display-1",
+      "--display-2",
+      "--fg-1",
+      "--fg-2",
+      "--fg-3",
+      "--fg-disabled",
+      "--font-display",
+      "--font-display-alt",
+      "--font-mono",
+      "--font-sans",
+      "--font-serif",
+      "--font-ui",
+      "--green",
+      "--h1",
+      "--h2",
+      "--h3",
+      "--h4",
+      "--ink",
+      "--ink-500",
+      "--ink-700",
+      "--ink-800",
+      "--ink-900",
+      "--mono-label",
+      "--orange",
+      "--r-0",
+      "--r-full",
+      "--r-lg",
+      "--r-md",
+      "--r-sm",
+      "--r-xl",
+      "--r-xs",
+      "--red",
+      "--s-1",
+      "--s-2",
+      "--s-3",
+      "--s-4",
+      "--s-5",
+      "--s-6",
+      "--s-7",
+      "--s-8",
+      "--s-9",
+      "--shadow-lg",
+      "--shadow-md",
+      "--shadow-pop",
+      "--shadow-sm",
+      "--shadow-xs",
+      "--surface-2",
+      "--surface-3",
+      "--surface-app",
+      "--taupe",
+      "--track-label",
+      "--track-tight",
+      "--ui",
+      "--ui-rg",
+      "--ui-sm",
+      "--white"
+    ],
+    "tokenKinds": {
+      "--black": "color",
+      "--ink": "color",
+      "--ink-900": "color",
+      "--ink-800": "color",
+      "--ink-700": "color",
+      "--ink-500": "color",
+      "--fg-1": "color",
+      "--fg-2": "color",
+      "--fg-3": "color",
+      "--fg-disabled": "color",
+      "--white": "color",
+      "--surface-app": "color",
+      "--surface-2": "color",
+      "--surface-3": "color",
+      "--beige": "color",
+      "--beige-2": "color",
+      "--border": "color",
+      "--border-2": "color",
+      "--border-3": "color",
+      "--border-on-light": "color",
+      "--border-faint": "color",
+      "--blue": "color",
+      "--blue-alt": "color",
+      "--blue-300": "color",
+      "--green": "color",
+      "--red": "color",
+      "--orange": "color",
+      "--taupe": "color",
+      "--shadow-xs": "shadow",
+      "--shadow-sm": "shadow",
+      "--shadow-md": "shadow",
+      "--shadow-lg": "shadow",
+      "--shadow-pop": "shadow",
+      "--r-0": "spacing",
+      "--r-xs": "spacing",
+      "--r-sm": "spacing",
+      "--r-md": "spacing",
+      "--r-lg": "spacing",
+      "--r-xl": "spacing",
+      "--r-full": "spacing",
+      "--s-1": "spacing",
+      "--s-2": "spacing",
+      "--s-3": "spacing",
+      "--s-4": "spacing",
+      "--s-5": "spacing",
+      "--s-6": "spacing",
+      "--s-7": "spacing",
+      "--s-8": "spacing",
+      "--s-9": "spacing",
+      "--font-display": "font",
+      "--font-sans": "font",
+      "--font-serif": "font",
+      "--font-ui": "font",
+      "--font-mono": "font",
+      "--font-display-alt": "font",
+      "--display-1": "color",
+      "--display-2": "color",
+      "--h1": "color",
+      "--h2": "color",
+      "--h3": "color",
+      "--h4": "color",
+      "--body-lg": "color",
+      "--body": "color",
+      "--body-sm": "color",
+      "--ui": "color",
+      "--ui-rg": "color",
+      "--ui-sm": "color",
+      "--mono-label": "color",
+      "--code": "color",
+      "--track-tight": "spacing",
+      "--track-label": "spacing"
+    },
+    "fontFamilies": [
+      "IBM Plex Mono",
+      "IBM Plex Sans",
+      "Inter",
+      "NB International Pro",
+      "PP Mori",
+      "STK Bureau Serif"
+    ]
+  }
+}
