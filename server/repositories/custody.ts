@@ -5,7 +5,7 @@ import oracledb from 'oracledb';
 import type {
   CustodyAccountSummary, CustodyAccountType, CustodyClientPage, CustodyClientRow, CustodyClientSummary, CustodyConfirmation,
   CustodyStatement, CustodyStatementDate, CustodyStatementLine, Currency, HouseholdDto, PortfolioDto, QtyType,
-  BreakCause, BreakStatus, PositionBreak, PositionCheckResult,
+  BreakCause, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckResult,
 } from '../../src/api/types';
 import { getPool, query } from '../db/pool';
 import { decSum, normalizeDec } from '../custody/decimal.js';
@@ -224,11 +224,139 @@ export async function runPositionChecks(opts: { date?: string; accountId?: numbe
   const breaks: PositionBreak[] = outcomes.flatMap(o => o.rows.map(r => {
     const n = noteOf.get(`${o.accountId}|${r.isin}|${o.date}`);
     return {
-      accountId: o.accountId, safeNo: o.safeNo, isin: r.isin, name: nameOf.get(r.isin) ?? r.isin, qtyType: r.qtyType,
+      accountId: o.accountId, safeNo: o.safeNo, isin: r.isin, name: nameOf.get(r.isin) ?? r.isin, date: o.date, qtyType: r.qtyType,
       previousQty: r.previousQty, settledNet: r.settledNet, expectedQty: r.expectedQty, reportedQty: r.reportedQty, difference: r.difference,
       status: n?.status ?? 'NEW', cause: n?.cause ?? null, note: n?.note ?? null, updatedBy: n?.updatedBy ?? null, updatedAt: n?.updatedAt ?? null,
       sourceMessageIds: [o.previousRef, o.statementRef, ...r.settlementRefs].filter((x): x is string => !!x).map(Number),
     };
-  }));
+  })).sort((a, b) => a.date.localeCompare(b.date) || a.accountId - b.accountId || a.isin.localeCompare(b.isin));
   return { date: opts.date ?? '', mode, accountsChecked: accounts.length, breaks };
+}
+
+export async function listPositionCheckDates(): Promise<string[]> {
+  const rows = await query<{ date: string }>(
+    `SELECT DISTINCT TO_CHAR(statement_date, 'YYYY-MM-DD') AS "date"
+       FROM custody_statements WHERE is_effective = 1 ORDER BY 1 DESC`);
+  return rows.map(row => row.date);
+}
+
+export async function listBreakNotes(): Promise<BreakNoteRow[]> {
+  return query<BreakNoteRow>(
+    `SELECT n.account_id AS "accountId", TRIM(n.isin) AS "isin", TO_CHAR(n.statement_date, 'YYYY-MM-DD') AS "date",
+            NVL(i.name, TRIM(n.isin)) AS "name", n.status AS "status", n.cause AS "cause", n.note AS "note",
+            n.updated_by AS "updatedBy", TO_CHAR(n.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS "updatedAt"
+       FROM custody_break_notes n LEFT JOIN custody_instruments i ON i.isin = n.isin
+      ORDER BY n.statement_date DESC, n.account_id, n.isin`);
+}
+
+export function parseBreakNotePatch(body: unknown): BreakNotePatch {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    throw new CustodyValidationError('body must be an object');
+  }
+  const input = body as Record<string, unknown>;
+  if (typeof input.author !== 'string' || !input.author.trim() || input.author.trim().length > 80) {
+    throw new CustodyValidationError('author is required');
+  }
+
+  const patch: BreakNotePatch = { author: input.author.trim() };
+  if (Object.prototype.hasOwnProperty.call(input, 'status')) {
+    if (input.status !== 'OPEN' && input.status !== 'CHASED' && input.status !== 'RESOLVED' && input.status !== 'WRITEOFF') {
+      throw new CustodyValidationError('status must be OPEN, CHASED, RESOLVED, or WRITEOFF');
+    }
+    patch.status = input.status;
+  }
+  if (Object.prototype.hasOwnProperty.call(input, 'cause')) {
+    if (input.cause !== null && input.cause !== 'CORP_ACTION' && input.cause !== 'MISSING_CONFIRM' && input.cause !== 'OTHER') {
+      throw new CustodyValidationError('cause must be CORP_ACTION, MISSING_CONFIRM, OTHER, or null');
+    }
+    patch.cause = input.cause;
+  }
+  if (Object.prototype.hasOwnProperty.call(input, 'note')) {
+    if (input.note !== null && typeof input.note !== 'string') {
+      throw new CustodyValidationError('note must be a string or null');
+    }
+    if (typeof input.note === 'string' && input.note.trim().length > 2000) {
+      throw new CustodyValidationError('note must be at most 2000 characters');
+    }
+    patch.note = typeof input.note === 'string' ? input.note.trim() || null : null;
+  }
+  if (!('status' in patch) && !('cause' in patch) && !('note' in patch)) {
+    throw new CustodyValidationError('nothing to update');
+  }
+  return patch;
+}
+
+export function requireIsin(v: unknown): string {
+  if (typeof v !== 'string' || !/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(v)) {
+    throw new CustodyValidationError('isin must be a valid ISIN');
+  }
+  return v;
+}
+
+export async function patchBreakNote(accountId: number, isin: string, date: string, patch: BreakNotePatch): Promise<BreakNote | null> {
+  if (!(await accountExists(accountId))) return null;
+  const conn = await (await getPool()).getConnection();
+  try {
+    const key = { accountId, isin, breakDate: date };
+    const current = (await conn.execute<{ status: Exclude<BreakStatus, 'NEW'>; cause: BreakCause | null; note: string | null }>(
+      `SELECT status AS "status", cause AS "cause", note AS "note"
+         FROM custody_break_notes
+        WHERE account_id = :accountId AND isin = :isin AND statement_date = TO_DATE(:breakDate, 'YYYY-MM-DD')
+        FOR UPDATE`, key,
+    )).rows?.[0];
+    const status = patch.status ?? current?.status ?? 'OPEN';
+    const cause = 'cause' in patch ? patch.cause! : current?.cause ?? null;
+    const note = 'note' in patch ? patch.note! : current?.note ?? null;
+    const clock = (await conn.execute<{ now: Date; updatedAt: string }>(
+      `SELECT now_value AS "now", TO_CHAR(now_value, 'YYYY-MM-DD"T"HH24:MI:SS') AS "updatedAt"
+         FROM (SELECT LOCALTIMESTAMP(0) AS now_value FROM dual)`,
+    )).rows?.[0];
+    if (!clock) throw new Error('Could not read database time');
+
+    if (current) {
+      await conn.execute(
+        `UPDATE custody_break_notes
+            SET status = :status, cause = :cause, note = :note, updated_by = :author, updated_at = :now
+          WHERE account_id = :accountId AND isin = :isin AND statement_date = TO_DATE(:breakDate, 'YYYY-MM-DD')`,
+        { ...key, status, cause, note, author: patch.author, now: clock.now },
+      );
+    } else {
+      await conn.execute(
+        `INSERT INTO custody_break_notes (account_id, isin, statement_date, status, cause, note, updated_by, updated_at)
+         VALUES (:accountId, :isin, TO_DATE(:breakDate, 'YYYY-MM-DD'), :status, :cause, :note, :author, :now)`,
+        { ...key, status, cause, note, author: patch.author, now: clock.now },
+      );
+    }
+
+    await conn.execute('LOCK TABLE custody_break_note_history IN EXCLUSIVE MODE');
+    const historyId = (await conn.execute<{ historyId: number }>(
+      `SELECT NVL(MAX(history_id), 0) + 1 AS "historyId" FROM custody_break_note_history`,
+    )).rows?.[0]?.historyId;
+    if (historyId === undefined) throw new Error('Could not allocate break-note history id');
+    await conn.execute(
+      `INSERT INTO custody_break_note_history
+       (history_id, account_id, isin, statement_date, status, cause, note, changed_by, changed_at, source)
+       VALUES (:historyId, :accountId, :isin, TO_DATE(:breakDate, 'YYYY-MM-DD'), :status, :cause, :note, :author, :now, 'USER')`,
+      { historyId, ...key, status, cause, note, author: patch.author, now: clock.now },
+    );
+    await conn.commit();
+    return { status, cause, note, updatedBy: patch.author, updatedAt: clock.updatedAt };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    await conn.close();
+  }
+}
+
+export async function getBreakHistory(accountId: number, isin: string, date: string): Promise<BreakNoteHistory[] | null> {
+  if (!(await accountExists(accountId))) return null;
+  return query<BreakNoteHistory>(
+    `SELECT status AS "status", cause AS "cause", note AS "note", changed_by AS "updatedBy",
+            TO_CHAR(changed_at, 'YYYY-MM-DD"T"HH24:MI:SS') AS "updatedAt", source AS "source"
+       FROM custody_break_note_history
+      WHERE account_id = :accountId AND isin = :isin AND statement_date = TO_DATE(:breakDate, 'YYYY-MM-DD')
+      ORDER BY changed_at DESC, history_id DESC`,
+    { accountId, isin, breakDate: date },
+  );
 }

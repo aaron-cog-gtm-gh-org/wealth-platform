@@ -14,6 +14,7 @@ const HEIGHT = Number(process.env.HEIGHT ?? 900);
 const OUT = 'visual-diff-output';
 
 const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'];
+const APP_ONLY = ['position-check'];
 const STATES = ['Populated', 'Loading', 'Empty', 'Error'];
 
 // Interaction flows replayed identically against the mockup and the app.
@@ -38,8 +39,9 @@ const FLOWS = [
 
 const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
+const APP_ONLY_CASES = APP_ONLY.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
 const cases = !args.length
-  ? [...STATIC, ...FLOWS]
+  ? [...STATIC, ...APP_ONLY_CASES, ...FLOWS]
   : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
 
 mkdirSync(OUT, { recursive: true });
@@ -72,6 +74,12 @@ function pad(img, w, h) {
 
 let worst = 0;
 for (const { name, screen, state = 'Populated', steps } of cases) {
+  if (APP_ONLY.includes(screen)) {
+    const app = await shoot(`${APP_URL}/?screen=${screen}&state=${state}`, null, steps);
+    writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
+    console.log(`${name.padEnd(34)} app-only`);
+    continue;
+  }
   const mock = await shoot(MOCK_URL, page => page.route(MOCK_URL, async route => {
     const res = await route.fetch();
     const body = (await res.text())

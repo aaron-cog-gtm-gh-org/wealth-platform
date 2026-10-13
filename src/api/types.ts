@@ -134,6 +134,7 @@ export interface CustodyConfirmation { confirmationId: number; mtType: 544 | 545
   amountCcy: Currency | null; reference: string; messageId: number }
 
 export interface PositionBreak { accountId: number; safeNo: number; isin: string; name: string;
+  date: string;
   qtyType: QtyType; previousQty: Dec; settledNet: Dec; expectedQty: Dec; reportedQty: Dec;
   difference: Dec; status: BreakStatus; cause: BreakCause | null; note: string | null;
   updatedBy: string | null; updatedAt: string | null; sourceMessageIds: number[] }
@@ -142,6 +143,7 @@ export interface PositionCheckResult { date: string; mode: PositionCheckMode;
 export interface BreakNotePatch { author: string; status?: Exclude<BreakStatus, 'NEW'>; cause?: BreakCause | null; note?: string | null }
 export interface BreakNote { status: BreakStatus; cause: BreakCause | null; note: string | null;
   updatedBy: string; updatedAt: string }
+export interface BreakNoteRow extends BreakNote { accountId: number; isin: string; date: string; name: string }
 export interface BreakNoteHistory extends BreakNote { source: 'LEGACY_MIGRATION' | 'USER' }
 
 export interface CustodyMessageRow { messageId: number; mtType: number; functionCode: string;
