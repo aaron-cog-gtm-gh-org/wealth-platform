@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { getIngestionStatus, postIngestRun } from '../api/client';
 import type { IngestRun, IngestionStatus } from '../api/types';
-import { fmt } from '../format';
+import { dayMonthYearTime, fmt } from '../format';
 
 // Custody ingestion admin (US5): archive stats, last run, and an on-demand incremental ingest.
 // Replaces Portfolio Viewer Admin → Reload archive. Users are not managed here (no login).
@@ -109,8 +109,8 @@ export function CustodyAdmin() {
               ? <div style={{ padding: '8px 12px', color: 'rgba(25,25,25,.56)' }}>No ingest runs yet.</div>
               : <div style={{ padding: '6px 0' }}>
                   {kv('Run id', `#${lr.runId}`)}
-                  {kv('Started', lr.startedAt)}
-                  {kv('Finished', lr.finishedAt ?? '—')}
+                  {kv('Started', dayMonthYearTime(lr.startedAt))}
+                  {kv('Finished', dayMonthYearTime(lr.finishedAt))}
                   {kv('Duration', lr.durationMs === null ? '—' : `${fmt(lr.durationMs)} ms`)}
                   {kv('Files seen', fmt(lr.filesSeen))}
                   {kv('New', fmt(lr.filesNew))}

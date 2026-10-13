@@ -103,7 +103,14 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   if (screen === 'home' && c) title = `Good afternoon, ${isCustody ? c.displayName : c.displayName.split(/\s+/)[0]}`;
 
   const navGroups = isCustody
-    ? NAV_GROUPS.map((g, i) => i === 0 ? { ...g, items: [...g.items, ['custody-holdings', 'Custodian statements'] as [Screen, string]] } : g)
+    ? NAV_GROUPS.map((g, i) => i === 0 ? {
+      ...g,
+      items: [
+        ...g.items,
+        ['custody-holdings', 'Custodian statements'] as [Screen, string],
+        ['custody-settlements', 'Custodian settlements'] as [Screen, string],
+      ],
+    } : g)
     : NAV_GROUPS;
   const nav = navGroups.map(g => ({
     label: g.label,

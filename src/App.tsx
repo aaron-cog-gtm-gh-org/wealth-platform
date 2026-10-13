@@ -22,6 +22,7 @@ import { CustodyAdmin } from './screens/CustodyAdmin';
 import { CustodyHoldings } from './screens/CustodyHoldings';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import type { DataState, Screen, SetUiState } from './types';
+import { clientSwitchLocation } from './model/navigation';
 
 interface Location {
   screen: Screen;
@@ -45,7 +46,8 @@ export function App() {
   const [ui, setUi] = useState(INITIAL_UI_STATE);
   const [data, setData] = useState<Data | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const selectedRef = useRef(clientParam(selectedClient()));
+  const [clientKey, setClientKey] = useState(() => clientParam(selectedClient()));
+  const selectedRef = useRef(clientKey);
 
   const load = useCallback(() => {
     setLoadFailed(false);
@@ -64,7 +66,10 @@ export function App() {
       const changed = current !== selectedRef.current;
       selectedRef.current = current;
       setLoc(readLocation());
-      if (changed) load();
+      if (changed) {
+        setClientKey(current);
+        load();
+      }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -81,17 +86,12 @@ export function App() {
 
   const pickClient = useCallback((item: ClientPickerItem) => {
     const selection: ClientSelection = item.kind === 'custody' ? { kind: 'custody', clientId: Number(item.id) } : { kind: 'household', id: item.id };
-    const q = new URLSearchParams(window.location.search);
-    if (selection.kind === 'household' && selection.id === 'HH-WHITFIELD') q.delete('client');
-    else q.set('client', clientParam(selection));
-    let screen = loc.screen;
-    if (screen === 'custody-holdings' && item.kind === 'household') screen = 'c360';
-    q.set('screen', screen);
-    q.delete('account');
-    q.delete('date');
-    window.history.pushState(null, '', '?' + q.toString());
-    selectedRef.current = clientParam(selection);
-    setLoc(current => ({ ...current, screen, dataState: null }));
+    const location = clientSwitchLocation(window.location.search, selection, loc.screen);
+    window.history.pushState(null, '', '?' + location.search);
+    const nextClientKey = clientParam(selection);
+    selectedRef.current = nextClientKey;
+    setClientKey(nextClientKey);
+    setLoc(current => ({ ...current, screen: location.screen, dataState: null }));
     load();
   }, [load, loc.screen]);
 
@@ -212,8 +212,8 @@ export function App() {
             {show.money && <MoveMoney m={m} />}
 
             {show['custody-settlements'] && <CustodySettlements m={m} />}
-            {show['position-check'] && <PositionCheck />}
-            {show['message-browser'] && <MessageBrowser />}
+            {show['position-check'] && <PositionCheck key={clientKey} />}
+            {show['message-browser'] && <MessageBrowser key={clientKey} />}
 
             {show['custody-admin'] && <CustodyAdmin />}
             {show['custody-holdings'] && <CustodyHoldings />}

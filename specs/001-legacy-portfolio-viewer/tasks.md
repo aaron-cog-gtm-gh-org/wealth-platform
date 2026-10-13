@@ -158,12 +158,12 @@ make parser, rules and parity tests mandatory for this feature.
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T051 [P] Write docs/custody.md (db:setup load, ingest runbook, file-drop location, no-login note, legacy-parity mode)
-- [ ] T052 [P] Add custody paths to the table in docs/oracle-setup.md and screens to README.md
-- [ ] T053 Apply one date format from src/format.ts across all custody screens (FR-023)
-- [ ] T054 Measure full ingest (< 2 min) and screen latency (< 2 s) with the full archive; tune indexes in server/db/schema.sql if needed
-- [ ] T055 Run quickstart.md end-to-end and record sign-off results in specs/001-legacy-portfolio-viewer/signoff.md
-- [ ] T056 Agree decommission steps with operations (Portfolio Viewer read-only for one statement cycle, archive retention) in specs/001-legacy-portfolio-viewer/signoff.md
+- [x] T051 [P] Write docs/custody.md (db:setup load, ingest runbook, file-drop location, no-login note, legacy-parity mode)
+- [x] T052 [P] Add custody paths to the table in docs/oracle-setup.md and screens to README.md
+- [x] T053 Apply one date format from src/format.ts across all custody screens (FR-023)
+- [x] T054 Measure full ingest (< 2 min) and screen latency (< 2 s) with the full archive; tune indexes in server/db/schema.sql if needed
+- [x] T055 Run quickstart.md end-to-end and record sign-off results in specs/001-legacy-portfolio-viewer/signoff.md
+- [x] T056 Agree decommission steps with operations (Portfolio Viewer read-only for one statement cycle, archive retention) in specs/001-legacy-portfolio-viewer/signoff.md
 
 ---
 
