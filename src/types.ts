@@ -1,4 +1,4 @@
-export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'position-check'] as const;
+export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'custody-settlements', 'position-check'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const DATA_STATES = ['Populated', 'Loading', 'Empty', 'Error'] as const;

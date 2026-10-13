@@ -84,11 +84,11 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §3 confirmation rows + §4 step 3
 
-- [ ] T028 [US2] Implement `listConfirmations(accountId, from, to)` (default 90 days to latest statement, excludes cancelled and cancellations) in server/repositories/custody.ts
-- [ ] T029 [US2] Add `GET /api/custody/accounts/:accountId/confirmations` in server/app.ts
-- [ ] T030 [P] [US2] Build src/screens/CustodySettlements.tsx (date range, direction, FOP label, qty type, amount + ccy, reference)
-- [ ] T031 [US2] Register `custody-settlements` screen and link it from src/screens/CustodyHoldings.tsx
-- [ ] T032 [US2] Add custody-settlements states to scripts/visual-diff.mjs
+- [x] T028 [US2] Implement `listConfirmations(accountId, from, to)` (default 90 days to latest statement, excludes cancelled and cancellations) in server/repositories/custody.ts
+- [x] T029 [US2] Add `GET /api/custody/accounts/:accountId/confirmations` in server/app.ts
+- [x] T030 [P] [US2] Build src/screens/CustodySettlements.tsx (date range, direction, FOP label, qty type, amount + ccy, reference)
+- [x] T031 [US2] Register `custody-settlements`; expose settlementsHref link contract (CustodyHoldings link deferred until US1)
+- [x] T032 [US2] Add custody-settlements states to scripts/visual-diff.mjs
 
 **Checkpoint**: Settlements.aspx replaced; D-1..D-3 visible as fixed
 
