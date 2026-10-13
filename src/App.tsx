@@ -12,6 +12,7 @@ import { SettlementExceptions } from './screens/SettlementExceptions';
 import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
+import { CustodySettlements } from './screens/CustodySettlements';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import type { DataState, Screen, SetUiState } from './types';
 
@@ -182,6 +183,8 @@ export function App() {
             {show.activity && <ActivityStatus m={m} />}
 
             {show.money && <MoveMoney m={m} />}
+
+            {show['custody-settlements'] && <CustodySettlements m={m} />}
           </div>
         </main>
       </div>

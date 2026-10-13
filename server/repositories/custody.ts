@@ -133,7 +133,19 @@ export async function getLatestStatement(accountId: number): Promise<CustodyStat
 }
 
 /** Live (not cancelled, not CANC) confirmations settling in [from, to], newest first. */
-export async function listConfirmations(accountId: number, from = '0001-01-01', to = '9999-12-31'): Promise<CustodyConfirmation[]> {
+const addDaysUtc = (iso: string, days: number) => {
+  const date = new Date(`${iso}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+export async function listConfirmations(accountId: number, from?: string, to?: string): Promise<CustodyConfirmation[]> {
+  const defaultTo = to ?? (await query<{ latest: string | null }>(
+    `SELECT TO_CHAR(MAX(statement_date), 'YYYY-MM-DD') AS "latest"
+       FROM custody_statements WHERE account_id = :a AND is_effective = 1`, { a: accountId }))[0]?.latest
+    ?? new Date().toISOString().slice(0, 10);
+  const defaultFrom = from ?? addDaysUtc(defaultTo, -90);
+  if (defaultFrom > defaultTo) throw new CustodyValidationError('from must be on or before to');
   const rows = await query<Omit<CustodyConfirmation, 'direction' | 'freeOfPayment' | 'qty' | 'amount'> & { dir: string; qty: string; amount: string | null }>(
     `SELECT c.confirmation_id AS "confirmationId", c.mt_type AS "mtType", c.direction AS "dir", ${isoCol('c.trade_date', 'tradeDate')},
             ${isoCol('c.settle_date', 'settleDate')}, TRIM(c.isin) AS "isin", NVL(i.name, TRIM(c.isin)) AS "name", ${decCol('c.qty', 'qty')},
@@ -142,7 +154,7 @@ export async function listConfirmations(accountId: number, from = '0001-01-01', 
        FROM custody_confirmations c LEFT JOIN custody_instruments i ON i.isin = c.isin
       WHERE c.account_id = :a AND c.function_code <> 'CANC' AND c.cancelled_by IS NULL
         AND c.settle_date BETWEEN TO_DATE(:f, 'YYYY-MM-DD') AND TO_DATE(:t, 'YYYY-MM-DD')
-      ORDER BY c.settle_date DESC, c.confirmation_id DESC`, { a: accountId, f: from, t: to });
+      ORDER BY c.settle_date DESC, c.confirmation_id DESC`, { a: accountId, f: defaultFrom, t: defaultTo });
   return rows.map(({ dir, qty, amount, ...r }) => ({
     ...r, direction: dir === 'RECEIVE' ? 'Receive' : 'Deliver', freeOfPayment: r.mtType === 544 || r.mtType === 546,
     qty: dec(qty)!, amount: dec(amount),
