@@ -18,6 +18,7 @@ const META: Record<Screen, [string, string, string]> = {
   home: ['Client portal / Home', 'Good afternoon, Eleanor', 'Last sign-in 08-Oct-2026 from iPhone'],
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
+  'custody-settlements': ['Advisers / Custodian accounts / Settlements', 'Settlement confirmations', 'Legacy custodian feed · SWIFT MT544–MT547 · by settle date'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -29,6 +30,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   home: ['Welcome to RBC Wealth', 'Your accounts will appear here once your first deposit arrives. Most transfers take 3–5 business days.', 'Make a deposit'],
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
+  'custody-settlements': ['No settlement confirmations', 'Nothing settled for this account in the selected period. Widen the date range or pick another account.', 'Change date range'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -40,6 +42,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   home: ['We can’t show your balances right now', 'Something went wrong on our side. Your money is safe and no transactions are affected. Try again in a few minutes, or call 1-800-555-0199.', 'Call us'],
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
+  'custody-settlements': ['Settlement confirmations didn’t load', 'The custody service did not respond. Holdings and statements are unaffected. Retry in a minute.', 'Back to holdings'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];

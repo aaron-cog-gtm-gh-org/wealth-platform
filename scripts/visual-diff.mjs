@@ -1,7 +1,7 @@
 // Screenshots every screen × data state of the app and the mockup, then pixel-diffs them.
 // Usage: node scripts/visual-diff.mjs [screen[:state] ...]
 // Env: APP_URL (default http://localhost:5173), MOCK_URL (mockup .dc.html served over http), CHROME (executable path), WIDTH, HEIGHT.
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
@@ -15,6 +15,8 @@ const OUT = 'visual-diff-output';
 
 const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'];
 const STATES = ['Populated', 'Loading', 'Empty', 'Error'];
+const CUSTODY_CASES = STATES.map(state => ({ name: `custody-settlements-${state}`, screen: 'custody-settlements', state }));
+const CUSTODY_CLIENT_ID = process.env.CUSTODY_CLIENT_ID ?? '1055';
 
 // Interaction flows replayed identically against the mockup and the app.
 const FLOWS = [
@@ -40,7 +42,15 @@ const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
 const cases = !args.length
   ? [...STATIC, ...FLOWS]
-  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
+  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : a.startsWith('custody-settlements') ? [] : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
+const custodyCases = !args.length
+  ? CUSTODY_CASES
+  : args.flatMap(a => {
+    const [screen, state] = a.split(':');
+    return screen === 'custody-settlements'
+      ? CUSTODY_CASES.filter(c => state === undefined || c.state.toLowerCase() === state.toLowerCase())
+      : [];
+  });
 
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: CHROME, headless: false, args: ['--headless=new', '--hide-scrollbars'] });
@@ -90,6 +100,29 @@ for (const { name, screen, state = 'Populated', steps } of cases) {
   writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
   writeFileSync(`${OUT}/${name}-diff.png`, PNG.sync.write(diff));
   const sizeNote = mock.height !== app.height || mock.width !== app.width ? ` size mock ${mock.width}x${mock.height} app ${app.width}x${app.height}` : '';
+  console.log(`${name.padEnd(34)} ${n.toString().padStart(8)} px  ${(ratio * 100).toFixed(3)}%${sizeNote}`);
+}
+for (const { name, state } of custodyCases) {
+  const appUrl = `${APP_URL}/?screen=${name.split('-').slice(0, 2).join('-')}&state=${state}&client=${CUSTODY_CLIENT_ID}&account=2101&from=2026-06-01&to=2026-07-31`;
+  const app = await shoot(appUrl);
+  const baselinePath = `design/baselines/${name}.png`;
+  writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
+  if (!existsSync(baselinePath)) {
+    mkdirSync('design/baselines', { recursive: true });
+    writeFileSync(baselinePath, PNG.sync.write(app));
+    console.log(`${name.padEnd(34)} baseline captured`);
+    continue;
+  }
+  const baseline = PNG.sync.read(readFileSync(baselinePath));
+  const w = Math.max(baseline.width, app.width), h = Math.max(baseline.height, app.height);
+  const a = pad(baseline, w, h), b = pad(app, w, h);
+  const diff = new PNG({ width: w, height: h });
+  const n = pixelmatch(a.data, b.data, diff.data, w, h, { threshold: 0.1 });
+  const ratio = n / (w * h);
+  worst = Math.max(worst, ratio);
+  writeFileSync(`${OUT}/${name}-baseline.png`, PNG.sync.write(baseline));
+  writeFileSync(`${OUT}/${name}-diff.png`, PNG.sync.write(diff));
+  const sizeNote = baseline.height !== app.height || baseline.width !== app.width ? ` size baseline ${baseline.width}x${baseline.height} app ${app.width}x${app.height}` : '';
   console.log(`${name.padEnd(34)} ${n.toString().padStart(8)} px  ${(ratio * 100).toFixed(3)}%${sizeNote}`);
 }
 await browser.close();
