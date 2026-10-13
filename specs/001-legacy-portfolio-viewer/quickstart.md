@@ -57,6 +57,8 @@ curl 'localhost:3001/api/custody/position-checks?date=2026-07-17&mode=legacy'
 
 ## 4. UI walk-through
 
+To run the legacy Portfolio Viewer alongside for comparison, see `.agents/skills/running-legacy-portfolio-viewer/SKILL.md`.
+
 ```bash
 npm run dev:full
 ```

@@ -3,6 +3,7 @@ dist
 *.tsbuildinfo
 visual-diff-output
 .vite/
+.legacy-run/
 
 # legacy parity harness build output, local scratch
 tools/legacy-parity/bin/
