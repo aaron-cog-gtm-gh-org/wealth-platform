@@ -12,10 +12,11 @@ const CHROME = process.env.CHROME ?? 'C:/devin/chrome/chrome-win64/chrome.exe';
 const WIDTH = Number(process.env.WIDTH ?? 1440);
 const HEIGHT = Number(process.env.HEIGHT ?? 900);
 const OUT = 'visual-diff-output';
+const BASELINES = 'scripts/visual-baselines';
 
 const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'];
 // Screens with no mockup: app-only cases, never diffed.
-const APP_ONLY = ['position-check', 'message-browser', 'custody-admin'];
+const APP_ONLY_SCREENS = ['position-check', 'message-browser', 'custody-admin'];
 const STATES = ['Populated', 'Loading', 'Empty', 'Error'];
 const CUSTODY_CASES = STATES.map(state => ({ name: `custody-settlements-${state}`, screen: 'custody-settlements', state }));
 const CUSTODY_CLIENT_ID = process.env.CUSTODY_CLIENT_ID ?? '1055';
@@ -52,13 +53,36 @@ async function appOnlyExtra() {
   return out;
 }
 
+const APP_ONLY_CASES = [
+  { name: 'c360-custody', query: '?client=1001&screen=c360' },
+  { name: 'portfolio-custody', query: '?client=1001&screen=portfolio' },
+  { name: 'alts-custody', query: '?client=1001&screen=alts' },
+  { name: 'custody-holdings-Populated', query: '?client=1001&screen=custody-holdings&account=2001&date=2026-07-17' },
+  { name: 'custody-holdings-Loading', query: '?client=1001&screen=custody-holdings&state=Loading' },
+  { name: 'custody-holdings-Empty', query: '?client=1001&screen=custody-holdings&state=Empty' },
+  { name: 'custody-holdings-Error', query: '?client=1001&screen=custody-holdings&state=Error' },
+  { name: 'custody-holdings-empty-statement', query: '?client=1033&screen=custody-holdings&account=2051&date=2026-04-17' },
+  { name: 'custody-holdings-rplc', query: '?client=1028&screen=custody-holdings&account=2038&date=2026-06-26' },
+  { name: 'custody-holdings-unverified', query: '?client=1012&screen=custody-holdings&account=2018&date=2026-07-17' },
+  { name: 'flow-picker-search', query: '?screen=c360', steps: [['click', 'Search clients, accounts, instruments, exceptions'], ['fill', '[aria-label="Search clients"]', 'Pen'], ['waitFor', 'The Penhaligon Family Trust']] },
+].map(c => ({ ...c, appOnly: true }));
+
 const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
-const APP_ONLY_CASES = APP_ONLY.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
-const cases = [...(!args.length || args.some(a => APP_ONLY.includes(a)) ? await appOnlyExtra() : []), ...(!args.length
-  ? [...STATIC, ...APP_ONLY_CASES, ...FLOWS]
-  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : a.startsWith('custody-settlements') ? [] : APP_ONLY.includes(a) ? APP_ONLY_CASES.filter(c => c.screen === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':'))))];
-const custodyCases = !args.length
+const APP_ONLY_SCREEN_CASES = APP_ONLY_SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
+const pickedAppCases = APP_ONLY_CASES.filter(c => args.includes('custody') || args.includes('app-only') || args.some(a => c.name.toLowerCase() === a.toLowerCase()));
+const extraAppCases = !args.length || args.includes('app-only') || args.some(a => APP_ONLY_SCREENS.includes(a))
+  ? await appOnlyExtra()
+  : [];
+const cases = args.includes('custody') || args.includes('app-only') || pickedAppCases.length
+  ? [...pickedAppCases, ...APP_ONLY_SCREEN_CASES, ...extraAppCases]
+  : !args.length
+  ? [...STATIC, ...APP_ONLY_SCREEN_CASES, ...APP_ONLY_CASES, ...FLOWS, ...extraAppCases]
+  : [
+    ...args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : a.startsWith('custody-settlements') ? [] : APP_ONLY_SCREENS.includes(a) ? APP_ONLY_SCREEN_CASES.filter(c => c.screen === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':'))),
+    ...extraAppCases,
+  ];
+const custodyCases = !args.length || args.includes('custody')
   ? CUSTODY_CASES
   : args.flatMap(a => {
     const [screen, state] = a.split(':');
@@ -68,6 +92,7 @@ const custodyCases = !args.length
   });
 
 mkdirSync(OUT, { recursive: true });
+mkdirSync(BASELINES, { recursive: true });
 const browser = await chromium.launch({ executablePath: CHROME, headless: false, args: ['--headless=new', '--hide-scrollbars'] });
 
 async function shoot(url, setup, steps = []) {
@@ -79,6 +104,7 @@ async function shoot(url, setup, steps = []) {
     if (kind === 'click') await page.getByText(target, { exact: true }).nth(arg ?? 0).click();
     else if (kind === 'hover') await page.getByText(target, { exact: true }).nth(arg ?? 0).hover();
     else if (kind === 'fill') await page.locator(target).first().fill(arg);
+    else if (kind === 'waitFor') await page.getByText(target, { exact: true }).first().waitFor({ state: 'visible', timeout: 5000 });
   }
   if (!steps.some(s => s[0] === 'hover')) await page.mouse.move(0, HEIGHT - 1);
   await page.waitForTimeout(400);
@@ -96,8 +122,24 @@ function pad(img, w, h) {
 }
 
 let worst = 0;
-for (const { name, screen, state = 'Populated', steps, url } of cases) {
-  if (APP_ONLY.includes(screen) || url) {
+for (const { name, screen, state = 'Populated', steps, url, query, appOnly } of cases) {
+  if (appOnly) {
+    const app = await shoot(`${APP_URL}/${query}`, null, steps);
+    const baselinePath = `${BASELINES}/${name}.png`;
+    if (process.env.UPDATE_BASELINES === '1' || !existsSync(baselinePath)) writeFileSync(baselinePath, PNG.sync.write(app));
+    const baseline = PNG.sync.read(readFileSync(baselinePath));
+    const w = Math.max(baseline.width, app.width), h = Math.max(baseline.height, app.height);
+    const a = pad(baseline, w, h), b = pad(app, w, h);
+    const diff = new PNG({ width: w, height: h });
+    const n = pixelmatch(a.data, b.data, diff.data, w, h, { threshold: 0.1 });
+    const ratio = n / (w * h);
+    worst = Math.max(worst, ratio);
+    writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
+    writeFileSync(`${OUT}/${name}-diff.png`, PNG.sync.write(diff));
+    console.log(`${name.padEnd(34)} ${n.toString().padStart(8)} px  ${(ratio * 100).toFixed(3)}%`);
+    continue;
+  }
+  if (APP_ONLY_SCREENS.includes(screen) || url) {
     const app = await shoot(url ?? `${APP_URL}/?screen=${screen}&state=${state}`, null, steps);
     writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
     console.log(`${name.padEnd(34)} app-only`);

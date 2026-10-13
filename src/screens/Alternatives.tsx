@@ -3,6 +3,7 @@ import type { Model } from '../model';
 
 export function Alternatives({ m }: { m: Model }) {
   const { altKpis, calls, commits, dists } = m;
+  if (m.alternativesUnavailable) return <div style={{ background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px', padding: '18px', color: 'rgba(25,25,25,.7)' }}>Alternatives are not available — Portfolio Viewer has no alternatives data for this client.</div>;
   return (
     <>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

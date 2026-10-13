@@ -1,8 +1,8 @@
 import type {
-  ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, CustodyClientPage, CustodyClientSummary,
-  CustodyConfirmation, CustodyMessage, CustodyMessagePage, CustodyStatement, CustodyStatementDate, HouseholdDto, IngestRun,
-  IngestionStatus, PaymentsDto, PerformanceDto, PortfolioDto,
-  PositionCheckMode, PositionCheckResult, RebalanceDto, SettlementExceptionsDto, WealthData,
+  ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, ClientPickerPage, CustodyClientPage,
+  CustodyClientSummary, CustodyConfirmation, CustodyMessage, CustodyMessagePage, CustodyStatement, CustodyStatementDate,
+  HouseholdDto, IngestRun, IngestionStatus, PaymentsDto, PerformanceDto, PortfolioDto, PositionCheckMode, PositionCheckResult,
+  RebalanceDto, SettlementExceptionsDto, WealthData,
 } from './types';
 
 /** Household shown when no `?client=` is given. */
@@ -104,6 +104,7 @@ const qs = (params: Record<string, string | number | undefined>) => {
 const custody = (path: string) => '/custody' + path;
 
 export const getCustodyClients = (q = '', page = 1) => get<CustodyClientPage>(custody('/clients' + qs({ q, page })));
+export const searchClients = (q = '', page = 1) => get<ClientPickerPage>('/clients' + qs({ q, page }));
 export const getCustodyClient = (clientId: number) => get<CustodyClientSummary>(custody(`/clients/${clientId}`));
 export const getCustodyHousehold = (clientId: number) => get<HouseholdDto>(custody(`/clients/${clientId}/household`));
 export const getCustodyPortfolio = (clientId: number) => get<PortfolioDto>(custody(`/clients/${clientId}/portfolio`));

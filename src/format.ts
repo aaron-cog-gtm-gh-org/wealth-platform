@@ -22,15 +22,21 @@ export const pill = (k: PillKind) => PILLS[k];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const isoParts = (iso: string) => iso.split('-');
+const validIsoDate = (iso: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const date = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === iso;
+};
 
 /** `2026-10-09` → `09-Oct` */
-export const dayMonth = (iso: string) => { const [, m, d] = isoParts(iso); return `${d}-${MONTHS[+m - 1]}`; };
+export const dayMonth = (iso: string) => { if (!validIsoDate(iso)) return '—'; const [, m, d] = isoParts(iso); return `${d}-${MONTHS[+m - 1]}`; };
 /** `2026-10-09` → `09-Oct-2026` */
-export const dayMonthYear = (iso: string) => dayMonth(iso) + '-' + isoParts(iso)[0];
+export const dayMonthYear = (iso: string) => validIsoDate(iso) ? dayMonth(iso) + '-' + isoParts(iso)[0] : '—';
 /** `2026-11-04` → `Wed 04-Nov-2026` */
-export const weekdayDate = (iso: string) => { const [y, m, d] = isoParts(iso).map(Number); return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + dayMonthYear(iso); };
+export const weekdayDate = (iso: string) => { if (!validIsoDate(iso)) return '—'; const [y, m, d] = isoParts(iso).map(Number); return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + dayMonthYear(iso); };
 /** Whole years between two ISO dates. */
 export const yearsBetween = (fromIso: string, toIso: string) => {
+  if (!validIsoDate(fromIso) || !validIsoDate(toIso)) return '—';
   const [fy, fm, fd] = isoParts(fromIso).map(Number), [ty, tm, td] = isoParts(toIso).map(Number);
   return ty - fy - (tm < fm || (tm === fm && td < fd) ? 1 : 0);
 };

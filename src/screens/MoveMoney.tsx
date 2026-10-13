@@ -26,7 +26,7 @@ export function MoveMoney({ m }: { m: Model }) {
                 </Fragment>))}
                 <a href="#">Add a new payee</a></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <label style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>Amount (CAD)</span>
+                <label style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>{m.isCustody ? `Amount (${m.reportingCurrency})` : 'Amount (CAD)'}</span>
                   <input value={amount} onChange={onAmount} style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", font: "600 14px Inter,sans-serif" }} /></label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>Date</span><div style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", fontSize: "13px" }}>Today, Mon 12-Oct-2026</div></div>
               </div>

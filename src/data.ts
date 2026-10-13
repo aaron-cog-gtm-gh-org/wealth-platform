@@ -76,7 +76,7 @@ export function deriveData(raw: WealthData) {
 
   const allocation = portfolio.assetClasses.map(c => {
     const mv = holdings.filter(h => h.cls === c.name).reduce((s, h) => s + h.mv, 0);
-    return { cls: c.name, mv, a: (mv / totalValue) * 100, t: c.targetWeightPct, color: CLASS_COLORS[c.name] };
+    return { cls: c.name, mv, a: totalValue ? (mv / totalValue) * 100 : 0, t: c.targetWeightPct, color: CLASS_COLORS[c.name] };
   });
 
   const causes = new Map(exceptions.causes.map(c => [c.name, c]));

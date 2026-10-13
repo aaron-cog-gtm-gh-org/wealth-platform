@@ -67,12 +67,12 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §3 statement rows + §4 steps 1–2
 
-- [ ] T022 [US1] Implement `listStatementDates` and `getStatement` (custodian-name fallback, `nameVerified`, `missingReportingValues`) in server/repositories/custody.ts
-- [ ] T023 [US1] Add `GET /api/custody/accounts/:accountId/statements[/:date]` in server/app.ts
-- [ ] T024 [P] [US1] Build src/screens/CustodyHoldings.tsx (statement-date picker, holdings table, totals, "no statement" vs "empty statement" states, unverified-instrument marker)
-- [ ] T025 [US1] Register `custody-holdings` in src/types.ts SCREENS, src/model/screens.ts, src/model/shell.ts and src/App.tsx with Loading/Error states
-- [ ] T026 [US1] Render a picked custody client in src/screens/Client360.tsx and src/screens/PortfolioDetail.tsx via `/api/custody/clients/:clientId/household|portfolio` (GBP, "not available" panels) with a "Custodian statements" link to custody-holdings
-- [ ] T027 [US1] Add custody-holdings states to scripts/visual-diff.mjs and capture baselines
+- [x] T022 [US1] Implement `listStatementDates` and `getStatement` (custodian-name fallback, `nameVerified`, `missingReportingValues`) in server/repositories/custody.ts
+- [x] T023 [US1] Add `GET /api/custody/accounts/:accountId/statements[/:date]` in server/app.ts
+- [x] T024 [P] [US1] Build src/screens/CustodyHoldings.tsx (statement-date picker, holdings table, totals, "no statement" vs "empty statement" states, unverified-instrument marker)
+- [x] T025 [US1] Register `custody-holdings` in src/types.ts SCREENS, src/model/screens.ts, src/model/shell.ts and src/App.tsx with Loading/Error states
+- [x] T026 [US1] Render a picked custody client in src/screens/Client360.tsx and src/screens/PortfolioDetail.tsx via `/api/custody/clients/:clientId/household|portfolio` (GBP, "not available" panels) with a "Custodian statements" link to custody-holdings
+- [x] T027 [US1] Add custody-holdings states to scripts/visual-diff.mjs and capture baselines
 
 **Checkpoint**: Advisers can stop using Holdings.aspx
 
@@ -147,10 +147,10 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §4 step 1; 50 clients findable by reference
 
-- [ ] T047 [US6] Implement `searchClients(q, page)` (households + custody clients by name or client_ref; 25/page) and `getClientSummary` in server/repositories/custody.ts
-- [ ] T048 [US6] Add `GET /api/clients`, `GET /api/custody/clients/:clientId[/household|/portfolio]` in server/app.ts
-- [ ] T049 [P] [US6] Build src/ClientPicker.tsx (header search, results showing reporting currency) in the app shell
-- [ ] T050 [US6] Wire the picker into src/App.tsx/src/model/shell.ts setting `?client=`; add picker and GBP Client 360 states to scripts/visual-diff.mjs
+- [x] T047 [US6] Implement `searchClients(q, page)` (households + custody clients by name or client_ref; 25/page) and `getClientSummary` in server/repositories/custody.ts
+- [x] T048 [US6] Add `GET /api/clients`, `GET /api/custody/clients/:clientId[/household|/portfolio]` in server/app.ts
+- [x] T049 [P] [US6] Build src/ClientPicker.tsx (header search, results showing reporting currency) in the app shell
+- [x] T050 [US6] Wire the picker into src/App.tsx/src/model/shell.ts setting `?client=`; add picker and GBP Client 360 states to scripts/visual-diff.mjs
 
 **Checkpoint**: ClientSearch.aspx and ClientSummary.aspx replaced — all legacy screens covered
 

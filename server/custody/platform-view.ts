@@ -52,7 +52,7 @@ export function toCustodyHousehold(client: CustodyClientSummary): HouseholdDto {
 export function toCustodyPortfolio(client: CustodyClientSummary, statements: CustodyStatement[]): PortfolioDto {
   const accounts: AccountDto[] = client.accounts.map(a => ({
     key: custodyAccountKey(a.accountId), accountNo: String(a.safeNo), name: accountLabel(a), shortName: a.accountType,
-    ownership: client.name, management: 'Custody', currencies: a.reportingCcy, driftPts: 0, driftStatus: 'OK', dayChangePct: 0,
+    ownership: client.name, management: a.closed ? 'Custody · closed' : 'Custody', currencies: a.reportingCcy, driftPts: 0, driftStatus: 'OK', dayChangePct: 0,
   }));
   const holdings: HoldingDto[] = statements.flatMap(s => s.lines.map(l => ({
     accountKey: custodyAccountKey(s.accountId), assetClass: assetClassFor(l.isin, l.qtyType), name: l.name, identifier: l.isin,
