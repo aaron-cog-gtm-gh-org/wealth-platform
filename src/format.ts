@@ -32,6 +32,13 @@ const validIsoDate = (iso: string) => {
 export const dayMonth = (iso: string) => { if (!validIsoDate(iso)) return '—'; const [, m, d] = isoParts(iso); return `${d}-${MONTHS[+m - 1]}`; };
 /** `2026-10-09` → `09-Oct-2026` */
 export const dayMonthYear = (iso: string) => validIsoDate(iso) ? dayMonth(iso) + '-' + isoParts(iso)[0] : '—';
+/** `2026-10-09T14:05:33` → `09-Oct-2026 14:05` */
+export const dayMonthYearTime = (iso: string | null) => {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/.test(iso) || Number.isNaN(Date.parse(iso))) return '—';
+  const date = iso.slice(0, 10);
+  if (!validIsoDate(date)) return '—';
+  return `${dayMonthYear(date)} ${iso.slice(11, 16)}`;
+};
 /** `2026-11-04` → `Wed 04-Nov-2026` */
 export const weekdayDate = (iso: string) => { if (!validIsoDate(iso)) return '—'; const [y, m, d] = isoParts(iso).map(Number); return WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] + ' ' + dayMonthYear(iso); };
 /** Whole years between two ISO dates. */

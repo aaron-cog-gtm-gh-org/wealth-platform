@@ -10,7 +10,7 @@ npm run dev        # http://localhost:5173
 npm run build      # typecheck + production build
 ```
 
-Screens are addressed with query parameters: `?screen=c360|portfolio|orders|alts|exceptions|home|activity|money` and `&state=Populated|Loading|Empty|Error`.
+Screens are addressed with query parameters: `?screen=c360|portfolio|orders|alts|exceptions|home|activity|money|custody-holdings|custody-settlements|position-check|message-browser|custody-admin` and `&state=Populated|Loading|Empty|Error`. For custody data, `?client=<id>` selects a custody client.
 
 ## Layout
 
@@ -35,3 +35,5 @@ npm run dev:full                   # API :3001 + app :5173
 
 See [docs/oracle-setup.md](docs/oracle-setup.md) for configuration, the tmpfs (RAM-only) variant and
 the Testcontainers check (`npm run test:db`).
+
+See [docs/custody.md](docs/custody.md) for custody data loading, archive ingestion, and legacy parity modes.

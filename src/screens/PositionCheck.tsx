@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { getBreakHistory, getBreakNotes, getPositionCheckDates, getPositionChecks, patchBreakNote } from '../api/client';
 import type { BreakCause, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckMode, PositionCheckResult } from '../api/types';
-import { AMBER, GREEN, INK, MUTE, RED, dayMonthYear, pill } from '../format';
+import { AMBER, GREEN, INK, MUTE, RED, dayMonthYear, dayMonthYearTime, pill } from '../format';
 import type { PillKind } from '../format';
 import { SourceMessageLink } from './SourceMessageLink';
 
@@ -25,8 +25,6 @@ export function fmtQty(dec: string, signed = false) {
   const zero = /^0*$/.test(int) && !f;
   return (neg && !zero ? '−' : signed && !zero ? '+' : '') + body;
 }
-
-const stamp = (iso: string | null) => (iso ? `${dayMonthYear(iso.slice(0, 10))} ${iso.slice(11, 16)}` : '—');
 
 function readParams() {
   const q = new URLSearchParams(window.location.search);
@@ -165,7 +163,7 @@ function HistoryDrawer({ k, title, onClose }: { k: BreakKey; title: string; onCl
           <div key={i} data-testid="history-entry" style={{ padding: '10px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: 600 }}>{h.updatedBy}</span>
-              <span style={{ color: MUTE, fontSize: '11px' }}>{stamp(h.updatedAt)}</span>
+              <span style={{ color: MUTE, fontSize: '11px' }}>{dayMonthYearTime(h.updatedAt)}</span>
               <span style={{ flex: 1 }} />
               {h.source === 'LEGACY_MIGRATION' && <span style={{ whiteSpace: 'nowrap', fontSize: '10px', color: MUTE, border: '1px solid #e1e5eb', borderRadius: '8px', padding: '0 6px' }}>Migrated from Portfolio Viewer</span>}
               <StatusPill status={h.status} />
@@ -319,7 +317,7 @@ export function PositionCheck() {
                     <span><StatusPill status={b.status} /></span>
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <span title={b.note ?? ''} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: b.note ? INK : MUTE }}>{b.note ?? 'No note'}</span>
-                      <span style={{ fontSize: '10.5px', color: MUTE }}>{b.cause ? CAUSE_LABEL[b.cause] + ' · ' : ''}{b.updatedBy ? `${b.updatedBy} · ${stamp(b.updatedAt)}` : ''}</span>
+                      <span style={{ fontSize: '10.5px', color: MUTE }}>{b.cause ? CAUSE_LABEL[b.cause] + ' · ' : ''}{b.updatedBy ? `${b.updatedBy} · ${dayMonthYearTime(b.updatedAt)}` : ''}</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                       <SourceLinks ids={b.sourceMessageIds} />
@@ -347,7 +345,7 @@ export function PositionCheck() {
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.name}</span><span style={{ ...mono, color: MUTE }}>{n.isin}</span></div>
                 <span><StatusPill status={n.status} /></span>
                 <span style={{ color: n.note ? INK : MUTE }}>{n.note ?? 'No note'}{n.cause ? <span style={{ color: MUTE }}> · {CAUSE_LABEL[n.cause]}</span> : null}</span>
-                <span style={{ fontSize: '11px' }}>{n.updatedBy}<br /><span style={{ color: MUTE }}>{stamp(n.updatedAt)}</span></span>
+                <span style={{ fontSize: '11px' }}>{n.updatedBy}<br /><span style={{ color: MUTE }}>{dayMonthYearTime(n.updatedAt)}</span></span>
                 <span style={{ display: 'flex', gap: '10px', whiteSpace: 'nowrap' }}>
                   <button type="button" onClick={() => openCheck(n)} style={linkBtn}>Open check</button>
                   <button type="button" onClick={() => setHistory({ k: n, title: n.name })} style={linkBtn}>History</button>
