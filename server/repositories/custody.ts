@@ -3,9 +3,9 @@
 // Decimals leave Oracle as strings (TO_CHAR ... 'TM9') and are normalized with `normalizeDec`.
 import oracledb from 'oracledb';
 import type {
-  CustodyAccountSummary, CustodyAccountType, CustodyClientPage, CustodyClientRow, CustodyClientSummary, CustodyConfirmation,
-  CustodyMessage, CustodyMessageDerived, CustodyMessagePage, CustodyMessageRow,
-  CustodyStatement, CustodyStatementDate, CustodyStatementLine, Currency, HouseholdDto, IngestionStatus, IngestRun, PortfolioDto, QtyType,
+  ClientPickerItem, ClientPickerPage, CustodyAccountSummary, CustodyAccountType, CustodyClientPage, CustodyClientRow, CustodyClientSummary,
+  CustodyConfirmation, CustodyMessage, CustodyMessageDerived, CustodyMessagePage, CustodyMessageRow, CustodyStatement,
+  CustodyStatementDate, CustodyStatementLine, Currency, HouseholdDto, IngestionStatus, IngestRun, PortfolioDto, QtyType,
   BreakCause, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckResult,
 } from '../../src/api/types';
 import { getPool, query } from '../db/pool';
@@ -21,6 +21,12 @@ export const PAGE_SIZE = 25;
 
 /** Thrown for invalid request input; routes map it to `400 { error }`. */
 export class CustodyValidationError extends Error {}
+
+export function custodyPageWindow(householdCount: number, page: number, size = PAGE_SIZE) {
+  const start = (page - 1) * size;
+  const end = start + size;
+  return { offset: Math.max(0, start - householdCount), limit: Math.max(0, Math.min(size, end - householdCount)) };
+}
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export function requireDate(v: unknown, name = 'date'): string {
@@ -86,6 +92,45 @@ export async function getCustodyClient(clientId: number): Promise<CustodyClientS
   if (!row) return null;
   const accounts = await listCustodyAccounts(clientId);
   return { ...row, accounts, total: decSum(accounts.map(a => a.latestValue ?? '0')) };
+}
+
+export const getClientSummary = getCustodyClient;
+
+/** Households precede custody clients in one searchable, 25-row client-picker result. */
+export async function searchClients(q = '', page = 1): Promise<ClientPickerPage> {
+  const like = `%${q.trim().toUpperCase()}%`;
+  const [households, householdTotal, custodyTotal] = await Promise.all([
+    query<{ id: string; name: string; clientRef: string | null }>(
+      `SELECT h.household_id AS "id", h.household_name AS "name",
+              MAX(CASE WHEN c.is_primary = 1 THEN c.client_id END) AS "clientRef"
+         FROM households h LEFT JOIN clients c ON c.household_id = h.household_id
+        WHERE UPPER(h.household_id) LIKE :q OR UPPER(h.household_name) LIKE :q
+        GROUP BY h.household_id, h.household_name ORDER BY UPPER(h.household_name), h.household_id`,
+      { q: like }),
+    query<{ N: number }>(
+      `SELECT COUNT(*) AS n FROM households h
+        WHERE UPPER(h.household_id) LIKE :q OR UPPER(h.household_name) LIKE :q`, { q: like }),
+    query<{ N: number }>(
+      `SELECT COUNT(*) AS n FROM custody_clients c
+        WHERE UPPER(c.client_ref) LIKE :q OR UPPER(c.client_name) LIKE :q`, { q: like }),
+  ]);
+  const start = (page - 1) * PAGE_SIZE;
+  const householdItems: ClientPickerItem[] = households.slice(start, start + PAGE_SIZE).map(h => ({
+    kind: 'household', id: h.id, name: h.name, clientRef: h.clientRef, reportingCurrency: 'CAD',
+  }));
+  const window = custodyPageWindow(households.length, page);
+  const custodyRows = window.limit ? await query<{ id: number; name: string; clientRef: string; reportingCurrency: Currency | null }>(
+    `SELECT c.client_id AS "id", c.client_name AS "name", c.client_ref AS "clientRef",
+            (SELECT TRIM(a.reporting_ccy) FROM custody_accounts a
+              WHERE a.client_id = c.client_id ORDER BY a.account_id FETCH FIRST 1 ROW ONLY) AS "reportingCurrency"
+       FROM custody_clients c
+      WHERE UPPER(c.client_ref) LIKE :q OR UPPER(c.client_name) LIKE :q
+      ORDER BY c.client_name, c.client_id OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+    { q: like, offset: window.offset, limit: window.limit }) : [];
+  const custodyItems: ClientPickerItem[] = custodyRows.map(c => ({
+    kind: 'custody', id: String(c.id), name: c.name, clientRef: c.clientRef, reportingCurrency: c.reportingCurrency ?? 'GBP',
+  }));
+  return { items: [...householdItems, ...custodyItems], page, total: Number(householdTotal[0]?.N ?? 0) + Number(custodyTotal[0]?.N ?? 0) };
 }
 
 export async function accountExists(accountId: number): Promise<boolean> {

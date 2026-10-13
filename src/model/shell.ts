@@ -1,5 +1,5 @@
 import type { Data } from '../data';
-import { GREEN, INK, dayMonthYear, money, weekdayDate } from '../format';
+import { ccyMoney, GREEN, INK, dayMonthYear, money, weekdayDate } from '../format';
 import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
 
@@ -19,6 +19,7 @@ const META: Record<Screen, [string, string, string]> = {
   home: ['Client portal / Home', 'Good afternoon, Eleanor', 'Last sign-in 08-Oct-2026 from iPhone'],
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
+  'custody-holdings': ['Advisers / Custodian statements', 'Custodian statements', 'Effective MT535 statement history'],
   'custody-settlements': ['Advisers / Custodian accounts / Settlements', 'Settlement confirmations', 'Legacy custodian feed · SWIFT MT544–MT547 · by settle date'],
   'position-check': ['Operations / Custody', 'Position check', 'Custodian MT535 statements vs previous statement + settled MT54x movements'],
   'message-browser': ['Operations / Custody', 'Message browser', 'Raw SWIFT messages from the custodian archive · shown exactly as received'],
@@ -34,6 +35,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   home: ['Welcome to RBC Wealth', 'Your accounts will appear here once your first deposit arrives. Most transfers take 3–5 business days.', 'Make a deposit'],
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
+  'custody-holdings': ['No statement on file', 'There are no custodian statements available for this account.', 'Choose another date'],
   'custody-settlements': ['No settlement confirmations', 'Nothing settled for this account in the selected period. Widen the date range or pick another account.', 'Change date range'],
   'position-check': ['No custody statements loaded', 'Position checks run once custodian MT535 statements have been ingested. Run an ingest from the custody archive to populate this screen.', 'View ingestion status'],
   'message-browser': ['No messages ingested', 'The custodian archive has not been ingested yet. Run an ingest from Custody ingestion to load MT535 and MT54x files.', 'Open custody ingestion'],
@@ -49,6 +51,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   home: ['We can’t show your balances right now', 'Something went wrong on our side. Your money is safe and no transactions are affected. Try again in a few minutes, or call 1-800-555-0199.', 'Call us'],
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
+  'custody-holdings': ['Custodian statements are unavailable', 'The custody statement service did not respond. Retry to load the statement history.', 'Retry'],
   'custody-settlements': ['Settlement confirmations didn’t load', 'The custody service did not respond. Holdings and statements are unaffected. Retry in a minute.', 'Back to holdings'],
   'position-check': ['Position check could not run', 'The custody service did not respond. No break notes were changed. Retry, or check the ingestion status for the custody archive.', 'View ingestion status'],
   'message-browser': ['Messages didn’t load', 'The custody message store did not respond. Raw files remain in the archive; retry in a minute.', 'View ingestion status'],
@@ -68,16 +71,48 @@ export const totalSource = (d: Data) =>
 export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null) {
   const isOps = OPS_SCREENS.includes(screen);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
-  const [crumb, title, subtitle] = META[screen];
+  const hh = data?.raw.household, c = hh?.primaryClient;
+  const isCustody = hh?.source?.kind === 'custody';
+  const reportCcy = hh?.source?.reportingCurrency ?? 'CAD';
+  const portalName = c?.displayName ?? 'Eleanor Whitfield';
+  let [crumb, title, subtitle] = META[screen];
+  if (isCustody && hh?.source) {
+    const asOf = hh.source.asOf ? dayMonthYear(hh.source.asOf) : 'Not available';
+    if (screen === 'c360') {
+      crumb = `Advisers / Book of business / ${hh.name}`;
+      subtitle = `${data?.accounts.length ?? 0} accounts · ${data?.holdings.length ?? 0} holdings · custodian statements as of ${asOf}`;
+    } else if (screen === 'portfolio') {
+      crumb = `Advisers / ${hh.name} / All accounts`;
+      subtitle = `Custodian MT535 statements · reporting currency ${reportCcy} · as of ${asOf}`;
+    } else if (screen === 'orders') {
+      crumb = `Advisers / ${hh.name} / Rebalance`;
+    } else if (screen === 'alts') {
+      crumb = `Advisers / ${hh.name} / Alternatives`;
+      subtitle = 'Alternatives data is not available from custodian statements';
+    } else if (screen === 'custody-holdings') {
+      crumb = `Advisers / ${hh.name} / Custodian statements`;
+      subtitle = `Reporting currency ${reportCcy} · as of ${asOf}`;
+    } else if (screen === 'home') {
+      subtitle = `Custodian statement values · reporting currency ${reportCcy} · as of ${asOf}`;
+    } else if (screen === 'activity') {
+      subtitle = 'Transaction activity is not available for migrated custody clients.';
+    } else if (screen === 'money') {
+      subtitle = 'Payments are not available for migrated custody clients.';
+    }
+  }
+  if (screen === 'home' && c) title = `Good afternoon, ${isCustody ? c.displayName : c.displayName.split(/\s+/)[0]}`;
 
-  const nav = NAV_GROUPS.map(g => ({
+  const navGroups = isCustody
+    ? NAV_GROUPS.map((g, i) => i === 0 ? { ...g, items: [...g.items, ['custody-holdings', 'Custodian statements'] as [Screen, string]] } : g)
+    : NAV_GROUPS;
+  const nav = navGroups.map(g => ({
     label: g.label,
     items: g.items.map(([id, label, badge]) => {
       const active = id === screen;
       return {
         id,
         label,
-        badge: id === 'exceptions' ? (data ? String(data.settlementExceptions.rows.length) : null) : badge || null,
+        badge: id === 'exceptions' ? (data ? String(data.settlementExceptions.rows.length) : null) : isCustody && id === 'orders' ? null : badge || null,
         onClick: () => go(id),
         bar: active ? '#005daa' : 'transparent',
         bg: active ? '#eaf1fa' : 'transparent',
@@ -89,8 +124,11 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     }),
   }));
 
-  const hh = data?.raw.household, c = hh?.primaryClient;
-  const ctx = ((data && hh && c ? [
+  const ctx = ((data && hh && c && isCustody ? [
+    ['Client', hh.name], ['Client ref', c.id || 'Not available'], ['AUA', ccyMoney(data.totalValue, reportCcy, 2)],
+    ['Adviser', hh.advisorName || 'Not available'], ['Latest statement', hh.source?.asOf ? dayMonthYear(hh.source.asOf) : 'Not available'],
+    ['Risk', 'Not available'], ['KYC', 'Not available'], ['Mandate', 'Not available'], ['Next review', 'Not available'],
+  ] : data && hh && c ? [
     ['Household', hh.name], ['Primary', c.displayName], ['AUA', money(data.totalValue)], ['Risk profile', `${c.riskProfile} (${c.riskScore}/10)`],
     ['KYC', `${c.kycStatus} · reviewed ${dayMonthYear(c.kycReviewedDate)}`, GREEN], ['Mandate', hh.mandate], ['Next review', weekdayDate(hh.nextReviewDate)], ['Advisor', hh.advisorName],
   ] : []) as [string, string, string?][]).map(([k, v, c]) => ({ k, v, color: c || INK }));
@@ -101,6 +139,10 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     title,
     subtitle,
     ctx,
+    isCustody,
+    householdName: hh?.name ?? 'Whitfield family',
+    portalName,
+    reportingCurrency: reportCcy,
     isClientView,
     showCtx: !isOps && !isClientView,
     userInitials: isOps ? 'AN' : 'AD',

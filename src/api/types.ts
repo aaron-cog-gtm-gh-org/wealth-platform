@@ -33,6 +33,7 @@ export interface AccountDto {
 export interface HoldingDto {
   accountKey: AccountKey; assetClass: AssetClass; name: string; identifier: string; quantity: number; price: number;
   marketValue: number; costBasis: number; dayChangePct: number; currency: Currency;
+  quantityDec?: string; priceDec?: string;
 }
 
 export interface PortfolioDto {

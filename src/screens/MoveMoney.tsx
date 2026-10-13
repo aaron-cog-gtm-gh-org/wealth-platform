@@ -3,6 +3,11 @@ import type { Model } from '../model';
 
 export function MoveMoney({ m }: { m: Model }) {
   const { amount, amountError, availableCashFmt, benes, confirmTitle, fromLabel, goActivity, limits, m1, m2, m3, mSteps, needsApproval, onAmount, railNote, rails, review, toConfirm, toEdit, toReview, tracking } = m;
+  if (m.isCustody) {
+    return <div style={{ background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px', padding: '18px', color: 'rgba(25,25,25,.56)' }}>
+      Payments are not available for migrated custody clients.
+    </div>;
+  }
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 320px", gap: "12px", alignItems: "start", maxWidth: "1100px" }}>
@@ -26,7 +31,7 @@ export function MoveMoney({ m }: { m: Model }) {
                 </Fragment>))}
                 <a href="#">Add a new payee</a></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <label style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>Amount (CAD)</span>
+                <label style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>{m.isCustody ? `Amount (${m.reportingCurrency})` : 'Amount (CAD)'}</span>
                   <input value={amount} onChange={onAmount} style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", font: "600 14px Inter,sans-serif" }} /></label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>Date</span><div style={{ padding: "9px 11px", border: "1px solid #cfd5dd", borderRadius: "6px", fontSize: "13px" }}>Today, Mon 12-Oct-2026</div></div>
               </div>

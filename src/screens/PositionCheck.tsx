@@ -3,8 +3,8 @@ import type { CSSProperties } from 'react';
 import { getBreakHistory, getBreakNotes, getPositionCheckDates, getPositionChecks, patchBreakNote } from '../api/client';
 import type { BreakCause, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckMode, PositionCheckResult } from '../api/types';
 import { AMBER, GREEN, INK, MUTE, RED, dayMonthYear, pill } from '../format';
-import { messageBrowserHref } from '../model/messages';
 import type { PillKind } from '../format';
+import { SourceMessageLink } from './SourceMessageLink';
 
 const AUTHOR_KEY = 'wealth.positionCheck.author';
 const EDIT_STATUSES: Exclude<BreakStatus, 'NEW'>[] = ['OPEN', 'CHASED', 'RESOLVED', 'WRITEOFF'];
@@ -60,12 +60,12 @@ function StatusPill({ status }: { status: BreakStatus }) {
 }
 
 function SourceLinks({ ids }: { ids: number[] }) {
-  if (!ids.length) return <span style={{ color: MUTE }}>—</span>;
-  const labelFor = (i: number) => (i === 0 ? 'Prev' : i === 1 ? 'Stmt' : 'Conf');
+  const sourceIds = ids.filter(id => Number.isInteger(id) && id > 0);
+  if (!sourceIds.length) return <span style={{ color: MUTE }}>—</span>;
   return (
     <span style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
-      {ids.map((id, i) => (
-        <a key={i} href={messageBrowserHref(id)} title={`Source message #${id}`} style={{ color: '#005daa', textDecoration: 'none', ...mono }}>{labelFor(i)} #{id}</a>
+      {sourceIds.map((id, i) => (
+        <SourceMessageLink key={`${id}:${i}`} messageId={id} label={i === 0 ? 'prev stmt' : i === 1 ? 'stmt' : `settl. ${id}`} />
       ))}
     </span>
   );
@@ -301,7 +301,7 @@ export function PositionCheck() {
         ) : (
           <div style={{ overflowX: 'auto' }}><div style={{ minWidth: '1100px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '10px', padding: '6px 12px', background: '#f8f9fb', color: MUTE, fontSize: '11px' }}>
-              <span>Account · date</span><span>Instrument</span><span style={{ textAlign: 'right' }}>Previous</span><span style={{ textAlign: 'right' }}>Settled net</span><span style={{ textAlign: 'right' }}>Expected</span><span style={{ textAlign: 'right' }}>Reported</span><span style={{ textAlign: 'right' }}>Difference</span><span>Status</span><span>Note</span><span>Source</span>
+              <span>Account · date</span><span>Instrument</span><span style={{ textAlign: 'right' }}>Previous</span><span style={{ textAlign: 'right' }}>Settled net</span><span style={{ textAlign: 'right' }}>Expected</span><span style={{ textAlign: 'right' }}>Reported</span><span style={{ textAlign: 'right' }}>Difference</span><span>Status</span><span>Note</span><span>Sources</span>
             </div>
             {breaks.map(b => {
               const k = keyOf(b);

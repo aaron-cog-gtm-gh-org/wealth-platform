@@ -3,6 +3,7 @@ import type { Model } from '../model';
 
 export function RebalanceOrders({ m }: { m: Model }) {
   const { approve, approveBg, approveCursor, approveFg, approveLabel, approveNote, checkSummary, checkSummaryColor, checks, driftAfter, impact, tradeCountLabel, trades } = m;
+  if (m.isCustody) return <div style={{ background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px', padding: '18px', color: 'rgba(25,25,25,.7)' }}>Not available</div>;
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 330px", gap: "12px", alignItems: "start" }}>

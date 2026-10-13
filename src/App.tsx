@@ -1,9 +1,12 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
-import { loadWealthData } from './api/client';
+import { clientParam, loadWealthData, selectedClient } from './api/client';
+import type { ClientSelection } from './api/client';
+import type { ClientPickerItem } from './api/types';
 import { deriveData } from './data';
 import type { Data } from './data';
 import { buildModel } from './model';
+import { ClientPicker } from './ClientPicker';
 import { Client360 } from './screens/Client360';
 import { PortfolioDetail } from './screens/PortfolioDetail';
 import { RebalanceOrders } from './screens/RebalanceOrders';
@@ -16,6 +19,7 @@ import { MoveMoney } from './screens/MoveMoney';
 import { CustodySettlements } from './screens/CustodySettlements';
 import { MessageBrowser } from './screens/MessageBrowser';
 import { CustodyAdmin } from './screens/CustodyAdmin';
+import { CustodyHoldings } from './screens/CustodyHoldings';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import type { DataState, Screen, SetUiState } from './types';
 
@@ -41,11 +45,12 @@ export function App() {
   const [ui, setUi] = useState(INITIAL_UI_STATE);
   const [data, setData] = useState<Data | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const selectedRef = useRef(clientParam(selectedClient()));
 
   const load = useCallback(() => {
     setLoadFailed(false);
     setData(null);
-    loadWealthData().then(
+    loadWealthData(selectedClient()).then(
       raw => setData(deriveData(raw)),
       err => { console.error(err); setLoadFailed(true); },
     );
@@ -54,10 +59,16 @@ export function App() {
   useEffect(load, [load]);
 
   useEffect(() => {
-    const onPop = () => setLoc(readLocation());
+    const onPop = () => {
+      const current = clientParam(selectedClient());
+      const changed = current !== selectedRef.current;
+      selectedRef.current = current;
+      setLoc(readLocation());
+      if (changed) load();
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  }, [load]);
 
   const setState: SetUiState = useCallback(patch => setUi(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) })), []);
 
@@ -67,6 +78,22 @@ export function App() {
     window.history.pushState(null, '', '?' + q.toString());
     setLoc(l => ({ ...l, screen }));
   }, []);
+
+  const pickClient = useCallback((item: ClientPickerItem) => {
+    const selection: ClientSelection = item.kind === 'custody' ? { kind: 'custody', clientId: Number(item.id) } : { kind: 'household', id: item.id };
+    const q = new URLSearchParams(window.location.search);
+    if (selection.kind === 'household' && selection.id === 'HH-WHITFIELD') q.delete('client');
+    else q.set('client', clientParam(selection));
+    let screen = loc.screen;
+    if (screen === 'custody-holdings' && item.kind === 'household') screen = 'c360';
+    q.set('screen', screen);
+    q.delete('account');
+    q.delete('date');
+    window.history.pushState(null, '', '?' + q.toString());
+    selectedRef.current = clientParam(selection);
+    setLoc(current => ({ ...current, screen, dataState: null }));
+    load();
+  }, [load, loc.screen]);
 
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
@@ -81,10 +108,7 @@ export function App() {
           <div style={{ font: "600 14px/1 Inter,sans-serif", letterSpacing: "-0.01em" }}>Wealth Platform</div>
           <div style={{ font: "500 10px/1 'IBM Plex Mono',monospace", letterSpacing: ".04em", padding: "3px 6px", border: "1px solid rgba(255,255,255,.5)", borderRadius: "4px" }}>UAT</div>
         </div>
-        <div style={{ flex: "1", minWidth: "0", maxWidth: "520px", height: "30px", background: "rgba(255,255,255,.14)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", padding: "0 10px", color: "rgba(255,255,255,.85)" }}>
-          <span style={{ minWidth: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Search clients, accounts, instruments, exceptions</span>
-          <span style={{ font: "500 11px 'IBM Plex Mono',monospace", flex: "none" }}>⌘K</span>
-        </div>
+        <ClientPicker onPick={pickClient} />
         <div style={{ flex: "0 1 auto", minWidth: "0", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "14px", fontSize: "11px", color: "rgba(255,255,255,.9)", marginLeft: "auto" }}>
           <span style={{ minWidth: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>TSX open · data as of 14:47 ET · Mon 12-Oct-2026</span>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "none" }}>
@@ -115,7 +139,7 @@ export function App() {
         <main style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column" }}>
           {isClientView && (<>
             <div style={{ background: "#fff8d6", borderBottom: "1px solid #f0dd8a", padding: "7px 20px", fontSize: "12px", color: "#5c4a00", display: "flex", justifyContent: "space-between" }}>
-              <span><strong>Client portal preview</strong> — you are viewing what Eleanor Whitfield sees. Actions are simulated and nothing is submitted.</span>
+              <span><strong>Client portal preview</strong>{data?.raw.household.source?.kind === 'custody' ? ` — you are viewing what ${data.raw.household.primaryClient.displayName} sees. Actions are simulated and nothing is submitted.` : ' — you are viewing what Eleanor Whitfield sees. Actions are simulated and nothing is submitted.'}</span>
               <span>WCAG 2.2 AA layout</span>
             </div>
           </>)}
@@ -189,10 +213,10 @@ export function App() {
 
             {show['custody-settlements'] && <CustodySettlements m={m} />}
             {show['position-check'] && <PositionCheck />}
-
             {show['message-browser'] && <MessageBrowser />}
 
             {show['custody-admin'] && <CustodyAdmin />}
+            {show['custody-holdings'] && <CustodyHoldings />}
           </div>
         </main>
       </div>

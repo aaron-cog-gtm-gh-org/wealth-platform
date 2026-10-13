@@ -1,8 +1,8 @@
 import type {
-  ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, CustodyClientPage, CustodyClientSummary,
-  CustodyConfirmation, CustodyMessage, CustodyMessagePage, CustodyStatement, CustodyStatementDate, HouseholdDto, IngestRun,
-  IngestionStatus, PaymentsDto, PerformanceDto, PortfolioDto,
-  PositionCheckMode, PositionCheckResult, RebalanceDto, SettlementExceptionsDto, WealthData,
+  ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, ClientPickerPage, CustodyClientPage,
+  CustodyClientSummary, CustodyConfirmation, CustodyMessage, CustodyMessagePage, CustodyStatement, CustodyStatementDate,
+  HouseholdDto, IngestRun, IngestionStatus, PaymentsDto, PerformanceDto, PortfolioDto, PositionCheckMode, PositionCheckResult,
+  RebalanceDto, SettlementExceptionsDto, WealthData,
 } from './types';
 
 /** Household shown when no `?client=` is given. */
@@ -61,6 +61,7 @@ const EMPTY_PERFORMANCE: PerformanceDto = {
 const EMPTY_REBALANCE: RebalanceDto = { proposal: { id: '', status: 'Not available', trackingErrorBeforePct: 0, trackingErrorAfterPct: 0 }, trades: [], checks: [], drift: [] };
 const EMPTY_ALTERNATIVES: AlternativesDto = { commitments: [], capitalCalls: [], distributions: [] };
 const EMPTY_ACTIVITY: ActivityDto = { feed: [], pending: [], transactions: [] };
+const EMPTY_PAYMENTS: PaymentsDto = { payees: [], rails: [] };
 
 export async function loadWealthData(selection: ClientSelection = selectedClient()): Promise<WealthData> {
   if (selection.kind === 'custody') return loadCustodyWealthData(selection.clientId);
@@ -84,13 +85,12 @@ export async function loadWealthData(selection: ClientSelection = selectedClient
  * (GBP); panels with no legacy source are empty and listed in `household.source.unavailable`.
  */
 async function loadCustodyWealthData(clientId: number): Promise<WealthData> {
-  const [household, portfolio, exceptions, payments] = await Promise.all([
+  const [household, portfolio, exceptions] = await Promise.all([
     getCustodyHousehold(clientId),
     getCustodyPortfolio(clientId),
     get<SettlementExceptionsDto>('/ops/queues/' + encodeURIComponent(OPS_QUEUE) + '/settlement-exceptions'),
-    get<PaymentsDto>('/portal/clients/' + encodeURIComponent(CLIENT_ID) + '/payments').then(p => ({ ...p, payees: [] })),
   ]);
-  return { household, portfolio, performance: EMPTY_PERFORMANCE, rebalance: EMPTY_REBALANCE, alternatives: EMPTY_ALTERNATIVES, exceptions, activity: EMPTY_ACTIVITY, payments };
+  return { household, portfolio, performance: EMPTY_PERFORMANCE, rebalance: EMPTY_REBALANCE, alternatives: EMPTY_ALTERNATIVES, exceptions, activity: EMPTY_ACTIVITY, payments: EMPTY_PAYMENTS };
 }
 
 // --- Custody fetch helpers (contracts/api.md) ---
@@ -104,6 +104,7 @@ const qs = (params: Record<string, string | number | undefined>) => {
 const custody = (path: string) => '/custody' + path;
 
 export const getCustodyClients = (q = '', page = 1) => get<CustodyClientPage>(custody('/clients' + qs({ q, page })));
+export const searchClients = (q = '', page = 1) => get<ClientPickerPage>('/clients' + qs({ q, page }));
 export const getCustodyClient = (clientId: number) => get<CustodyClientSummary>(custody(`/clients/${clientId}`));
 export const getCustodyHousehold = (clientId: number) => get<HouseholdDto>(custody(`/clients/${clientId}/household`));
 export const getCustodyPortfolio = (clientId: number) => get<PortfolioDto>(custody(`/clients/${clientId}/portfolio`));

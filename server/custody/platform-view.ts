@@ -52,12 +52,12 @@ export function toCustodyHousehold(client: CustodyClientSummary): HouseholdDto {
 export function toCustodyPortfolio(client: CustodyClientSummary, statements: CustodyStatement[]): PortfolioDto {
   const accounts: AccountDto[] = client.accounts.map(a => ({
     key: custodyAccountKey(a.accountId), accountNo: String(a.safeNo), name: accountLabel(a), shortName: a.accountType,
-    ownership: client.name, management: 'Custody', currencies: a.reportingCcy, driftPts: 0, driftStatus: 'OK', dayChangePct: 0,
+    ownership: client.name, management: a.closed ? 'Custody · closed' : 'Custody', currencies: a.reportingCcy, driftPts: 0, driftStatus: 'OK', dayChangePct: 0,
   }));
   const holdings: HoldingDto[] = statements.flatMap(s => s.lines.map(l => ({
     accountKey: custodyAccountKey(s.accountId), assetClass: assetClassFor(l.isin, l.qtyType), name: l.name, identifier: l.isin,
     quantity: decToNumber(l.qty), price: decToNumber(l.price), marketValue: l.reportingValue === null ? 0 : decToNumber(l.reportingValue),
-    costBasis: 0, dayChangePct: 0, currency: l.ccy,
+    costBasis: 0, dayChangePct: 0, currency: l.ccy, quantityDec: l.qty, priceDec: l.price,
   })));
   const asOf = statements.map(s => s.date).sort().at(-1) ?? null;
   return {
