@@ -154,7 +154,7 @@ Client 360 / Portfolio CAD 8,555,922, 3 accounts, 25 holdings, CAD exceptions, n
 
 ## Evidence
 
-- Continuous screen recordings are attached to PR #10: the full side-by-side walkthrough, plus a retest of I-1..I-3 after the fixes.
+- Continuous screen recordings, delivered with the PR #10 sign-off report: `pv-migration-full-walkthrough.mp4` (the full six-client side-by-side walkthrough) and `custody-integration-retest.mp4` (the I-1..I-3 retest after the fixes).
 - Paired legacy | new screenshots are embedded in the PR description: holdings 2001, D-1, D-3 (corrected and legacy mode), D-4
   (statement, source messages, false break), D-5, D-6, Check All (both modes), Admin, HH-WHITFIELD, and the I-1..I-3 before/after.
 - Re-runnable checks: `node scratch/quickstart-api.mjs` (quickstart §3 API checks; not committed) and `node scripts/custody-perf.mjs`.
