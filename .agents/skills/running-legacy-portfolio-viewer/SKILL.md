@@ -149,3 +149,12 @@ The all-dates totals (legacy 7 / corrected 2) come from `legacy-as-built.md` §9
   (Admin page shows the full path). Keep the legacy checkout layout intact.
 - Legacy pages are fixed-width and "Best viewed at 1024x768"; deep links need a logged-in session (else redirect to
   Login.aspx, which then lands on ClientSearch, not the deep link).
+
+## Message Browser and ingestion comparisons (US4/US5)
+
+- A maximized browser with alternating tabs is useful when the legacy fixed-width page and new app cannot both fit legibly side by side. Chrome zoom is shared by hostname, including different localhost ports.
+- New Message Browser filtered links use `?screen=message-browser&type=535|54x&date=YYYY-MM-DD&safe=NNNNN`. Legacy supports type/date query params, but safe code must be entered and submitted with **List**.
+- Clicking a new cancellation link goes to `?screen=message-browser&message=<id>`, which also shows the unfiltered first page of 50 files. The detail is below that list: after loading finishes, use Ctrl+End to reveal it. Do not mistake the initial list for a failed link.
+- For an incremental-ingest demonstration, copy a committed file to a new path without changing its bytes, after verifying the destination does not already exist. **Run ingest** should count the new path as one new file even when its contents match an existing file.
+- Message Browser filters use the parsed internal business date, not the date embedded in the copied filename. Reuse the source's business date to find the new file.
+- For cleanup, delete only the added file and run `npm run db:setup` in PowerShell. Wait for ingestion to finish, then check `/api/custody/admin/ingestion` and `git status --short`; leave the dev services up.

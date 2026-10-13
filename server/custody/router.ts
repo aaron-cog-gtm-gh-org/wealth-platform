@@ -2,9 +2,10 @@
 // in server/repositories/custody.ts. Validation errors → 400 { error }, missing → 404.
 import { json as expressJson, Router, type NextFunction, type Request, type Response } from 'express';
 import {
-  CustodyValidationError, accountExists, getBreakHistory, getCustodyClient, getCustodyHousehold, getCustodyPortfolio, getStatement,
-  listBreakNotes, listConfirmations, listCustodyClients, listPositionCheckDates, listStatementDates, optionalPage, parseBreakNotePatch,
-  patchBreakNote, requireDate, requireId, requireIsin, runPositionChecks,
+  CustodyValidationError, IngestBusyError, IngestConflictError, accountExists, getBreakHistory, getCustodyClient, getCustodyHousehold,
+  getCustodyPortfolio, getIngestionStatus, getMessage, getStatement, listBreakNotes, listConfirmations, listCustodyClients, listMessages,
+  listPositionCheckDates, listStatementDates, optionalPage, parseBreakNotePatch, parseMessageType, patchBreakNote, requireDate, requireId,
+  requireIsin, runPositionChecks, triggerIngestRun,
 } from '../repositories/custody';
 import type { PositionCheckMode } from '../../src/api/types';
 
@@ -71,6 +72,22 @@ export function custodyRouter() {
       return;
     }
     next(err);
+  });
+  r.get('/messages', custodyJson(req => listMessages({
+    type: parseMessageType(str(req.query.type)),
+    date: optDate(req.query.date, 'date'),
+    safe: req.query.safe === undefined || req.query.safe === '' ? undefined : requireId(req.query.safe, 'safe'),
+    page: optionalPage(req.query.page),
+  })));
+  r.get('/messages/:messageId', custodyJson(req => getMessage(requireId(req.params.messageId, 'messageId'))));
+  r.get('/admin/ingestion', custodyJson(() => getIngestionStatus()));
+  r.post('/admin/ingest-runs', async (_req, res, next) => {
+    try {
+      res.status(201).json(await triggerIngestRun());
+    } catch (err) {
+      if (err instanceof IngestBusyError || err instanceof IngestConflictError) res.status(409).json({ error: (err as Error).message });
+      else next(err);
+    }
   });
   return r;
 }

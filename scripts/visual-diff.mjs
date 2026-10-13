@@ -14,7 +14,8 @@ const HEIGHT = Number(process.env.HEIGHT ?? 900);
 const OUT = 'visual-diff-output';
 
 const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'];
-const APP_ONLY = ['position-check'];
+// Screens with no mockup: app-only cases, never diffed.
+const APP_ONLY = ['position-check', 'message-browser', 'custody-admin'];
 const STATES = ['Populated', 'Loading', 'Empty', 'Error'];
 const CUSTODY_CASES = STATES.map(state => ({ name: `custody-settlements-${state}`, screen: 'custody-settlements', state }));
 const CUSTODY_CLIENT_ID = process.env.CUSTODY_CLIENT_ID ?? '1055';
@@ -39,12 +40,24 @@ const FLOWS = [
   { name: 'flow-money-edit', screen: 'money', steps: [['click', 'Review payment'], ['click', 'Edit']] },
 ];
 
+// Extra app-only cases with custom URLs (US4 message detail).
+async function appOnlyExtra() {
+  const out = [];
+  try {
+    const res = await fetch(`${APP_URL}/api/custody/messages?type=535&date=2026-07-17&safe=16598`);
+    const page = await res.json();
+    const row = page.rows?.find(r => r.sourceFile === 'mt535/MT535_16598_20260717_001.txt');
+    if (row) out.push({ name: 'message-browser-detail', screen: 'message-browser', url: `${APP_URL}/?screen=message-browser&message=${row.messageId}` });
+  } catch { /* detail case skipped when the custody API is down */ }
+  return out;
+}
+
 const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
 const APP_ONLY_CASES = APP_ONLY.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
-const cases = !args.length
+const cases = [...(!args.length || args.some(a => APP_ONLY.includes(a)) ? await appOnlyExtra() : []), ...(!args.length
   ? [...STATIC, ...APP_ONLY_CASES, ...FLOWS]
-  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : a.startsWith('custody-settlements') ? [] : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
+  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : a.startsWith('custody-settlements') ? [] : APP_ONLY.includes(a) ? APP_ONLY_CASES.filter(c => c.screen === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':'))))];
 const custodyCases = !args.length
   ? CUSTODY_CASES
   : args.flatMap(a => {
@@ -83,9 +96,9 @@ function pad(img, w, h) {
 }
 
 let worst = 0;
-for (const { name, screen, state = 'Populated', steps } of cases) {
-  if (APP_ONLY.includes(screen)) {
-    const app = await shoot(`${APP_URL}/?screen=${screen}&state=${state}`, null, steps);
+for (const { name, screen, state = 'Populated', steps, url } of cases) {
+  if (APP_ONLY.includes(screen) || url) {
+    const app = await shoot(url ?? `${APP_URL}/?screen=${screen}&state=${state}`, null, steps);
     writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
     console.log(`${name.padEnd(34)} app-only`);
     continue;

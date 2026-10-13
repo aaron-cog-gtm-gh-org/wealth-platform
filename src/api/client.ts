@@ -1,6 +1,7 @@
 import type {
   ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, CustodyClientPage, CustodyClientSummary,
-  CustodyConfirmation, CustodyStatement, CustodyStatementDate, HouseholdDto, PaymentsDto, PerformanceDto, PortfolioDto,
+  CustodyConfirmation, CustodyMessage, CustodyMessagePage, CustodyStatement, CustodyStatementDate, HouseholdDto, IngestRun,
+  IngestionStatus, PaymentsDto, PerformanceDto, PortfolioDto,
   PositionCheckMode, PositionCheckResult, RebalanceDto, SettlementExceptionsDto, WealthData,
 } from './types';
 
@@ -118,3 +119,18 @@ export const patchBreakNote = (accountId: number, isin: string, date: string, pa
   send<BreakNote>('PATCH', custody(`/breaks/${accountId}/${isin}/${date}`), patch);
 export const getBreakHistory = (accountId: number, isin: string, date: string) =>
   get<BreakNoteHistory[]>(custody(`/breaks/${accountId}/${isin}/${date}/history`));
+
+export const getCustodyMessages = (f: { type?: string; date?: string; safe?: string | number; page?: number } = {}) =>
+  get<CustodyMessagePage>(custody('/messages' + qs({ type: f.type, date: f.date, safe: f.safe, page: f.page })));
+export const getCustodyMessage = (messageId: number) => get<CustodyMessage>(custody(`/messages/${messageId}`));
+export const getIngestionStatus = () => get<IngestionStatus>(custody('/admin/ingestion'));
+
+/** POST an incremental ingest run; non-2xx bodies carry `{ error }` (409 busy/conflict). */
+export async function postIngestRun(): Promise<IngestRun> {
+  const res = await fetch('/api/custody/admin/ingest-runs', { method: 'POST', headers: { Accept: 'application/json' } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error ?? `POST /custody/admin/ingest-runs failed with ${res.status}`);
+  }
+  return res.json() as Promise<IngestRun>;
+}

@@ -4,12 +4,14 @@
 import oracledb from 'oracledb';
 import type {
   CustodyAccountSummary, CustodyAccountType, CustodyClientPage, CustodyClientRow, CustodyClientSummary, CustodyConfirmation,
-  CustodyStatement, CustodyStatementDate, CustodyStatementLine, Currency, HouseholdDto, PortfolioDto, QtyType,
+  CustodyMessage, CustodyMessageDerived, CustodyMessagePage, CustodyMessageRow,
+  CustodyStatement, CustodyStatementDate, CustodyStatementLine, Currency, HouseholdDto, IngestionStatus, IngestRun, PortfolioDto, QtyType,
   BreakCause, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckResult,
 } from '../../src/api/types';
 import { getPool, query } from '../db/pool';
 import { decSum, normalizeDec } from '../custody/decimal.js';
 import { toCustodyHousehold, toCustodyPortfolio } from '../custody/platform-view.js';
+import { defaultArchiveDir, ingestArchive, IngestConflictError } from '../custody/ingest.js';
 import { confirmationFact, parseArchiveText, statementFact, type ArchiveEntry } from '../custody/archive.js';
 import {
   buildRuleContext, positionChecksForAll, type AccountRef, type ConfirmationFact, type RuleMode, type StatementFact,
@@ -372,3 +374,174 @@ export async function getBreakHistory(accountId: number, isin: string, date: str
     { accountId, isin, breakDate: date },
   );
 }
+
+// --- Raw messages & ingestion admin (US4 / US5) ----------------------------------------------
+
+/** Legacy MessageBrowser GridView page size. */
+export const MESSAGE_PAGE_SIZE = 50;
+
+export type MessageTypeFilter = '535' | '54x' | '544' | '545' | '546' | '547';
+
+/** Accepts `535`, `MT535`, `54x`, `MT54x` (case-insensitive); undefined/'' → no filter. */
+export function parseMessageType(v: unknown): MessageTypeFilter | undefined {
+  if (v === undefined || v === '') return undefined;
+  const s = String(v).trim().toUpperCase().replace(/^MT/, '');
+  if (s === '535' || s === '54X' || s === '544' || s === '545' || s === '546' || s === '547') {
+    return (s === '54X' ? '54x' : s) as MessageTypeFilter;
+  }
+  throw new CustodyValidationError('type must be 535, 54x, 544, 545, 546 or 547');
+}
+
+const messageWhere = (f: { type?: MessageTypeFilter; date?: string; safe?: number }) => {
+  const conds: string[] = [];
+  const binds: oracledb.BindParameters = {};
+  if (f.type === '535') conds.push('mt_type = 535');
+  else if (f.type === '54x') conds.push('mt_type BETWEEN 544 AND 547');
+  else if (f.type) { conds.push('mt_type = :mt'); binds.mt = Number(f.type); }
+  if (f.date) { conds.push(`business_date = TO_DATE(:d, 'YYYY-MM-DD')`); binds.d = f.date; }
+  if (f.safe !== undefined) { conds.push('safe_no = :safe'); binds.safe = f.safe; }
+  return { where: conds.length ? ' WHERE ' + conds.join(' AND ') : '', binds };
+};
+
+const MESSAGE_ROW_COLS = `message_id AS "messageId", mt_type AS "mtType", function_code AS "functionCode",
+  safe_no AS "safeNo", ${isoCol('business_date', 'businessDate')}, source_file AS "sourceFile",
+  parse_status AS "parseStatus", DBMS_LOB.GETLENGTH(raw_text) AS "sizeBytes"`;
+
+/** Stored messages, 50 per page, ordered by source file (ordinal — matches the legacy browser). */
+export async function listMessages(f: { type?: MessageTypeFilter; date?: string; safe?: number; page?: number } = {}): Promise<CustodyMessagePage> {
+  const page = f.page ?? 1;
+  const { where, binds } = messageWhere(f);
+  const [rows, total] = await Promise.all([
+    query<CustodyMessageRow>(`SELECT ${MESSAGE_ROW_COLS} FROM custody_messages${where}
+      ORDER BY NLSSORT(source_file, 'NLS_SORT=BINARY') OFFSET :o ROWS FETCH NEXT :n ROWS ONLY`,
+      { ...binds, o: (page - 1) * MESSAGE_PAGE_SIZE, n: MESSAGE_PAGE_SIZE }),
+    query<{ N: number }>(`SELECT COUNT(*) AS n FROM custody_messages${where}`, binds),
+  ]);
+  return { rows, page, total: Number(total[0]?.N ?? 0) };
+}
+
+/** One message with its exact raw text (CLOB → JS string) and its derived statement/confirmation. */
+export async function getMessage(id: number): Promise<CustodyMessage | null> {
+  const conn = await (await getPool()).getConnection();
+  let msg: (CustodyMessageRow & { rawText: string; parseError: string | null; contentSha256: string }) | undefined;
+  try {
+    const rows = (await conn.execute<Record<string, unknown>>(
+      `SELECT ${MESSAGE_ROW_COLS}, raw_text AS "rawText", parse_error AS "parseError", content_sha256 AS "contentSha256"
+         FROM custody_messages WHERE message_id = :id`,
+      { id }, { outFormat: oracledb.OUT_FORMAT_OBJECT, fetchInfo: { rawText: { type: oracledb.STRING } } })).rows ?? [];
+    msg = rows[0] as unknown as typeof msg;
+  } finally {
+    await conn.close();
+  }
+  if (!msg) return null;
+  return { ...msg, derived: await messageDerived(id, msg.mtType) };
+}
+
+async function messageDerived(messageId: number, mtType: number): Promise<CustodyMessageDerived | null> {
+  if (mtType === 535) {
+    const r = (await query<{ accountId: number | null; clientId: number | null; date: string; functionCode: string; effective: number; lineCount: number }>(
+      `SELECT s.account_id AS "accountId", a.client_id AS "clientId", ${isoCol('s.statement_date', 'date')},
+              s.function_code AS "functionCode", s.is_effective AS "effective",
+              (SELECT COUNT(*) FROM custody_statement_lines l WHERE l.statement_id = s.statement_id) AS "lineCount"
+         FROM custody_statements s LEFT JOIN custody_accounts a ON a.account_id = s.account_id
+        WHERE s.message_id = :id`, { id: messageId }))[0];
+    return r ? { kind: 'statement', ...r, effective: r.effective === 1 } : null;
+  }
+  const r = (await query<{ confirmationId: number; accountId: number | null; clientId: number | null; date: string;
+    reference: string; isin: string; functionCode: string; cancelledBy: number | null }>(
+    `SELECT c.confirmation_id AS "confirmationId", c.account_id AS "accountId", a.client_id AS "clientId",
+            ${isoCol('c.settle_date', 'date')}, c.seme AS "reference", TRIM(c.isin) AS "isin",
+            c.function_code AS "functionCode", c.cancelled_by AS "cancelledBy"
+       FROM custody_confirmations c LEFT JOIN custody_accounts a ON a.account_id = c.account_id
+      WHERE c.message_id = :id`, { id: messageId }))[0];
+  if (!r) return null;
+  const [byMsg, cancelsMsg] = await Promise.all([
+    r.cancelledBy === null ? Promise.resolve(null)
+      : query<{ M: number }>(`SELECT message_id AS m FROM custody_confirmations WHERE confirmation_id = :id`, { id: r.cancelledBy }).then(x => x[0]?.M ?? null),
+    r.functionCode === 'CANC'
+      ? query<{ M: number }>(`SELECT message_id AS m FROM custody_confirmations WHERE cancelled_by = :id`, { id: r.confirmationId }).then(x => x[0]?.M ?? null)
+      : Promise.resolve(null),
+  ]);
+  const { cancelledBy: _cb, ...rest } = r;
+  return { kind: 'confirmation', ...rest, cancelsMessageId: cancelsMsg, cancelledByMessageId: byMsg };
+}
+
+// --- Ingestion admin -------------------------------------------------------------------------
+
+const tsCol = (col: string, alias: string) => `TO_CHAR(${col}, 'YYYY-MM-DD"T"HH24:MI:SS') AS "${alias}"`;
+
+type RunRow = { runId: number; startedAt: string; finishedAt: string | null; filesSeen: number; filesNew: number;
+  filesDuplicate: number; parseErrors: number; triggeredBy: string };
+
+const RUN_COLS = `run_id AS "runId", ${tsCol('started_at', 'startedAt')}, ${tsCol('finished_at', 'finishedAt')},
+  files_seen AS "filesSeen", files_new AS "filesNew", files_duplicate AS "filesDuplicate",
+  parse_errors AS "parseErrors", triggered_by AS "triggeredBy"`;
+
+const toIngestRun = (r: RunRow): IngestRun => ({
+  ...r,
+  durationMs: r.finishedAt ? Date.parse(r.finishedAt) - Date.parse(r.startedAt) : null,
+});
+
+let ingestInFlight: Promise<unknown> | undefined;
+
+/** A run row exists but never got a finished_at, or this process holds a run right now. */
+const runInProgressNow = async () =>
+  ingestInFlight !== undefined ||
+  (await query(`SELECT 1 FROM custody_ingest_runs WHERE finished_at IS NULL AND ROWNUM = 1`)).length > 0;
+
+/** Counts and the most recent run for the custody-admin screen (FR-019). */
+export async function getIngestionStatus(): Promise<IngestionStatus> {
+  const [lastRunRows, byType, counts, unmatched, errors] = await Promise.all([
+    query<RunRow>(`SELECT ${RUN_COLS} FROM custody_ingest_runs WHERE run_id = (SELECT MAX(run_id) FROM custody_ingest_runs)`),
+    query<{ mtType: number; n: number }>(`SELECT mt_type AS "mtType", COUNT(*) AS "n" FROM custody_messages GROUP BY mt_type`),
+    query<{ statements: number; effectiveStatements: number; confirmations: number }>(
+      `SELECT (SELECT COUNT(*) FROM custody_statements) AS "statements",
+              (SELECT COUNT(*) FROM custody_statements WHERE is_effective = 1) AS "effectiveStatements",
+              (SELECT COUNT(*) FROM custody_confirmations) AS "confirmations" FROM dual`),
+    query<{ N: number }>(`SELECT COUNT(*) AS n FROM custody_confirmations c WHERE c.function_code = 'CANC'
+        AND NOT EXISTS (SELECT 1 FROM custody_confirmations x WHERE x.cancelled_by = c.confirmation_id)`),
+    query<{ sourceFile: string; error: string }>(`SELECT source_file AS "sourceFile", parse_error AS "error"
+        FROM custody_messages WHERE parse_status = 'ERROR' ORDER BY NLSSORT(source_file, 'NLS_SORT=BINARY')`),
+  ]);
+  return {
+    lastRun: lastRunRows[0] ? toIngestRun(lastRunRows[0]) : null,
+    messagesByType: Object.fromEntries(byType.map(t => [String(t.mtType), Number(t.n)])),
+    statements: counts[0].statements,
+    effectiveStatements: counts[0].effectiveStatements,
+    confirmations: counts[0].confirmations,
+    unmatchedCancellations: Number(unmatched[0]?.N ?? 0),
+    errors,
+    archiveRoot: defaultArchiveDir(),
+    runInProgress: await runInProgressNow(),
+  };
+}
+
+/** Thrown when an ingest is triggered while another run is in flight (one at a time, in-process). */
+export class IngestBusyError extends Error {}
+
+/**
+ * Runs a full incremental ingest on a pooled connection (per-file commits; readers keep working).
+ * `IngestBusyError` → 409 if a run is already in flight; `IngestConflictError` propagates (→ 409).
+ */
+export async function triggerIngestRun(opts: { triggeredBy?: string; archiveDir?: string } = {}): Promise<IngestRun> {
+  if (ingestInFlight) throw new IngestBusyError('An ingest run is already in progress');
+  const work = (async () => {
+    const conn = await (await getPool()).getConnection();
+    try {
+      const summary = await ingestArchive(conn, opts.archiveDir ?? defaultArchiveDir(), { triggeredBy: opts.triggeredBy ?? 'admin-ui' });
+      return summary.runId;
+    } finally {
+      await conn.close();
+    }
+  })();
+  ingestInFlight = work;
+  try {
+    const runId = await work;
+    const row = (await query<RunRow>(`SELECT ${RUN_COLS} FROM custody_ingest_runs WHERE run_id = :id`, { id: runId }))[0];
+    return toIngestRun(row);
+  } finally {
+    ingestInFlight = undefined;
+  }
+}
+
+export { IngestConflictError };

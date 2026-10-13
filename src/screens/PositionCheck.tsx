@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { getBreakHistory, getBreakNotes, getPositionCheckDates, getPositionChecks, patchBreakNote } from '../api/client';
 import type { BreakCause, BreakNoteHistory, BreakNotePatch, BreakNoteRow, BreakStatus, PositionBreak, PositionCheckMode, PositionCheckResult } from '../api/types';
 import { AMBER, GREEN, INK, MUTE, RED, dayMonthYear, pill } from '../format';
+import { messageBrowserHref } from '../model/messages';
 import type { PillKind } from '../format';
 
 const AUTHOR_KEY = 'wealth.positionCheck.author';
@@ -64,7 +65,7 @@ function SourceLinks({ ids }: { ids: number[] }) {
   return (
     <span style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
       {ids.map((id, i) => (
-        <a key={i} href={`?screen=message-browser&messageId=${id}`} title={`Source message #${id}`} style={{ color: '#005daa', textDecoration: 'none', ...mono }}>{labelFor(i)} #{id}</a>
+        <a key={i} href={messageBrowserHref(id)} title={`Source message #${id}`} style={{ color: '#005daa', textDecoration: 'none', ...mono }}>{labelFor(i)} #{id}</a>
       ))}
     </span>
   );

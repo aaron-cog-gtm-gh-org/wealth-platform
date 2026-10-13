@@ -5,7 +5,8 @@ import type { DataState, Screen } from '../types';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
-  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', ''], ['position-check', 'Position check']] },
+  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', ''], ['position-check', 'Position check'], ['message-browser', 'Message browser']] },
+  { label: 'Administration', items: [['custody-admin', 'Custody ingestion']] },
   { label: 'Client portal preview', items: [['home', 'Client home'], ['activity', 'Activity & status'], ['money', 'Move money']] },
 ];
 
@@ -20,6 +21,8 @@ const META: Record<Screen, [string, string, string]> = {
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   'custody-settlements': ['Advisers / Custodian accounts / Settlements', 'Settlement confirmations', 'Legacy custodian feed · SWIFT MT544–MT547 · by settle date'],
   'position-check': ['Operations / Custody', 'Position check', 'Custodian MT535 statements vs previous statement + settled MT54x movements'],
+  'message-browser': ['Operations / Custody', 'Message browser', 'Raw SWIFT messages from the custodian archive · shown exactly as received'],
+  'custody-admin': ['Administration / Custody', 'Custody ingestion', 'Custodian archive ingest status and re-runs'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -33,6 +36,8 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   'custody-settlements': ['No settlement confirmations', 'Nothing settled for this account in the selected period. Widen the date range or pick another account.', 'Change date range'],
   'position-check': ['No custody statements loaded', 'Position checks run once custodian MT535 statements have been ingested. Run an ingest from the custody archive to populate this screen.', 'View ingestion status'],
+  'message-browser': ['No messages ingested', 'The custodian archive has not been ingested yet. Run an ingest from Custody ingestion to load MT535 and MT54x files.', 'Open custody ingestion'],
+  'custody-admin': ['No ingest runs yet', 'Nothing has been ingested from the custodian archive. Start a run to load statements and confirmations.', 'Run ingest'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -46,9 +51,13 @@ const ERR: Record<Screen, [string, string, string]> = {
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   'custody-settlements': ['Settlement confirmations didn’t load', 'The custody service did not respond. Holdings and statements are unaffected. Retry in a minute.', 'Back to holdings'],
   'position-check': ['Position check could not run', 'The custody service did not respond. No break notes were changed. Retry, or check the ingestion status for the custody archive.', 'View ingestion status'],
+  'message-browser': ['Messages didn’t load', 'The custody message store did not respond. Raw files remain in the archive; retry in a minute.', 'View ingestion status'],
+  'custody-admin': ['Ingestion status unavailable', 'The custody service did not respond, so counts and the last run are unknown. No ingest has been started.', 'Retry later'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
+/** Ops-context screens: no household context bar, ops user in the header. */
+export const OPS_SCREENS: Screen[] = ['exceptions', 'position-check', 'message-browser', 'custody-admin'];
 
 /** Business date the seeded book is valued at. */
 export const AS_OF = '2026-10-12';
@@ -57,7 +66,7 @@ export const totalSource = (d: Data) =>
   `Sum of ${d.holdings.length} positions across ${d.accounts.length} accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun`;
 
 export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null) {
-  const isOps = screen === 'exceptions' || screen === 'position-check';
+  const isOps = OPS_SCREENS.includes(screen);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const [crumb, title, subtitle] = META[screen];
 
