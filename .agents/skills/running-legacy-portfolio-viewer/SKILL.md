@@ -98,7 +98,7 @@ Open legacy and new in two browser windows side by side. Values must match legac
    legacy shows **21,637.05** (defect D-1, fraction read as hundredths); new app must show `21,637.50` **[fix D-1]**.
 5. **Unknown ISIN `GB00ZZ004322`** — `Holdings.aspx?acct=2018&stmt=20260717`: legacy shows `UNKNOWN INSTRUMENT` (defect D-5) although `35B` carries a name;
    new app shows the custodian name flagged unverified **[fix D-5]**.
-6. **Position Check, Check All 2026-07-17** — legacy break count (see Verified results) vs new app legacy mode and
+6. **Position Check, Check All 2026-07-17** — legacy shows 2 accounts with differences (2001, 2145) vs new app legacy mode and
    corrected mode. Across all dates: legacy rules 7 breaks, corrected 2 (account 2001 `GB00ZZ011962` 07-17,
    account 2074 `GB00ZZ000908` 07-31).
 7. **Message Browser** — open a source file from a break (e.g. `?file=MT535_16598_20260717_001.txt`) in both; raw
@@ -107,7 +107,21 @@ Open legacy and new in two browser windows side by side. Values must match legac
 
 # Verified results
 
-VERIFIED_RESULTS_PLACEHOLDER
+Observed in the legacy UI on the committed archive + seed (2026-10-13). Use these as the legacy-side baseline.
+
+| Check | Legacy shows |
+|---|---|
+| Client Summary `?cid=1001` (latest stmt 09-OCT-2026) | 2001/`01001-01` GBP 283,880.39; 2002/`01001-02` GBP 76,295.23; total GBP 360,175.62 |
+| Holdings `?acct=2001&stmt=20260717` | Total Mkt Val (GBP) 203,327.79; `GB00ZZ011962` qty 1,600 @ 13.0020 = 20,803.20 |
+| Check All 2026-07-17 | 118 accounts listed, **2 with differences** (1 each): 2001/`01001-01` Penhaligon (`GB00ZZ011962`, genuine) and 2145/`01079-03` Ms R Fitzwarren (safe 16056, `GB00ZZ001500`, false break D-3) — corrected rules should leave only 2001 |
+| PositionCheck `?acct=2001&stmt=20260717` | `GB00ZZ011962` expected 800, stmt 1,600, diff +800, status RESOLVED |
+| PositionCheck `?acct=2038&stmt=20260626` | `GB00ZZ003373` expected 1,250, stmt 0, diff −1,250, OPEN (false break D-4) |
+| Settlements `?acct=2101&from=01/06/2026&to=31/07/2026` | MT545 ref `KS5400060214` shows GBP **21,637.05** (source `GBP21637,5`, D-1) |
+| Holdings `?acct=2018&stmt=20260717` | `UNKNOWN INSTRUMENT` for `GB00ZZ004322`, qty 544, GBP 6,030.78 (D-5) |
+| Admin | root `<LegacyDir>\archive`; MT535 3,073; MT54x 2,971; parse errors 0 |
+| Roles | JSMITH has no Position Check/Message Browser/Admin nav; deep link → `ClientSearch.aspx?err=1` |
+
+The all-dates totals (legacy 7 / corrected 2) come from `legacy-as-built.md` §9, not from this UI run.
 
 # Gotchas
 
