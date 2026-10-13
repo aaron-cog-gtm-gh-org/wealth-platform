@@ -230,7 +230,7 @@ export async function runPositionChecks(opts: { date?: string; accountId?: numbe
       sourceMessageIds: [o.previousRef, o.statementRef, ...r.settlementRefs].filter((x): x is string => !!x).map(Number),
     };
   })).sort((a, b) => a.date.localeCompare(b.date) || a.accountId - b.accountId || a.isin.localeCompare(b.isin));
-  return { date: opts.date ?? '', mode, accountsChecked: accounts.length, breaks };
+  return { date: opts.date ?? '', mode, accountsChecked: new Set(outcomes.map(o => o.accountId)).size, breaks };
 }
 
 export async function listPositionCheckDates(): Promise<string[]> {

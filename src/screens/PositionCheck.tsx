@@ -60,9 +60,9 @@ function StatusPill({ status }: { status: BreakStatus }) {
 
 function SourceLinks({ ids }: { ids: number[] }) {
   if (!ids.length) return <span style={{ color: MUTE }}>—</span>;
-  const labelFor = (i: number) => (i === 0 ? 'Prev stmt' : i === 1 ? 'Stmt' : `Conf ${i - 1}`);
+  const labelFor = (i: number) => (i === 0 ? 'Prev' : i === 1 ? 'Stmt' : 'Conf');
   return (
-    <span style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+    <span style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
       {ids.map((id, i) => (
         <a key={i} href={`?screen=message-browser&messageId=${id}`} title={`Source message #${id}`} style={{ color: '#005daa', textDecoration: 'none', ...mono }}>{labelFor(i)} #{id}</a>
       ))}
@@ -166,7 +166,7 @@ function HistoryDrawer({ k, title, onClose }: { k: BreakKey; title: string; onCl
               <span style={{ fontWeight: 600 }}>{h.updatedBy}</span>
               <span style={{ color: MUTE, fontSize: '11px' }}>{stamp(h.updatedAt)}</span>
               <span style={{ flex: 1 }} />
-              {h.source === 'LEGACY_MIGRATION' && <span style={{ fontSize: '10px', color: MUTE, border: '1px solid #e1e5eb', borderRadius: '8px', padding: '0 6px' }}>Migrated from Portfolio Viewer</span>}
+              {h.source === 'LEGACY_MIGRATION' && <span style={{ whiteSpace: 'nowrap', fontSize: '10px', color: MUTE, border: '1px solid #e1e5eb', borderRadius: '8px', padding: '0 6px' }}>Migrated from Portfolio Viewer</span>}
               <StatusPill status={h.status} />
             </div>
             {describeChange(h, rows[i + 1]).map((c, j) => <span key={j} style={{ fontSize: '12px', color: INK }}>{c}</span>)}
@@ -178,7 +178,7 @@ function HistoryDrawer({ k, title, onClose }: { k: BreakKey; title: string; onCl
 }
 
 type Tab = 'breaks' | 'notes';
-const COLS = '120px minmax(170px,1fr) 104px 96px 96px 96px 104px 92px 150px 132px';
+const COLS = '112px minmax(160px,1fr) 76px 76px 76px 76px 84px 84px minmax(160px,1fr) 112px';
 
 export function PositionCheck() {
   const init = readParams();
@@ -298,7 +298,7 @@ export function PositionCheck() {
             <span style={{ color: MUTE }}>{result ? `${result.accountsChecked} account${result.accountsChecked === 1 ? '' : 's'} checked for ${date ? dayMonthYear(date) : 'all statement dates'} using ${mode} rules.` : ''}</span>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}><div style={{ minWidth: '1240px' }}>
+          <div style={{ overflowX: 'auto' }}><div style={{ minWidth: '1100px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '10px', padding: '6px 12px', background: '#f8f9fb', color: MUTE, fontSize: '11px' }}>
               <span>Account · date</span><span>Instrument</span><span style={{ textAlign: 'right' }}>Previous</span><span style={{ textAlign: 'right' }}>Settled net</span><span style={{ textAlign: 'right' }}>Expected</span><span style={{ textAlign: 'right' }}>Reported</span><span style={{ textAlign: 'right' }}>Difference</span><span>Status</span><span>Note</span><span>Source</span>
             </div>
@@ -308,7 +308,7 @@ export function PositionCheck() {
               return (
                 <Fragment key={k}>
                   <div data-testid="break-row" style={{ display: 'grid', gridTemplateColumns: COLS, gap: '10px', padding: '6px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center', background: isEditing ? '#f7faff' : undefined }} className="hov-row">
-                    <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontWeight: 600 }}>{b.accountId}</span><span style={{ ...mono, color: MUTE }}>Safe {b.safeNo} · {dayMonthYear(b.date)}</span></div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontWeight: 600 }}>{b.accountId}</span><span style={{ ...mono, color: MUTE }}>Safe {b.safeNo}</span><span style={{ ...mono, color: MUTE }}>{dayMonthYear(b.date)}</span></div>
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</span><span style={{ ...mono, color: MUTE }}>{b.isin} · {b.qtyType}</span></div>
                     <span style={{ textAlign: 'right' }}>{fmtQty(b.previousQty)}</span>
                     <span style={{ textAlign: 'right' }}>{fmtQty(b.settledNet, true)}</span>
@@ -337,17 +337,17 @@ export function PositionCheck() {
 
         {!loading && !err && tab === 'notes' && (
           <div style={{ overflowX: 'auto' }}><div style={{ minWidth: '980px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(170px,1fr) 92px minmax(200px,1.4fr) 150px 120px', gap: '10px', padding: '6px 12px', background: '#f8f9fb', color: MUTE, fontSize: '11px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '120px minmax(170px,1fr) 92px minmax(200px,1.4fr) 150px 140px', gap: '10px', padding: '6px 12px', background: '#f8f9fb', color: MUTE, fontSize: '11px' }}>
               <span>Account · date</span><span>Instrument</span><span>Status</span><span>Note</span><span>Last updated</span><span />
             </div>
             {(notes ?? []).map(n => (
-              <div key={keyOf(n)} data-testid="note-row" style={{ display: 'grid', gridTemplateColumns: '120px minmax(170px,1fr) 92px minmax(200px,1.4fr) 150px 120px', gap: '10px', padding: '6px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center' }} className="hov-row">
+              <div key={keyOf(n)} data-testid="note-row" style={{ display: 'grid', gridTemplateColumns: '120px minmax(170px,1fr) 92px minmax(200px,1.4fr) 150px 140px', gap: '10px', padding: '6px 12px', borderTop: '1px solid #f3f4f6', alignItems: 'center' }} className="hov-row">
                 <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontWeight: 600 }}>{n.accountId}</span><span style={{ ...mono, color: MUTE }}>{dayMonthYear(n.date)}</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.name}</span><span style={{ ...mono, color: MUTE }}>{n.isin}</span></div>
                 <span><StatusPill status={n.status} /></span>
                 <span style={{ color: n.note ? INK : MUTE }}>{n.note ?? 'No note'}{n.cause ? <span style={{ color: MUTE }}> · {CAUSE_LABEL[n.cause]}</span> : null}</span>
                 <span style={{ fontSize: '11px' }}>{n.updatedBy}<br /><span style={{ color: MUTE }}>{stamp(n.updatedAt)}</span></span>
-                <span style={{ display: 'flex', gap: '10px' }}>
+                <span style={{ display: 'flex', gap: '10px', whiteSpace: 'nowrap' }}>
                   <button type="button" onClick={() => openCheck(n)} style={linkBtn}>Open check</button>
                   <button type="button" onClick={() => setHistory({ k: n, title: n.name })} style={linkBtn}>History</button>
                 </span>
