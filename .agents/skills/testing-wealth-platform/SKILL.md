@@ -61,3 +61,24 @@ at the end (or in CI), not per iteration. If it hangs:
 - At "Acquiring lock file": an earlier run is still alive (`kill_shell` does not kill its node
   child). Stop node processes whose command line contains `container-check`, then retry.
 On this Windows VM, run npm scripts via `node <npm-cli.js> run <script>` (see above).
+
+## Custody parity walkthrough notes
+
+### Reliable browser evidence
+
+- CDP Playwright connections can reuse the headed Chrome tabs. Discover the live debug port; do not assume a fixed port between sessions.
+- Client switching and custody requests have successive async loading states. `waitForLoadState('networkidle')` alone may return for an earlier document lifecycle. Wait for the selected client's identity, the requested account/date, and meaningful loaded content (e.g. Holdings `Total (GBP)`, Position Check's loading test ID hidden, or the expected message file). Check that screenshots contain data rather than a skeleton.
+- The message-list filename is rendered with a directory prefix such as `mt535/`. Locate the actual rendered text, not just the basename.
+- Break-note history closes with accessible name `Close history`. A note-only QA edit should include an author, preserve the original status, and be checked in the history drawer. Record the mutation in the report; do not silently erase audit history afterward.
+- Header selection should be verified by data ownership, not just `client=` in the URL. Position Check uses `acct`, Holdings/Settlements use `account`, and Message Browser uses `safe`/`message`; check stale parameters when switching clients. Global Admin counts should not become client-scoped. Switching client clears these scope params and remounts Position Check / Message Browser (`clientSwitchLocation` in `src/model/navigation.ts`).
+- Legacy Check All is a POST-backed page: record the selected date as evidence because the URL may not include it.
+- Full-page Message Browser screenshots may put raw text below a long list. For comparison images, crop a clearly labelled message-detail excerpt from the original screenshot and retain the full original.
+
+### Raw-message comparison
+
+- Legacy `<pre>.textContent` may retain CRLF while React/browser display text normalizes to LF. Compare visible lines separately from exact strings, report the distinction, and do not claim byte-for-byte preservation without comparing original downloads.
+- Keep raw SWIFT and filenames unchanged when evaluating display-date formatting; native date inputs and free-text notes are also not display-date formatter outputs.
+
+### Windows attachments
+
+- If `upload_attachment` rejects a Windows drive-qualified absolute path, a drive-rooted forward-slash path such as `/Users/Administrator/repos/.../image.png` can resolve on the Windows box. Keep full `C:\...` paths in deliverables and reports.
