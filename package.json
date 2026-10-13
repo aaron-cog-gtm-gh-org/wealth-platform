@@ -12,7 +12,7 @@
     "db:setup": "tsx server/db/setup.ts",
     "test:unit": "tsx --test server/custody/__tests__/parse.test.ts server/custody/__tests__/mt535.test.ts server/custody/__tests__/mt54x.test.ts server/custody/__tests__/rules.test.ts server/custody/__tests__/parity.test.ts src/model/__tests__/custody-settlements.test.ts src/model/__tests__/format.test.ts server/custody/__tests__/break-notes.test.ts server/custody/__tests__/messages.test.ts server/custody/__tests__/client-page-window.test.ts",
     "test:parity": "tsx --test server/custody/__tests__/parity.test.ts",
-    "test:int": "tsx --test server/custody/__tests__/ingest.int.test.ts server/custody/__tests__/position-check.int.test.ts server/custody/__tests__/messages.int.test.ts",
+    "test:int": "tsx --test --test-concurrency=1 --test-force-exit server/custody/__tests__/ingest.int.test.ts server/custody/__tests__/position-check.int.test.ts server/custody/__tests__/messages.int.test.ts",
     "test:int:confirmations": "tsx --test server/custody/__tests__/confirmations.int.test.ts",
     "custody:ingest": "tsx server/custody/ingest.ts",
     "custody:migrate-legacy": "tsx server/custody/migrate-legacy.ts",
