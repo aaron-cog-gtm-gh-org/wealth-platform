@@ -1,9 +1,10 @@
 // `/api/custody` routes (contracts/api.md). Story sessions add endpoints here; data access lives
 // in server/repositories/custody.ts. Validation errors → 400 { error }, missing → 404.
-import { Router, type NextFunction, type Request, type Response } from 'express';
+import { json as expressJson, Router, type NextFunction, type Request, type Response } from 'express';
 import {
-  CustodyValidationError, accountExists, getCustodyClient, getCustodyHousehold, getCustodyPortfolio, getStatement, listConfirmations,
-  listCustodyClients, listStatementDates, optionalPage, requireDate, requireId, runPositionChecks,
+  CustodyValidationError, accountExists, getBreakHistory, getCustodyClient, getCustodyHousehold, getCustodyPortfolio, getStatement,
+  listBreakNotes, listConfirmations, listCustodyClients, listPositionCheckDates, listStatementDates, optionalPage, parseBreakNotePatch,
+  patchBreakNote, requireDate, requireId, requireIsin, runPositionChecks,
 } from '../repositories/custody';
 import type { PositionCheckMode } from '../../src/api/types';
 
@@ -51,5 +52,25 @@ export function custodyRouter() {
     accountId: req.query.accountId === undefined || req.query.accountId === '' ? undefined : requireId(req.query.accountId, 'accountId'),
     mode: requireMode(req.query.mode),
   })));
+  r.get('/position-check-dates', custodyJson(() => listPositionCheckDates()));
+  r.get('/break-notes', custodyJson(() => listBreakNotes()));
+  r.patch('/breaks/:accountId/:isin/:date', expressJson(), custodyJson(req => patchBreakNote(
+    requireId(req.params.accountId, 'accountId'),
+    requireIsin(req.params.isin),
+    requireDate(req.params.date),
+    parseBreakNotePatch(req.body),
+  )));
+  r.get('/breaks/:accountId/:isin/:date/history', custodyJson(req => getBreakHistory(
+    requireId(req.params.accountId, 'accountId'),
+    requireIsin(req.params.isin),
+    requireDate(req.params.date),
+  )));
+  r.use((err: Error & { status?: number }, _req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof SyntaxError && err.status === 400) {
+      res.status(400).json({ error: 'Invalid JSON' });
+      return;
+    }
+    next(err);
+  });
   return r;
 }

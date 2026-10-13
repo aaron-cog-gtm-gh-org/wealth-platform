@@ -1,7 +1,7 @@
 import type {
-  ActivityDto, AlternativesDto, CustodyClientPage, CustodyClientSummary, CustodyConfirmation, CustodyStatement, CustodyStatementDate,
-  HouseholdDto, PaymentsDto, PerformanceDto, PortfolioDto, PositionCheckMode, PositionCheckResult, RebalanceDto, SettlementExceptionsDto,
-  WealthData,
+  ActivityDto, AlternativesDto, BreakNote, BreakNoteHistory, BreakNotePatch, BreakNoteRow, CustodyClientPage, CustodyClientSummary,
+  CustodyConfirmation, CustodyStatement, CustodyStatementDate, HouseholdDto, PaymentsDto, PerformanceDto, PortfolioDto,
+  PositionCheckMode, PositionCheckResult, RebalanceDto, SettlementExceptionsDto, WealthData,
 } from './types';
 
 /** Household shown when no `?client=` is given. */
@@ -14,6 +14,23 @@ export const OPS_QUEUE = 'Wealth Ops – Toronto';
 async function get<T>(path: string): Promise<T> {
   const res = await fetch('/api' + path, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`GET ${path} failed with ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+async function send<T>(method: string, path: string, body: unknown): Promise<T> {
+  const res = await fetch('/api' + path, {
+    method,
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let message: string | undefined;
+    try {
+      const payload = await res.json() as { error?: unknown };
+      if (typeof payload.error === 'string') message = payload.error;
+    } catch {}
+    throw new Error(message ?? `${method} ${path} failed with ${res.status}`);
+  }
   return res.json() as Promise<T>;
 }
 
@@ -95,3 +112,9 @@ export const getConfirmations = (accountId: number, from?: string, to?: string) 
   get<CustodyConfirmation[]>(custody(`/accounts/${accountId}/confirmations` + qs({ from, to })));
 export const getPositionChecks = (opts: { date?: string; accountId?: number; mode?: PositionCheckMode } = {}) =>
   get<PositionCheckResult>(custody('/position-checks' + qs(opts)));
+export const getPositionCheckDates = () => get<string[]>(custody('/position-check-dates'));
+export const getBreakNotes = () => get<BreakNoteRow[]>(custody('/break-notes'));
+export const patchBreakNote = (accountId: number, isin: string, date: string, patch: BreakNotePatch) =>
+  send<BreakNote>('PATCH', custody(`/breaks/${accountId}/${isin}/${date}`), patch);
+export const getBreakHistory = (accountId: number, isin: string, date: string) =>
+  get<BreakNoteHistory[]>(custody(`/breaks/${accountId}/${isin}/${date}/history`));
