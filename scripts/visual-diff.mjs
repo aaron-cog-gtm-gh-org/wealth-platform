@@ -170,11 +170,13 @@ for (const { name, state } of custodyCases) {
   const app = await shoot(appUrl);
   const baselinePath = `design/baselines/${name}.png`;
   writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
-  if (!existsSync(baselinePath)) {
+  if (process.env.UPDATE_BASELINES === '1' || !existsSync(baselinePath)) {
     mkdirSync('design/baselines', { recursive: true });
     writeFileSync(baselinePath, PNG.sync.write(app));
-    console.log(`${name.padEnd(34)} baseline captured`);
-    continue;
+    if (process.env.UPDATE_BASELINES !== '1') {
+      console.log(`${name.padEnd(34)} baseline captured`);
+      continue;
+    }
   }
   const baseline = PNG.sync.read(readFileSync(baselinePath));
   const w = Math.max(baseline.width, app.width), h = Math.max(baseline.height, app.height);

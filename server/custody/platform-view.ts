@@ -57,7 +57,7 @@ export function toCustodyPortfolio(client: CustodyClientSummary, statements: Cus
   const holdings: HoldingDto[] = statements.flatMap(s => s.lines.map(l => ({
     accountKey: custodyAccountKey(s.accountId), assetClass: assetClassFor(l.isin, l.qtyType), name: l.name, identifier: l.isin,
     quantity: decToNumber(l.qty), price: decToNumber(l.price), marketValue: l.reportingValue === null ? 0 : decToNumber(l.reportingValue),
-    costBasis: 0, dayChangePct: 0, currency: l.ccy,
+    costBasis: 0, dayChangePct: 0, currency: l.ccy, quantityDec: l.qty, priceDec: l.price,
   })));
   const asOf = statements.map(s => s.date).sort().at(-1) ?? null;
   return {

@@ -23,6 +23,8 @@ export interface Holding {
   cost: number;
   day: number;
   ccy: Currency;
+  qtyDec?: string;
+  pxDec?: string;
 }
 
 export interface SettlementException {
@@ -49,7 +51,7 @@ export function deriveData(raw: WealthData) {
 
   const holdings: Holding[] = portfolio.holdings.map(h => ({
     n: h.name, id: h.identifier, cls: h.assetClass, acct: h.accountKey, qty: h.quantity, px: h.price,
-    mv: h.marketValue, cost: h.costBasis, day: h.dayChangePct, ccy: h.currency,
+    mv: h.marketValue, cost: h.costBasis, day: h.dayChangePct, ccy: h.currency, qtyDec: h.quantityDec, pxDec: h.priceDec,
   }));
   const totalValue = holdings.reduce((s, h) => s + h.mv, 0);
   const cashIn = (key: AccountKey) => holdings.filter(h => h.acct === key && h.cls === 'Cash').reduce((s, h) => s + h.mv, 0);

@@ -1,7 +1,7 @@
 import { CLASS_COLORS } from '../data';
 import type { Data } from '../data';
 import type { ChangeEvent } from 'react';
-import { AMBER as amber, ccyMoney, GREEN as green, MUTE as mute, RED as red, dayMonth, dayMonthYear, fmt, money, pct as pc, pill, signedMoney as sgn, signedPts, yearsBetween } from '../format';
+import { AMBER as amber, ccyMoney, decMoney, decQuantity, GREEN as green, MUTE as mute, RED as red, dayMonth, dayMonthYear, fmt, money, pct as pc, pill, signedMoney as sgn, signedPts, yearsBetween } from '../format';
 import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
@@ -20,7 +20,7 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
   const goMoney = () => go('money');
     // Client 360
     const accounts = D.accounts.map(a => ({ ...a, mvFmt: fmtMoney(a.mv), drift: isCustody ? '—' : a.drift }));
-    const alloc = D.alloc.map(a => { const d = a.a - a.t; return { cls: a.cls, color: a.color, mvFmt: isCustody ? ccyMoney(a.mv, reportingCurrency, 2) : money(a.mv), actual: a.a.toFixed(1) + '%', target: a.t.toFixed(1) + '%', actualW: (a.a * 100 / 35).toFixed(1) + '%', targetW: (a.t * 100 / 35).toFixed(1) + '%', drift: (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1), driftColor: Math.abs(d) > 2 ? red : Math.abs(d) > 1 ? amber : mute, src: `${D.holdings.filter(h => h.cls === a.cls).length} positions · ${D.SRC[a.cls]}` }; });
+    const alloc = D.alloc.map(a => { const d = a.a - a.t; return { cls: a.cls, color: a.color, mvFmt: isCustody ? ccyMoney(a.mv, reportingCurrency, 2) : money(a.mv), actual: a.a.toFixed(1) + '%', target: isCustody ? '—' : a.t.toFixed(1) + '%', actualW: (a.a * 100 / 35).toFixed(1) + '%', targetW: isCustody ? null : (a.t * 100 / 35).toFixed(1) + '%', drift: isCustody ? '—' : (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1), driftColor: isCustody ? mute : Math.abs(d) > 2 ? red : Math.abs(d) > 1 ? amber : mute, src: `${D.holdings.filter(h => h.cls === a.cls).length} positions · ${D.SRC[a.cls]}` }; });
     const profileRows: [string, string, string?][] = isCustody
       ? [['Legal name', C.legalName || 'Not available'], ['Client ID', C.id || 'Not available'], ['Born', 'Not available'], ['Tax residency', 'Not available'], ['Occupation', 'Not available'], ['Risk profile', 'Not available'], ['Time horizon', 'Not available'], ['KYC / AML', 'Not available'], ['Suitability', 'Not available'], ['Preferred contact', 'Not available'], ['Power of attorney', 'Not available']]
       : [['Legal name', C.legalName], ['Client ID', C.id], ['Born', `${dayMonthYear(C.dateOfBirth)} (${yearsBetween(C.dateOfBirth, AS_OF)})`], ['Tax residency', C.taxResidency], ['Occupation', C.occupation], ['Risk profile', `${C.riskProfile} · ${C.riskScore}/10`], ['Time horizon', C.timeHorizon], ['KYC / AML', `${C.kycStatus} · next refresh ${dayMonthYear(C.kycNextRefreshDate)}`, green], ['Suitability', 'Signed ' + dayMonthYear(C.suitabilitySignedDate)], ['Preferred contact', C.preferredContact], ['Power of attorney', C.powerOfAttorney]];
@@ -38,8 +38,8 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
     const clsChips = ['All', ...D.classes].map(c => { const a = c === cls; const n = c === 'All' ? D.holdings.length : D.holdings.filter(h => h.cls === c).length; return { label: `${c} ${n}`, onClick: () => setState({ cls: c }), bg: a ? '#005daa' : '#fff', fg: a ? '#fff' : '#191919', border: a ? '#005daa' : '#d5dbe3' }; });
     const holdings = hs.map(h => { const u = h.mv - h.cost; const isB = h.cls === 'Bonds', isA = h.cls === 'Alternatives', isC = h.cls === 'Cash'; return {
       n: h.n, id: h.id, cls: h.cls, color: D.COLORS[h.cls], acct: h.acct,
-      qtyFmt: isC ? '—' : isB ? fmt(h.qty) + ' face' : isA ? 'paid-in' : fmt(h.qty, h.qty % 1 ? 3 : 0),
-      pxFmt: isCustody ? ccyMoney(h.px, h.ccy, 2) : isC ? (h.ccy === 'USD' ? 'FX ' + data.FX : '—') : isB ? h.px.toFixed(2) : isA ? 'NAV ' + h.px.toFixed(3) + 'x' : (h.ccy === 'USD' ? 'US$' : '$') + h.px.toFixed(2),
+      qtyFmt: isCustody ? decQuantity(h.qtyDec ?? String(h.qty)) + (isB ? ' face' : '') : isC ? '—' : isB ? fmt(h.qty) + ' face' : isA ? 'paid-in' : fmt(h.qty, h.qty % 1 ? 3 : 0),
+      pxFmt: isCustody ? decMoney(h.pxDec ?? String(h.px), h.ccy, 4) : isC ? (h.ccy === 'USD' ? 'FX ' + data.FX : '—') : isB ? h.px.toFixed(2) : isA ? 'NAV ' + h.px.toFixed(3) + 'x' : (h.ccy === 'USD' ? 'US$' : '$') + h.px.toFixed(2),
       mvFmt: fmtMoney(h.mv), wFmt: D.total ? (h.mv / D.total * 100).toFixed(2) + '%' : '—', uFmt: isCustody || isC ? '—' : sgn(u), uColor: u > 0 ? green : u < 0 ? red : mute, dFmt: isCustody ? '—' : h.day ? pc(h.day) : '—', dColor: h.day > 0 ? green : h.day < 0 ? red : mute,
       src: `${isC ? '' : fmt(h.qty, h.qty % 1 ? 3 : 0) + ' × ' + h.px + (h.ccy === 'USD' && !isC ? ' USD × FX ' + data.FX : '') + ' · '}${D.SRC[h.cls]} · cost basis ${money(h.cost)} (ACB)` }; });
     const dayAmt = D.holdings.reduce((s, h) => s + h.mv * h.day / 100, 0);

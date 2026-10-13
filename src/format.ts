@@ -59,6 +59,18 @@ export const decMoney = (dec: string, ccy: keyof typeof CURRENCY_SYMBOL = 'GBP',
   const int = BigInt(s.slice(0, s.length - d)).toLocaleString('en-CA');
   return (m[1] && units !== 0n ? '−' : '') + CURRENCY_SYMBOL[ccy] + int + (d ? '.' + s.slice(s.length - d) : '');
 };
+/** Fixed-point quantity formatted with grouping and at most four decimal places. */
+export const decQuantity = (dec: string, d = 4) => {
+  const m = /^(-)?(\d+)(?:\.(\d*))?$/.exec(dec.trim());
+  if (!m) return dec;
+  const digits = Math.max(0, Math.min(20, Math.trunc(d)));
+  const scale = 10n ** BigInt(digits);
+  let units = BigInt(m[2]) * scale + BigInt((m[3] ?? '').slice(0, digits).padEnd(digits, '0') || '0');
+  if ((m[3] ?? '').charAt(digits) >= '5') units += 1n;
+  const integer = (units / scale).toLocaleString('en-CA');
+  const fraction = digits ? (units % scale).toString().padStart(digits, '0').replace(/0+$/, '') : '';
+  return (m[1] && units !== 0n ? '−' : '') + integer + (fraction ? `.${fraction}` : '');
+};
 /** GBP total of custody decimals (e.g. statement lines), formatted. */
 export const gbpTotal = (values: (string | null)[], d = 2) => {
   let t = 0n;

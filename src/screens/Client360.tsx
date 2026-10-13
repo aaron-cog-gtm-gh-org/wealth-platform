@@ -42,7 +42,7 @@ export function Client360({ m }: { m: Model }) {
                   <span>{d.cls}</span>
                   <div style={{ position: "relative", height: "10px", background: "#eef1f5", borderRadius: "2px" }}>
                     <div style={{ position: "absolute", left: "0", top: "0", bottom: "0", width: d.actualW, background: d.color, borderRadius: "2px" }}></div>
-                    <div style={{ position: "absolute", top: "-3px", bottom: "-3px", width: "2px", background: "#191919", left: d.targetW }}></div>
+                  {d.targetW !== null && <div style={{ position: "absolute", top: "-3px", bottom: "-3px", width: "2px", background: "#191919", left: d.targetW }}></div>}
                   </div>
                   <span style={{ textAlign: "right" }}><span style={{ fontWeight: "600" }}>{d.actual}</span> <span style={{ color: d.driftColor }}>{d.drift}</span></span>
                 </div>

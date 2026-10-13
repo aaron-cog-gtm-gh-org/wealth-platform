@@ -1,20 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getCustodyClient, getStatement, getStatementDates, selectedClient } from '../api/client';
 import type { CustodyClientSummary, CustodyStatement, CustodyStatementDate } from '../api/types';
-import { decMoney, dayMonthYear } from '../format';
+import { decMoney, decQuantity, dayMonthYear } from '../format';
 
 const card = { background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px' };
 const muted = 'rgba(25,25,25,.56)';
-
-function decimal(value: string) {
-  const [whole, fraction] = value.split('.');
-  try {
-    const grouped = BigInt(whole).toLocaleString('en-GB');
-    return fraction ? `${grouped}.${fraction}` : grouped;
-  } catch {
-    return value;
-  }
-}
 
 function replaceStatementParams(accountId?: number, date?: string) {
   const q = new URLSearchParams(window.location.search);
@@ -223,8 +213,8 @@ export function CustodyHoldings() {
                       </span>
                     )}
                   </span>
-                  <span style={{ textAlign: 'right' }}>{decimal(line.qty)}{line.qtyType === 'FAMT' ? ' face' : ''}</span>
-                  <span style={{ textAlign: 'right' }}>{decMoney(line.price, line.ccy, 2)}</span>
+                  <span style={{ textAlign: 'right' }}>{decQuantity(line.qty)}{line.qtyType === 'FAMT' ? ' face' : ''}</span>
+                  <span style={{ textAlign: 'right' }}>{decMoney(line.price, line.ccy, 4)}</span>
                   <span>{line.ccy}</span>
                   <span style={{ textAlign: 'right' }}>{decMoney(line.marketValue, line.ccy, 2)}</span>
                   <span style={{ textAlign: 'right' }}>{line.reportingValue === null ? '—' : decMoney(line.reportingValue, 'GBP', 2)}</span>
