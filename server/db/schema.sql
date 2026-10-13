@@ -10,7 +10,10 @@ BEGIN
       'ALT_DISTRIBUTIONS', 'CAPITAL_CALLS', 'ALT_COMMITMENTS', 'PROPOSAL_DRIFT', 'PRETRADE_CHECKS',
       'PROPOSAL_TRADES', 'REBALANCE_PROPOSALS', 'PERFORMANCE_POINTS', 'PERFORMANCE_PERIODS',
       'FEE_SUMMARY', 'CLIENT_DOCUMENTS', 'CLIENT_COMMUNICATIONS', 'ADVISOR_TASKS', 'HOLDINGS',
-      'FX_RATES', 'ASSET_CLASSES', 'ACCOUNTS', 'HOUSEHOLD_MEMBERS', 'CLIENTS', 'HOUSEHOLDS'
+      'FX_RATES', 'ASSET_CLASSES', 'ACCOUNTS', 'HOUSEHOLD_MEMBERS', 'CLIENTS', 'HOUSEHOLDS',
+      'CUSTODY_BREAK_NOTE_HISTORY', 'CUSTODY_BREAK_NOTES', 'CUSTODY_CONFIRMATIONS',
+      'CUSTODY_STATEMENT_LINES', 'CUSTODY_STATEMENTS', 'CUSTODY_MESSAGES', 'CUSTODY_INGEST_RUNS',
+      'CUSTODY_INSTRUMENTS', 'CUSTODY_ACCOUNTS', 'CUSTODY_CLIENTS', 'CUSTODY_USERS'
     )
   ) LOOP
     EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS PURGE';
@@ -350,3 +353,151 @@ CREATE TABLE payment_rails (
   speed_label    VARCHAR2(80)  NOT NULL,
   arrival_label  VARCHAR2(40)  NOT NULL
 );
+
+-- Custody (legacy Portfolio Viewer) -----------------------------------------
+-- See specs/001-legacy-portfolio-viewer/data-model.md. Reference data is migrated
+-- from the legacy seed; messages and derived facts are ingested from the SWIFT archive.
+
+CREATE TABLE custody_users (
+  user_name     VARCHAR2(30)  PRIMARY KEY,
+  display_name  VARCHAR2(80)  NOT NULL,
+  role          VARCHAR2(10)  NOT NULL CHECK (role IN ('ADVISER', 'OPS', 'ADMIN')),
+  is_active     NUMBER(1)     DEFAULT 1 NOT NULL CHECK (is_active IN (0, 1))
+);
+
+CREATE TABLE custody_clients (
+  client_id           NUMBER(10)    PRIMARY KEY,
+  client_ref          VARCHAR2(20)  NOT NULL UNIQUE,
+  client_name         VARCHAR2(120) NOT NULL,
+  surname             VARCHAR2(80)  NOT NULL,
+  forename            VARCHAR2(80),
+  adviser             VARCHAR2(30)  REFERENCES custody_users (user_name),
+  status              VARCHAR2(10)  NOT NULL,
+  platform_client_id  VARCHAR2(16)  REFERENCES clients (client_id)
+);
+
+CREATE TABLE custody_accounts (
+  account_id           NUMBER(10)    PRIMARY KEY,
+  client_id            NUMBER(10)    NOT NULL REFERENCES custody_clients (client_id),
+  safe_no              NUMBER(10)    NOT NULL UNIQUE,
+  account_type         VARCHAR2(4)   NOT NULL CHECK (account_type IN ('ISA', 'SIPP', 'GIA')),
+  legacy_account_type  VARCHAR2(40),
+  reporting_ccy        CHAR(3)       DEFAULT 'GBP' NOT NULL,
+  open_date            DATE          NOT NULL,
+  close_date           DATE
+);
+CREATE INDEX custody_accounts_client_ix ON custody_accounts (client_id);
+
+CREATE TABLE custody_instruments (
+  isin    CHAR(12)       PRIMARY KEY,
+  name    VARCHAR2(120)  NOT NULL,
+  source  VARCHAR2(10)   NOT NULL CHECK (source IN ('LEGACY_REF', 'CUSTODIAN'))
+);
+
+CREATE TABLE custody_ingest_runs (
+  run_id           NUMBER(10)    PRIMARY KEY,
+  started_at       TIMESTAMP     NOT NULL,
+  finished_at      TIMESTAMP,
+  files_seen       NUMBER(10)    DEFAULT 0 NOT NULL,
+  files_new        NUMBER(10)    DEFAULT 0 NOT NULL,
+  files_duplicate  NUMBER(10)    DEFAULT 0 NOT NULL,
+  parse_errors     NUMBER(10)    DEFAULT 0 NOT NULL,
+  triggered_by     VARCHAR2(80)  NOT NULL
+);
+
+CREATE TABLE custody_messages (
+  message_id      NUMBER(10)     PRIMARY KEY,
+  mt_type         NUMBER(3)      NOT NULL CHECK (mt_type IN (535, 544, 545, 546, 547)),
+  sender_bic      VARCHAR2(12),
+  seme            VARCHAR2(35),
+  function_code   VARCHAR2(10)   CHECK (function_code IN ('NEWM', 'RPLC', 'NEWM/DUPL', 'CANC')),
+  safe_no         NUMBER(10),
+  business_date   DATE           NOT NULL,
+  source_folder   VARCHAR2(200)  NOT NULL,
+  source_file     VARCHAR2(200)  NOT NULL UNIQUE,
+  file_seq        NUMBER(4)      NOT NULL,
+  content_sha256  CHAR(64)       NOT NULL,
+  raw_text        CLOB           NOT NULL,
+  run_id          NUMBER(10)     NOT NULL REFERENCES custody_ingest_runs (run_id),
+  parse_status    VARCHAR2(5)    NOT NULL CHECK (parse_status IN ('OK', 'ERROR')),
+  parse_error     VARCHAR2(4000)
+);
+CREATE INDEX custody_messages_sha_ix ON custody_messages (content_sha256);
+CREATE INDEX custody_messages_type_ix ON custody_messages (mt_type, business_date);
+
+CREATE TABLE custody_statements (
+  statement_id    NUMBER(10)    PRIMARY KEY,
+  message_id      NUMBER(10)    NOT NULL UNIQUE REFERENCES custody_messages (message_id),
+  account_id      NUMBER(10)    REFERENCES custody_accounts (account_id),
+  safe_no         NUMBER(10)    NOT NULL,
+  statement_date  DATE          NOT NULL,
+  function_code   VARCHAR2(10)  NOT NULL,
+  file_seq        NUMBER(4)     NOT NULL,
+  is_effective    NUMBER(1)     DEFAULT 0 NOT NULL CHECK (is_effective IN (0, 1)),
+  is_empty        NUMBER(1)     DEFAULT 0 NOT NULL CHECK (is_empty IN (0, 1))
+);
+CREATE INDEX custody_statements_safe_ix ON custody_statements (safe_no, statement_date);
+
+CREATE TABLE custody_statement_lines (
+  statement_id     NUMBER(10)    NOT NULL REFERENCES custody_statements (statement_id),
+  line_no          NUMBER(4)     NOT NULL,
+  isin             CHAR(12)      NOT NULL,
+  custodian_desc   VARCHAR2(200),
+  qty              NUMBER(18,6)  NOT NULL,
+  qty_type         VARCHAR2(4)   NOT NULL CHECK (qty_type IN ('UNIT', 'FAMT')),
+  price            NUMBER(18,8)  NOT NULL,
+  price_type       VARCHAR2(4)   NOT NULL,
+  ccy              CHAR(3)       NOT NULL,
+  market_value     NUMBER(18,2)  NOT NULL,
+  reporting_value  NUMBER(18,2),
+  subsafe          VARCHAR2(35),
+  PRIMARY KEY (statement_id, line_no)
+);
+
+CREATE TABLE custody_confirmations (
+  confirmation_id  NUMBER(10)    PRIMARY KEY,
+  message_id       NUMBER(10)    NOT NULL UNIQUE REFERENCES custody_messages (message_id),
+  account_id       NUMBER(10)    REFERENCES custody_accounts (account_id),
+  safe_no          NUMBER(10)    NOT NULL,
+  mt_type          NUMBER(3)     NOT NULL CHECK (mt_type IN (544, 545, 546, 547)),
+  direction        VARCHAR2(7)   NOT NULL CHECK (direction IN ('RECEIVE', 'DELIVER')),
+  seme             VARCHAR2(35)  NOT NULL,
+  prev_ref         VARCHAR2(35),
+  function_code    VARCHAR2(10)  NOT NULL,
+  trade_date       DATE,
+  settle_date      DATE          NOT NULL,
+  isin             CHAR(12)      NOT NULL,
+  qty              NUMBER(18,6)  NOT NULL,
+  qty_type         VARCHAR2(4)   NOT NULL CHECK (qty_type IN ('UNIT', 'FAMT')),
+  amount           NUMBER(18,2),
+  amount_ccy       CHAR(3),
+  cancelled_by     NUMBER(10)    REFERENCES custody_confirmations (confirmation_id)
+);
+CREATE INDEX custody_confirmations_settle_ix ON custody_confirmations (safe_no, settle_date);
+CREATE INDEX custody_confirmations_seme_ix ON custody_confirmations (safe_no, seme);
+
+CREATE TABLE custody_break_notes (
+  account_id      NUMBER(10)      NOT NULL REFERENCES custody_accounts (account_id),
+  isin            CHAR(12)        NOT NULL,
+  statement_date  DATE            NOT NULL,
+  status          VARCHAR2(10)    NOT NULL CHECK (status IN ('OPEN', 'CHASED', 'RESOLVED', 'WRITEOFF')),
+  cause           VARCHAR2(16)    CHECK (cause IN ('CORP_ACTION', 'MISSING_CONFIRM', 'OTHER')),
+  note            VARCHAR2(2000),
+  updated_by      VARCHAR2(80)    NOT NULL,
+  updated_at      TIMESTAMP       NOT NULL,
+  PRIMARY KEY (account_id, isin, statement_date)
+);
+
+CREATE TABLE custody_break_note_history (
+  history_id      NUMBER(10)      PRIMARY KEY,
+  account_id      NUMBER(10)      NOT NULL,
+  isin            CHAR(12)        NOT NULL,
+  statement_date  DATE            NOT NULL,
+  status          VARCHAR2(10)    NOT NULL CHECK (status IN ('OPEN', 'CHASED', 'RESOLVED', 'WRITEOFF')),
+  cause           VARCHAR2(16)    CHECK (cause IN ('CORP_ACTION', 'MISSING_CONFIRM', 'OTHER')),
+  note            VARCHAR2(2000),
+  changed_by      VARCHAR2(80)    NOT NULL,
+  changed_at      TIMESTAMP       NOT NULL,
+  source          VARCHAR2(16)    NOT NULL CHECK (source IN ('LEGACY_MIGRATION', 'USER'))
+);
+CREATE INDEX custody_break_history_key_ix ON custody_break_note_history (account_id, isin, statement_date);

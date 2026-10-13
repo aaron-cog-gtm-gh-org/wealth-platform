@@ -3,3 +3,8 @@ dist
 *.tsbuildinfo
 visual-diff-output
 .vite/
+
+# legacy parity harness build output, local scratch
+tools/legacy-parity/bin/
+tools/legacy-parity/obj/
+scratch/

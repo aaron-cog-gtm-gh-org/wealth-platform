@@ -1,4 +1,4 @@
-import type { AccountKey, AssetClass, WealthData } from './api/types';
+import type { AccountKey, AssetClass, Currency, WealthData } from './api/types';
 
 export type { AccountKey, AssetClass };
 
@@ -22,7 +22,7 @@ export interface Holding {
   mv: number;
   cost: number;
   day: number;
-  ccy: 'CAD' | 'USD';
+  ccy: Currency;
 }
 
 export interface SettlementException {

@@ -35,3 +35,28 @@ export const yearsBetween = (fromIso: string, toIso: string) => {
   return ty - fy - (tm < fm || (tm === fm && td < fd) ? 1 : 0);
 };
 export const signedPts = (n: number) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(1);
+
+/** Currency symbols for the platform's reporting currencies (FR-024). CAD keeps the bare `$`. */
+export const CURRENCY_SYMBOL: Record<'CAD' | 'USD' | 'GBP' | 'EUR', string> = { CAD: '$', USD: 'US$', GBP: '£', EUR: '€' };
+/** Amount in a given currency: `ccyMoney(1234.5, 'GBP', 2)` → `£1,234.50`. CAD is identical to `money`. */
+export const ccyMoney = (n: number, ccy: keyof typeof CURRENCY_SYMBOL = 'CAD', d = 0) => (n < 0 ? '−' : '') + CURRENCY_SYMBOL[ccy] + fmt(n, d);
+export const gbp = (n: number, d = 2) => ccyMoney(n, 'GBP', d);
+export const eur = (n: number, d = 2) => ccyMoney(n, 'EUR', d);
+/** Fixed-point decimal string (custody `Dec`) formatted without float rounding of the digits shown. */
+export const decMoney = (dec: string, ccy: keyof typeof CURRENCY_SYMBOL = 'GBP', d = 2) => {
+  const m = /^(-)?(\d+)(?:\.(\d*))?$/.exec(dec.trim());
+  if (!m) return dec;
+  const frac = (m[3] ?? '').padEnd(d, '0');
+  let units = BigInt(m[2] + frac.slice(0, d));
+  if (frac.length > d && +frac[d] >= 5) units += 1n;
+  const s = units.toString().padStart(d + 1, '0');
+  const int = BigInt(s.slice(0, s.length - d)).toLocaleString('en-CA');
+  return (m[1] && units !== 0n ? '−' : '') + CURRENCY_SYMBOL[ccy] + int + (d ? '.' + s.slice(s.length - d) : '');
+};
+/** GBP total of custody decimals (e.g. statement lines), formatted. */
+export const gbpTotal = (values: (string | null)[], d = 2) => {
+  let t = 0n;
+  for (const v of values) if (v) { const [i, f = ''] = v.replace('-', '').split('.'); const u = BigInt(i + f.padEnd(8, '0').slice(0, 8)); t += v.startsWith('-') ? -u : u; }
+  const neg = t < 0n, a = neg ? -t : t;
+  return decMoney(`${neg ? '-' : ''}${a / 100000000n}.${(a % 100000000n).toString().padStart(8, '0')}`, 'GBP', d);
+};
