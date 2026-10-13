@@ -57,7 +57,11 @@ const APP_ONLY_CASES = [
   { name: 'c360-custody', query: '?client=1001&screen=c360' },
   { name: 'portfolio-custody', query: '?client=1001&screen=portfolio' },
   { name: 'alts-custody', query: '?client=1001&screen=alts' },
+  { name: 'home-custody', query: '?client=1040&screen=home' },
+  { name: 'activity-custody', query: '?client=1040&screen=activity' },
+  { name: 'money-custody', query: '?client=1040&screen=money' },
   { name: 'custody-holdings-Populated', query: '?client=1001&screen=custody-holdings&account=2001&date=2026-07-17' },
+  { name: 'custody-holdings-no-statement', query: '?client=1001&screen=custody-holdings&account=2001&date=2026-07-18' },
   { name: 'custody-holdings-Loading', query: '?client=1001&screen=custody-holdings&state=Loading' },
   { name: 'custody-holdings-Empty', query: '?client=1001&screen=custody-holdings&state=Empty' },
   { name: 'custody-holdings-Error', query: '?client=1001&screen=custody-holdings&state=Error' },
@@ -74,8 +78,10 @@ const pickedAppCases = APP_ONLY_CASES.filter(c => args.includes('custody') || ar
 const extraAppCases = !args.length || args.includes('app-only') || args.some(a => APP_ONLY_SCREENS.includes(a))
   ? await appOnlyExtra()
   : [];
-const cases = args.includes('custody') || args.includes('app-only') || pickedAppCases.length
+const cases = args.includes('custody') || args.includes('app-only')
   ? [...pickedAppCases, ...APP_ONLY_SCREEN_CASES, ...extraAppCases]
+  : pickedAppCases.length
+  ? pickedAppCases
   : !args.length
   ? [...STATIC, ...APP_ONLY_SCREEN_CASES, ...APP_ONLY_CASES, ...FLOWS, ...extraAppCases]
   : [

@@ -13,19 +13,29 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
   const reportingCurrency = HH.source?.reportingCurrency ?? 'CAD';
   const fmtMoney = (amount: number, digits = 0) => isCustody ? ccyMoney(amount, reportingCurrency, 2) : money(amount, digits);
   const totalFmt = fmtMoney(D.total);
-  const totalSrc = totalSource(data);
+  const totalSrc = isCustody
+    ? `Sum of ${D.holdings.length} positions across ${D.accounts.length} accounts · custodian statement values as of ${HH.source?.asOf ? dayMonthYear(HH.source.asOf) : 'Not available'}`
+    : totalSource(data);
   const goOrders = () => go('orders');
   const goCustodyStatements = () => go('custody-holdings');
   const goActivity = () => go('activity');
   const goMoney = () => go('money');
     // Client 360
-    const accounts = D.accounts.map(a => ({ ...a, mvFmt: fmtMoney(a.mv), drift: isCustody ? '—' : a.drift }));
+    const accounts = D.accounts.map(a => ({ ...a, mvFmt: fmtMoney(a.mv), drift: isCustody ? '—' : a.drift, day: isCustody ? 'Not available' : a.day, dayColor: isCustody ? mute : a.dayColor }));
     const alloc = D.alloc.map(a => { const d = a.a - a.t; return { cls: a.cls, color: a.color, mvFmt: isCustody ? ccyMoney(a.mv, reportingCurrency, 2) : money(a.mv), actual: a.a.toFixed(1) + '%', target: isCustody ? '—' : a.t.toFixed(1) + '%', actualW: (a.a * 100 / 35).toFixed(1) + '%', targetW: isCustody ? null : (a.t * 100 / 35).toFixed(1) + '%', drift: isCustody ? '—' : (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1), driftColor: isCustody ? mute : Math.abs(d) > 2 ? red : Math.abs(d) > 1 ? amber : mute, src: `${D.holdings.filter(h => h.cls === a.cls).length} positions · ${D.SRC[a.cls]}` }; });
     const profileRows: [string, string, string?][] = isCustody
       ? [['Legal name', C.legalName || 'Not available'], ['Client ID', C.id || 'Not available'], ['Born', 'Not available'], ['Tax residency', 'Not available'], ['Occupation', 'Not available'], ['Risk profile', 'Not available'], ['Time horizon', 'Not available'], ['KYC / AML', 'Not available'], ['Suitability', 'Not available'], ['Preferred contact', 'Not available'], ['Power of attorney', 'Not available']]
       : [['Legal name', C.legalName], ['Client ID', C.id], ['Born', `${dayMonthYear(C.dateOfBirth)} (${yearsBetween(C.dateOfBirth, AS_OF)})`], ['Tax residency', C.taxResidency], ['Occupation', C.occupation], ['Risk profile', `${C.riskProfile} · ${C.riskScore}/10`], ['Time horizon', C.timeHorizon], ['KYC / AML', `${C.kycStatus} · next refresh ${dayMonthYear(C.kycNextRefreshDate)}`, green], ['Suitability', 'Signed ' + dayMonthYear(C.suitabilitySignedDate)], ['Preferred contact', C.preferredContact], ['Power of attorney', C.powerOfAttorney]];
     const profile = profileRows.map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
     const household = HH.members.map(x => ({ n: x.name, r: x.relationship, a: x.accounts }));
+    const homeAdvisor = isCustody ? HH.advisorName || 'Not available' : 'Aaron Diamond, CFP';
+    const homeAdvisorInitials = isCustody
+      ? (homeAdvisor === 'Not available' ? '—' : homeAdvisor.trim().split(/\s+/).slice(0, 2).map(name => name[0] ?? '').join('').toUpperCase())
+      : 'AD';
+    const homeAdvisorReview = isCustody ? 'Not available' : 'Next review Wed 4-Nov-2026, 10:00 · 416-555-0148';
+    const homeValuationNote = isCustody
+      ? `Custodian statement values · as of ${HH.source?.asOf ? dayMonthYear(HH.source.asOf) : 'Not available'}`
+      : 'Includes private investments valued at 30-Jun-2026';
     const PRIORITY = { HIGH: [red, red], MEDIUM: [amber, amber], NORMAL: ['#005daa', mute], LOW: ['#8a94a3', mute] };
     const tasks = HH.tasks.map(x => ({ t: x.title, next: x.nextStep, due: x.due, color: PRIORITY[x.priority][0], dueColor: PRIORITY[x.priority][1] }));
     const comms = HH.communications.map(x => ({ t: x.channel, d: dayMonth(x.date), s: x.summary }));
@@ -41,9 +51,12 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
       qtyFmt: isCustody ? decQuantity(h.qtyDec ?? String(h.qty)) + (isB ? ' face' : '') : isC ? '—' : isB ? fmt(h.qty) + ' face' : isA ? 'paid-in' : fmt(h.qty, h.qty % 1 ? 3 : 0),
       pxFmt: isCustody ? decMoney(h.pxDec ?? String(h.px), h.ccy, 4) : isC ? (h.ccy === 'USD' ? 'FX ' + data.FX : '—') : isB ? h.px.toFixed(2) : isA ? 'NAV ' + h.px.toFixed(3) + 'x' : (h.ccy === 'USD' ? 'US$' : '$') + h.px.toFixed(2),
       mvFmt: fmtMoney(h.mv), wFmt: D.total ? (h.mv / D.total * 100).toFixed(2) + '%' : '—', uFmt: isCustody || isC ? '—' : sgn(u), uColor: u > 0 ? green : u < 0 ? red : mute, dFmt: isCustody ? '—' : h.day ? pc(h.day) : '—', dColor: h.day > 0 ? green : h.day < 0 ? red : mute,
-      src: `${isC ? '' : fmt(h.qty, h.qty % 1 ? 3 : 0) + ' × ' + h.px + (h.ccy === 'USD' && !isC ? ' USD × FX ' + data.FX : '') + ' · '}${D.SRC[h.cls]} · cost basis ${money(h.cost)} (ACB)` }; });
+      src: isCustody ? 'Custodian MT535 statement · cost basis not available' : `${isC ? '' : fmt(h.qty, h.qty % 1 ? 3 : 0) + ' × ' + h.px + (h.ccy === 'USD' && !isC ? ' USD × FX ' + data.FX : '') + ' · '}${D.SRC[h.cls]} · cost basis ${money(h.cost)} (ACB)` }; });
     const dayAmt = D.holdings.reduce((s, h) => s + h.mv * h.day / 100, 0);
-    const dayChg = pc(dayAmt / D.total * 100) + ' (' + sgn(dayAmt) + ')'; const ytd = R.performance.periods.find(p => p.code === 'YTD')!; const ytdChg = pc(ytd.portfolioReturnPct); const ytdRel = ytd.portfolioReturnPct - ytd.benchmarkReturnPct;
+    const dayChg = isCustody ? 'Day change not available' : pc(dayAmt / D.total * 100) + ' (' + sgn(dayAmt) + ')';
+    const ytd = R.performance.periods.find(p => p.code === 'YTD')!;
+    const ytdChg = isCustody ? 'Not available' : pc(ytd.portfolioReturnPct);
+    const ytdRel = ytd.portfolioReturnPct - ytd.benchmarkReturnPct;
     const altCommitted = R.alternatives.commitments.reduce((s, c) => s + c.commitment, 0), altCalled = R.alternatives.commitments.reduce((s, c) => s + c.called, 0);
     const kpis = (isCustody ? [
       ['Market value', ccyMoney(D.total, reportingCurrency, 2), `${reportingCurrency} · ${D.accounts.length} accounts`, '#191919', totalSrc],
@@ -128,23 +141,23 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
 
     // Move money
     const amt = parseFloat(String(st.amount).replace(/[^0-9.]/g, '')) || 0;
-    const fundAcct = data.accountByKey(C.fundingAccountKey), availCash = data.cashIn(C.fundingAccountKey); const availableCashFmt = money(availCash);
+    const fundAcct = data.accountByKey(C.fundingAccountKey), availCash = data.cashIn(C.fundingAccountKey); const availableCashFmt = isCustody ? 'Not available' : money(availCash);
     const B = R.payments.payees.map(p => [p.name, p.description, p.history]); const bene = B[st.bene] ?? ['—', '', '']; const beneNew = R.payments.payees[st.bene]?.isNew;
     const benes = B.map(([n, d, h], i) => { const a = i === st.bene; return { n, d, h, onClick: () => setState({ bene: i }), border: a ? '#005daa' : '#cfd5dd', bg: a ? '#f3f8fd' : '#fff', ring: a ? '#005daa' : '#9aa3af', dot: a ? '#005daa' : '#fff' }; });
     const amount = st.amount; const onAmount = (e: ChangeEvent<HTMLInputElement>) => setState({ amount: e.target.value });
     const rails = R.payments.rails.map(r => r.name as Rail).map(n => ({ n, onClick: () => setState({ rail: n }), bg: n === st.rail ? '#fff' : 'transparent', shadow: n === st.rail ? '0 1px 2px rgba(0,0,0,.08)' : 'none' }));
-    const rail = R.payments.rails.find(r => r.name === st.rail) ?? R.payments.rails[0]; const lim = rail.dailyLimit;
-    const railNote = `${rail.speed} · ${rail.fee ? money(rail.fee) + ' fee' : 'no fee'} · limit ${money(lim)}/day`;
-    const amountError = amt <= 0 ? 'Enter an amount greater than $0.' : amt > availCash ? `That’s more than the available cash of ${availableCashFmt}. Lower the amount or sell investments first.` : amt > lim ? `${st.rail} limit is ${money(lim)} per day. Choose Wire or lower the amount.` : null;
-    const needsApproval = amt > 25000;
+    const rail = R.payments.rails.find(r => r.name === st.rail) ?? R.payments.rails[0]; const lim = rail?.dailyLimit ?? 0;
+    const railNote = isCustody ? 'Not available' : `${rail?.speed} · ${rail?.fee ? money(rail.fee) + ' fee' : 'no fee'} · limit ${money(lim)}/day`;
+    const amountError = isCustody ? null : amt <= 0 ? 'Enter an amount greater than $0.' : amt > availCash ? `That’s more than the available cash of ${availableCashFmt}. Lower the amount or sell investments first.` : amt > lim ? `${st.rail} limit is ${money(lim)} per day. Choose Wire or lower the amount.` : null;
+    const needsApproval = !isCustody && amt > 25000;
     const mSteps = ['1  Details', '2  Review', '3  Confirmation'].map((n, i) => ({ n, bar: i + 1 === st.mStep ? '#005daa' : i + 1 < st.mStep ? '#9fc0e3' : 'transparent', fg: i + 1 <= st.mStep ? '#191919' : 'rgba(25,25,25,.45)' }));
     const m1 = st.mStep === 1; const m2 = st.mStep === 2; const m3 = st.mStep === 3;
     const toReview = () => { if (!amountError) setState({ mStep: 2 }); }; const toEdit = () => setState({ mStep: 1 }); const toConfirm = () => setState({ mStep: 3 });
-    const review = [['From', `${fundAcct.name} · ${fundAcct.no}`], ['To', bene[0] + ' · ' + bene[1]], ['Amount', money(amt, 2)], ['Fee', money(rail.fee, 2)], ['Send by', st.rail], ['Arrives', rail.arrival]].map(([k, v]) => ({ k, v }));
+    const review = isCustody ? [] : [['From', `${fundAcct.name} · ${fundAcct.no}`], ['To', bene[0] + ' · ' + bene[1]], ['Amount', money(amt, 2)], ['Fee', money(rail?.fee ?? 0, 2)], ['Send by', st.rail], ['Arrives', rail?.arrival ?? '']].map(([k, v]) => ({ k, v }));
     const confirmTitle = needsApproval ? 'Submitted. A second approver is reviewing your payment.' : 'Sent. Your payment is on its way.';
     const at = needsApproval ? 2 : 3;
     const tracking = [['Submitted', 'You confirmed with 2-step verification', '14:47'], ['Sanctions and fraud screening', 'Passed · payee history checked', '14:47'], ['Second approval', needsApproval ? 'Over $25,000 · RBC Payments team' : 'Not required under $25,000', needsApproval ? 'by 16:00' : '—'], ['Sent via ' + st.rail, 'Funds leave your account', ''], ['Confirmed by receiving bank', 'We’ll notify you by email and text', '']].map(([n, sub, d], i) => ({ n, sub, d, c: i <= at ? '#005daa' : '#cfd5dd', fill: i < at ? '#005daa' : i === at ? '#ffd200' : '#fff', w: i === at ? 600 : 400, fg: i > at ? 'rgba(25,25,25,.5)' : '#191919' }));
-    const limits = [['Available cash', availableCashFmt, `${fundAcct.shortName} ${fundAcct.no} · settled cash only`, '#191919'], ['Daily limit remaining', money(lim), st.rail + ' · resets midnight ET', '#191919'], ['Payee', bene[2], beneNew ? 'New payee: first payment held for a callback' : 'Known payee', beneNew ? amber : green], ['Second approval', amt > 25000 ? 'Required' : 'Not required', 'Payments over $25,000', amt > 25000 ? amber : green], ['Screening', 'Runs on submit', 'Sanctions, fraud and AML rules', '#191919']].map(([k, v, sub, color]) => ({ k, v, sub, color }));
+    const limits = isCustody ? [] : [['Available cash', availableCashFmt, `${fundAcct.shortName} ${fundAcct.no} · settled cash only`, '#191919'], ['Daily limit remaining', money(lim), st.rail + ' · resets midnight ET', '#191919'], ['Payee', bene[2], beneNew ? 'New payee: first payment held for a callback' : 'Known payee', beneNew ? amber : green], ['Second approval', amt > 25000 ? 'Required' : 'Not required', 'Payments over $25,000', amt > 25000 ? amber : green], ['Screening', 'Runs on submit', 'Sanctions, fraud and AML rules', '#191919']].map(([k, v, sub, color]) => ({ k, v, sub, color }));
 
   const alternativesUnavailable = isCustody || R.alternatives.commitments.length === 0;
   return {
@@ -163,6 +176,10 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
     isCustody,
     reportingCurrency,
     accountCount: isCustody ? D.accounts.length : undefined,
+    homeAdvisor,
+    homeAdvisorInitials,
+    homeAdvisorReview,
+    homeValuationNote,
     tasks,
     comms,
     docs,

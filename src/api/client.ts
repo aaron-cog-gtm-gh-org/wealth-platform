@@ -61,6 +61,7 @@ const EMPTY_PERFORMANCE: PerformanceDto = {
 const EMPTY_REBALANCE: RebalanceDto = { proposal: { id: '', status: 'Not available', trackingErrorBeforePct: 0, trackingErrorAfterPct: 0 }, trades: [], checks: [], drift: [] };
 const EMPTY_ALTERNATIVES: AlternativesDto = { commitments: [], capitalCalls: [], distributions: [] };
 const EMPTY_ACTIVITY: ActivityDto = { feed: [], pending: [], transactions: [] };
+const EMPTY_PAYMENTS: PaymentsDto = { payees: [], rails: [] };
 
 export async function loadWealthData(selection: ClientSelection = selectedClient()): Promise<WealthData> {
   if (selection.kind === 'custody') return loadCustodyWealthData(selection.clientId);
@@ -84,13 +85,12 @@ export async function loadWealthData(selection: ClientSelection = selectedClient
  * (GBP); panels with no legacy source are empty and listed in `household.source.unavailable`.
  */
 async function loadCustodyWealthData(clientId: number): Promise<WealthData> {
-  const [household, portfolio, exceptions, payments] = await Promise.all([
+  const [household, portfolio, exceptions] = await Promise.all([
     getCustodyHousehold(clientId),
     getCustodyPortfolio(clientId),
     get<SettlementExceptionsDto>('/ops/queues/' + encodeURIComponent(OPS_QUEUE) + '/settlement-exceptions'),
-    get<PaymentsDto>('/portal/clients/' + encodeURIComponent(CLIENT_ID) + '/payments').then(p => ({ ...p, payees: [] })),
   ]);
-  return { household, portfolio, performance: EMPTY_PERFORMANCE, rebalance: EMPTY_REBALANCE, alternatives: EMPTY_ALTERNATIVES, exceptions, activity: EMPTY_ACTIVITY, payments };
+  return { household, portfolio, performance: EMPTY_PERFORMANCE, rebalance: EMPTY_REBALANCE, alternatives: EMPTY_ALTERNATIVES, exceptions, activity: EMPTY_ACTIVITY, payments: EMPTY_PAYMENTS };
 }
 
 // --- Custody fetch helpers (contracts/api.md) ---

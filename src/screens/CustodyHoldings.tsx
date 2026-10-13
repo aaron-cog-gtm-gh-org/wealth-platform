@@ -75,10 +75,12 @@ export function CustodyHoldings() {
     getStatementDates(accountId).then(values => {
       if (!active) return;
       setDates(values);
-      const requested = new URLSearchParams(window.location.search).get('date');
-      const selected = values.find(d => d.date === requested) ?? values[0];
-      setDate(selected?.date ?? '');
-      replaceStatementParams(accountId, selected?.date);
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('date');
+      const selected = requested === null ? values[0] : values.find(d => d.date === requested);
+      const nextDate = selected?.date ?? requested ?? '';
+      setDate(nextDate);
+      replaceStatementParams(accountId, nextDate || undefined);
     }).catch(() => {
       if (active) setError(true);
     }).finally(() => {
@@ -163,6 +165,9 @@ export function CustodyHoldings() {
               style={{ border: '1px solid #cfd5dd', borderRadius: '4px', background: '#fff', padding: '6px 8px', color: '#191919' }}
             >
               {dates.length === 0 && <option value="">{loadingDates ? 'Loading…' : 'No statements on file'}</option>}
+              {date && !selectedDate && (
+                <option value={date}>{dayMonthYear(date)} · no statement</option>
+              )}
               {dates.map(d => (
                 <option key={d.date} value={d.date}>
                   {dayMonthYear(d.date)}{d.isEmpty ? ' · empty' : ''}{d.superseded > 0 ? ` · ${d.superseded} superseded` : ''}
@@ -185,7 +190,9 @@ export function CustodyHoldings() {
       </section>
 
       {loadingStatement && <div style={{ ...card, padding: '18px', color: muted }}>Loading statement…</div>}
-      {!loadingStatement && statementMissing && <div style={{ ...card, padding: '18px', color: '#4b5563' }}>No statement on file for this date</div>}
+      {!loadingStatement && statementMissing && <div style={{ ...card, padding: '18px', color: '#4b5563' }}>
+        No statement on file for {dayMonthYear(date)} — choose one of the {dates.length} statement dates.
+      </div>}
       {!loadingStatement && !statementMissing && !statement && !loadingDates && dates.length === 0 && (
         <div style={{ ...card, padding: '18px', color: '#4b5563' }}>No statement on file for this date</div>
       )}

@@ -19,23 +19,25 @@ export function PortfolioDetail({ m }: { m: Model }) {
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(300px,1fr)", gap: "12px" }}>
           <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px" }}>
             <div style={{ padding: "8px 12px", borderBottom: "1px solid #eef0f3", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontWeight: "600" }}>Performance vs benchmark <span style={{ fontWeight: "400", color: "rgba(25,25,25,.56)" }}>· {isCustody ? 'Not available' : 'time-weighted, net of fees, CAD'}</span></span>
-              <div style={{ display: "flex", gap: "2px", background: "rgba(0,0,0,.06)", borderRadius: "7px", padding: "2px" }}>
+              <span style={{ fontWeight: "600" }}>Performance vs benchmark {!isCustody && <span style={{ fontWeight: "400", color: "rgba(25,25,25,.56)" }}>· time-weighted, net of fees, CAD</span>}</span>
+              {!isCustody && <div style={{ display: "flex", gap: "2px", background: "rgba(0,0,0,.06)", borderRadius: "7px", padding: "2px" }}>
                 {periods.map((p, p_i) => (<Fragment key={p_i}>
                   <div onClick={p.onClick} style={{ padding: "3px 9px", borderRadius: "5px", cursor: "pointer", background: p.bg, boxShadow: p.shadow, fontWeight: "500" }}>{p.id}</div>
                 </Fragment>))}
+              </div>}
+            </div>
+            {isCustody ? <div style={{ padding: '22px 12px', color: 'rgba(25,25,25,.56)' }}>Not available — Portfolio Viewer has no performance history for this client.</div> : <>
+              <div style={{ padding: "10px 12px", display: "flex", gap: "18px", fontSize: "11.5px" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", height: "2px", background: "#005daa" }}></span>Portfolio <strong>{perfP}</strong></span>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", height: "0", borderTop: "2px dashed #8a94a3" }}></span>Benchmark (45% S&amp;P/TSX · 25% FTSE Universe · 20% MSCI World · 10% FTSE 91d T-bill) <strong>{perfB}</strong></span>
               </div>
-            </div>
-            <div style={{ padding: "10px 12px", display: "flex", gap: "18px", fontSize: "11.5px" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", height: "2px", background: "#005daa" }}></span>Portfolio <strong>{perfP}</strong></span>
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><span style={{ width: "14px", height: "0", borderTop: "2px dashed #8a94a3" }}></span>Benchmark (45% S&amp;P/TSX · 25% FTSE Universe · 20% MSCI World · 10% FTSE 91d T-bill) <strong>{perfB}</strong></span>
-            </div>
-            {isCustody ? <div style={{ padding: '22px 12px', color: 'rgba(25,25,25,.56)' }}>Not available</div> : <svg viewBox="0 0 600 170" preserveAspectRatio="none" style={{ width: "100%", height: "190px", display: "block" }}>
-              <line x1="0" y1="42" x2="600" y2="42" stroke="#eef0f3" /><line x1="0" y1="85" x2="600" y2="85" stroke="#eef0f3" /><line x1="0" y1="128" x2="600" y2="128" stroke="#eef0f3" />
-              <path d={benchPath} fill="none" stroke="#8a94a3" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-              <path d={perfPath} fill="none" stroke="#005daa" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-            </svg>}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px 10px", color: "rgba(25,25,25,.5)", fontSize: "10.5px" }}><span>{perfStart}</span><span>12-Oct-2026</span></div>
+              <svg viewBox="0 0 600 170" preserveAspectRatio="none" style={{ width: "100%", height: "190px", display: "block" }}>
+                <line x1="0" y1="42" x2="600" y2="42" stroke="#eef0f3" /><line x1="0" y1="85" x2="600" y2="85" stroke="#eef0f3" /><line x1="0" y1="128" x2="600" y2="128" stroke="#eef0f3" />
+                <path d={benchPath} fill="none" stroke="#8a94a3" strokeWidth="1.5" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+                <path d={perfPath} fill="none" stroke="#005daa" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+              </svg>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px 10px", color: "rgba(25,25,25,.5)", fontSize: "10.5px" }}><span>{perfStart}</span><span>12-Oct-2026</span></div>
+            </>}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px" }}>

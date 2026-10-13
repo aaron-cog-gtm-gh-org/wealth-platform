@@ -92,6 +92,12 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     } else if (screen === 'custody-holdings') {
       crumb = `Advisers / ${hh.name} / Custodian statements`;
       subtitle = `Reporting currency ${reportCcy} · as of ${asOf}`;
+    } else if (screen === 'home') {
+      subtitle = `Custodian statement values · reporting currency ${reportCcy} · as of ${asOf}`;
+    } else if (screen === 'activity') {
+      subtitle = 'Transaction activity is not available for migrated custody clients.';
+    } else if (screen === 'money') {
+      subtitle = 'Payments are not available for migrated custody clients.';
     }
   }
   if (screen === 'home' && c) title = `Good afternoon, ${c.displayName.split(/\s+/)[0]}`;
