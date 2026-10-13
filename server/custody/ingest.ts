@@ -41,79 +41,107 @@ export async function prepareCustodySession(conn: Conn) {
 
 const D = (bind: string) => `TO_DATE(:${bind}, 'YYYY-MM-DD')`;
 
-async function insertMessage(conn: Conn, id: number, runId: number, e: ArchiveEntry, sha: string, text: string, p: ParsedArchiveFile) {
+function messageInsert(id: number, runId: number, e: ArchiveEntry, sha: string, text: string, p: ParsedArchiveFile) {
   const s = p.kind === 'statement' ? p.statement : null;
   const c = p.kind === 'confirmation' ? p.confirmation : null;
   const mtType = s ? 535 : c ? c.mtType : Number(/^MT(\d{3})/.exec(e.fileName)?.[1] ?? (e.family === 'MT535' ? 535 : 545));
-  await conn.execute(
-    `INSERT INTO custody_messages (message_id, mt_type, sender_bic, seme, function_code, safe_no, business_date, source_folder,
+  return {
+    sql: `INSERT INTO custody_messages (message_id, mt_type, sender_bic, seme, function_code, safe_no, business_date, source_folder,
        source_file, file_seq, content_sha256, raw_text, run_id, parse_status, parse_error)
-     VALUES (:id, :mt, :bic, :seme, :fn, :safe, ${D('bd')}, :folder, :b_file, :seq, :sha, :b_raw, :run, :status, :err)`,
-    {
-      id, mt: mtType, bic: (s ?? c)?.senderBic ?? null, seme: (s ?? c)?.seme ?? null, fn: (s ?? c)?.functionCode ?? null,
-      safe: (s ?? c)?.safeNo ?? null, bd: s?.statementDate ?? e.businessDate, folder: e.sourceFolder, b_file: e.sourceFile,
-      seq: e.fileSeq, sha, b_raw: { val: text, type: oracledb.DB_TYPE_CLOB }, run: runId,
-      status: p.kind === 'error' ? 'ERROR' : 'OK', err: p.kind === 'error' ? p.error.slice(0, 4000) : null,
+     VALUES (:m_id, :m_mt, :m_bic, :m_seme, :m_fn, :m_safe, ${D('m_bd')}, :m_folder, :m_file, :m_seq, :m_sha, :m_raw, :m_run, :m_status, :m_err)`,
+    binds: {
+      m_id: id, m_mt: mtType, m_bic: (s ?? c)?.senderBic ?? null, m_seme: (s ?? c)?.seme ?? null,
+      m_fn: (s ?? c)?.functionCode ?? null, m_safe: (s ?? c)?.safeNo ?? null, m_bd: s?.statementDate ?? e.businessDate,
+      m_folder: e.sourceFolder, m_file: e.sourceFile, m_seq: e.fileSeq, m_sha: sha,
+      m_raw: { val: text, type: oracledb.DB_TYPE_CLOB }, m_run: runId,
+      m_status: p.kind === 'error' ? 'ERROR' : 'OK', m_err: p.kind === 'error' ? p.error.slice(0, 4000) : null,
     },
-  );
+  };
 }
 
-async function ensureInstruments(conn: Conn, items: { isin: string; desc: string | null }[], knownInstruments: Set<string>) {
+function missingInstruments(items: { isin: string; desc: string | null }[], knownInstruments: Set<string>) {
   const seen = new Map<string, string>();
   for (const i of items) if (!seen.has(i.isin)) seen.set(i.isin, i.desc ?? `Unknown instrument ${i.isin}`);
-  const missing = [...seen].filter(([isin]) => !knownInstruments.has(isin));
+  return [...seen].filter(([isin]) => !knownInstruments.has(isin));
+}
+
+async function ensureInstruments(conn: Conn, missing: [string, string][], autoCommit: boolean) {
   if (!missing.length) return [];
   await conn.executeMany(
     `MERGE INTO custody_instruments t USING (SELECT :isin AS isin, :name AS name FROM dual) s ON (t.isin = s.isin)
      WHEN NOT MATCHED THEN INSERT (isin, name, source) VALUES (s.isin, SUBSTR(s.name, 1, 120), 'CUSTODIAN')`,
     missing.map(([isin, name]) => ({ isin, name })),
+    { autoCommit },
   );
   return missing.map(([isin]) => isin);
 }
 
-async function insertDerived(
+async function insertArchiveFile(
   conn: Conn,
   messageId: number,
+  runId: number,
+  e: ArchiveEntry,
+  sha: string,
+  text: string,
   p: ParsedArchiveFile,
   ids: { statement: number; confirmation: number },
   knownInstruments: Set<string>,
 ): Promise<string[]> {
-  const newInstruments: string[] = [];
+  const message = messageInsert(messageId, runId, e, sha, text, p);
+  if (p.kind === 'error') {
+    await conn.execute(message.sql, message.binds, { autoCommit: true });
+    return [];
+  }
   if (p.kind === 'statement') {
     const s = p.statement;
-    const statementId = ids.statement;
+    const statement = {
+      sql: `INSERT INTO custody_statements (statement_id, message_id, safe_no, statement_date, function_code, file_seq, is_empty)
+       VALUES (:s_id, :s_msg, :s_safe, ${D('s_date')}, :s_fn, :s_seq, :s_empty)`,
+      binds: {
+        s_id: ids.statement, s_msg: messageId, s_safe: s.safeNo, s_date: s.statementDate,
+        s_fn: s.functionCode, s_seq: e.fileSeq, s_empty: s.isEmpty ? 1 : 0,
+      },
+    };
     await conn.execute(
-      `INSERT INTO custody_statements (statement_id, message_id, safe_no, statement_date, function_code, file_seq, is_empty)
-       VALUES (:id, :msg, :safe, ${D('d')}, :fn, :seq, :empty)`,
-      { id: statementId, msg: messageId, safe: s.safeNo, d: s.statementDate, fn: s.functionCode, seq: p.entry.fileSeq, empty: s.isEmpty ? 1 : 0 },
+      `BEGIN ${message.sql}; ${statement.sql}; END;`,
+      { ...message.binds, ...statement.binds },
+      { autoCommit: s.lines.length === 0 },
     );
-    if (s.lines.length) {
-      await conn.executeMany(
-        `INSERT INTO custody_statement_lines (statement_id, line_no, isin, custodian_desc, qty, qty_type, price, price_type, ccy,
+    if (!s.lines.length) return [];
+    const instruments = s.lines.map(l => ({ isin: l.isin, desc: l.custodianDesc }));
+    const missing = missingInstruments(instruments, knownInstruments);
+    await conn.executeMany(
+      `INSERT INTO custody_statement_lines (statement_id, line_no, isin, custodian_desc, qty, qty_type, price, price_type, ccy,
            market_value, reporting_value, subsafe)
          VALUES (:sid, :ln, :isin, :descr, TO_NUMBER(:qty), :qt, TO_NUMBER(:price), :pt, :ccy, TO_NUMBER(:mv), TO_NUMBER(:rv), :sub)`,
-        s.lines.map(l => ({
-          sid: statementId, ln: l.lineNo, isin: l.isin, descr: l.custodianDesc, qty: l.qty, qt: l.qtyType, price: l.price,
-          pt: l.priceType, ccy: l.ccy, mv: l.marketValue, rv: l.reportingValue, sub: l.subsafe,
-        })),
-      );
-      newInstruments.push(...await ensureInstruments(conn, s.lines.map(l => ({ isin: l.isin, desc: l.custodianDesc })), knownInstruments));
-    }
-  } else if (p.kind === 'confirmation') {
-    const c = p.confirmation;
-    await conn.execute(
-      `INSERT INTO custody_confirmations (confirmation_id, message_id, safe_no, mt_type, direction, seme, prev_ref, function_code,
-         trade_date, settle_date, isin, qty, qty_type, amount, amount_ccy)
-       VALUES (:id, :msg, :safe, :mt, :dir, :seme, :prev, :fn, ${D('td')}, ${D('sd')}, :isin, TO_NUMBER(:qty), :qt, TO_NUMBER(:amt), :ccy)`,
-      {
-        id: ids.confirmation, msg: messageId, safe: c.safeNo, mt: c.mtType,
-        dir: c.direction, seme: c.seme, prev: c.prevRef, fn: c.functionCode, td: c.tradeDate, sd: c.settleDate, isin: c.isin,
-        qty: c.qty, qt: c.qtyType, amt: c.amount, ccy: c.amountCcy,
-      },
+      s.lines.map(l => ({
+        sid: ids.statement, ln: l.lineNo, isin: l.isin, descr: l.custodianDesc, qty: l.qty, qt: l.qtyType, price: l.price,
+        pt: l.priceType, ccy: l.ccy, mv: l.marketValue, rv: l.reportingValue, sub: l.subsafe,
+      })),
+      { autoCommit: missing.length === 0 },
     );
-    newInstruments.push(...await ensureInstruments(conn, [{ isin: c.isin, desc: c.custodianDesc }], knownInstruments));
+    return missing.length ? ensureInstruments(conn, missing, true) : [];
   }
-  return newInstruments;
+  const c = p.confirmation;
+  const instruments = [{ isin: c.isin, desc: c.custodianDesc }];
+  const missing = missingInstruments(instruments, knownInstruments);
+  const confirmation = {
+    sql: `INSERT INTO custody_confirmations (confirmation_id, message_id, safe_no, mt_type, direction, seme, prev_ref, function_code,
+         trade_date, settle_date, isin, qty, qty_type, amount, amount_ccy)
+       VALUES (:c_id, :c_msg, :c_safe, :c_mt, :c_dir, :c_seme, :c_prev, :c_fn, ${D('c_td')}, ${D('c_sd')}, :c_isin, TO_NUMBER(:c_qty), :c_qt, TO_NUMBER(:c_amt), :c_ccy)`,
+    binds: {
+      c_id: ids.confirmation, c_msg: messageId, c_safe: c.safeNo, c_mt: c.mtType,
+      c_dir: c.direction, c_seme: c.seme, c_prev: c.prevRef, c_fn: c.functionCode,
+      c_td: c.tradeDate, c_sd: c.settleDate, c_isin: c.isin, c_qty: c.qty, c_qt: c.qtyType,
+      c_amt: c.amount, c_ccy: c.amountCcy,
+    },
+  };
+  await conn.execute(
+    `BEGIN ${message.sql}; ${confirmation.sql}; END;`,
+    { ...message.binds, ...confirmation.binds },
+    { autoCommit: missing.length === 0 },
+  );
+  return missing.length ? ensureInstruments(conn, missing, true) : [];
 }
 
 /** Recompute derived flags over the whole store (corrected rules), then link rows to accounts by safe number. */
@@ -186,9 +214,7 @@ export async function ingestArchive(conn: Conn, archiveDir = defaultArchiveDir()
     const parsed = parseArchiveText(e, text);
     let newInstruments: string[] = [];
     try {
-      await insertMessage(conn, messageId, runId, e, sha, text, parsed);
-      newInstruments = await insertDerived(conn, messageId, parsed, ids, knownInstruments);
-      await conn.commit();
+      newInstruments = await insertArchiveFile(conn, messageId, runId, e, sha, text, parsed, ids, knownInstruments);
     } catch (err) {
       await conn.rollback();
       throw new Error(`Ingest failed for ${e.sourceFile}: ${(err as Error).message}`);
