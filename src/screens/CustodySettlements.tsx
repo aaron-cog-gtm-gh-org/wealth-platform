@@ -4,6 +4,7 @@ import type { CustodyAccountSummary, CustodyConfirmation } from '../api/types';
 import type { Model } from '../model';
 import { dayMonthYear } from '../format';
 import { defaultSettlementRange, toSettlementRows } from '../model/custody-settlements';
+import { SourceMessageLink } from './SourceMessageLink';
 
 interface ConfirmationQuery {
   accountId: number;
@@ -232,7 +233,7 @@ export function CustodySettlements({ m }: { m: Model }) {
                   <span style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{row.qtyFmt} <small style={{ color: 'rgba(25,25,25,.56)' }}>{row.qtyType}</small></span>
                   <span style={{ textAlign: 'right', fontFamily: "'IBM Plex Mono',monospace" }}>{row.amountFmt}</span>
                   <span>{row.ccy}</span>
-                  <span title={`Message ${row.messageId}`} style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.reference}</span>
+                  <span title={`Message ${row.messageId}`} style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis' }}><SourceMessageLink messageId={row.messageId} label={row.reference} /></span>
                 </div>
               ))}
             </div>

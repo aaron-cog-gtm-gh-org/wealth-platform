@@ -118,9 +118,9 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §4 step 5; 20 random files byte-identical
 
-- [ ] T040 [US4] Implement `listMessages(type, date, safe, page)` and `getMessage(id)` in server/repositories/custody.ts
-- [ ] T041 [US4] Add `GET /api/custody/messages[/:messageId]` (OPS, ADMIN) in server/app.ts
-- [ ] T042 [P] [US4] Build src/screens/MessageBrowser.tsx (filters, paging, escaped `<pre>` raw text preserving line endings) and add its states to scripts/visual-diff.mjs
+- [x] T040 [US4] Implement `listMessages(type, date, safe, page)` and `getMessage(id)` in server/repositories/custody.ts
+- [x] T041 [US4] Add `GET /api/custody/messages[/:messageId]` (OPS, ADMIN) in server/app.ts
+- [x] T042 [P] [US4] Build src/screens/MessageBrowser.tsx (filters, paging, escaped `<pre>` raw text preserving line endings) and add its states to scripts/visual-diff.mjs
 - [ ] T043 [US4] Add source-message links (by `messageId`) from CustodyHoldings, CustodySettlements and PositionCheck screens
 
 **Checkpoint**: MessageBrowser.aspx replaced
@@ -133,9 +133,9 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §4 step 6
 
-- [ ] T044 [US5] Implement `getIngestionStatus` (counts by type, statements, confirmations, unmatched cancellations, errors) in server/repositories/custody.ts
-- [ ] T045 [US5] Add `GET /api/custody/admin/ingestion` and `POST /api/custody/admin/ingest-runs` (ADMIN; one run at a time) calling server/custody/ingest.ts from server/app.ts
-- [ ] T046 [P] [US5] Build src/screens/CustodyAdmin.tsx, register `custody-admin` under an admin nav entry and add its states to scripts/visual-diff.mjs
+- [x] T044 [US5] Implement `getIngestionStatus` (counts by type, statements, confirmations, unmatched cancellations, errors) in server/repositories/custody.ts
+- [x] T045 [US5] Add `GET /api/custody/admin/ingestion` and `POST /api/custody/admin/ingest-runs` (ADMIN; one run at a time) calling server/custody/ingest.ts from server/app.ts
+- [x] T046 [P] [US5] Build src/screens/CustodyAdmin.tsx, register `custody-admin` under an admin nav entry and add its states to scripts/visual-diff.mjs
 
 **Checkpoint**: Admin.aspx replaced
 

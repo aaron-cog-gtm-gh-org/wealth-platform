@@ -147,15 +147,28 @@ export interface BreakNoteRow extends BreakNote { accountId: number; isin: strin
 export interface BreakNoteHistory extends BreakNote { source: 'LEGACY_MIGRATION' | 'USER' }
 
 export interface CustodyMessageRow { messageId: number; mtType: number; functionCode: string;
-  safeNo: number | null; businessDate: string; sourceFile: string; parseStatus: 'OK' | 'ERROR' }
+  safeNo: number | null; businessDate: string; sourceFile: string; parseStatus: 'OK' | 'ERROR';
+  /** Length of the stored CLOB; archive files are ASCII, so chars = bytes. */
+  sizeBytes: number }
 export interface CustodyMessagePage { rows: CustodyMessageRow[]; page: number; total: number }
-export interface CustodyMessage extends CustodyMessageRow { rawText: string; parseError: string | null }
+
+/** Statement or confirmation row derived from a message, for the detail panel's cross-links. */
+export interface CustodyMessageDerived {
+  kind: 'statement' | 'confirmation'; accountId: number | null; clientId: number | null;
+  date: string; functionCode: string;
+  effective?: boolean; lineCount?: number;                                   // statement
+  confirmationId?: number; reference?: string; isin?: string;                // confirmation
+  cancelsMessageId?: number | null; cancelledByMessageId?: number | null;
+}
+export interface CustodyMessage extends CustodyMessageRow { rawText: string; parseError: string | null;
+  contentSha256: string; derived: CustodyMessageDerived | null }
 
 export interface IngestRun { runId: number; startedAt: string; finishedAt: string | null;
-  filesSeen: number; filesNew: number; filesDuplicate: number; parseErrors: number }
+  filesSeen: number; filesNew: number; filesDuplicate: number; parseErrors: number;
+  triggeredBy: string; durationMs: number | null }
 export interface IngestionStatus { lastRun: IngestRun | null; messagesByType: Record<string, number>;
-  statements: number; confirmations: number; unmatchedCancellations: number;
-  errors: { sourceFile: string; error: string }[] }
+  statements: number; effectiveStatements: number; confirmations: number; unmatchedCancellations: number;
+  errors: { sourceFile: string; error: string }[]; archiveRoot: string; runInProgress: boolean }
 
 /**
  * Provenance of a `HouseholdDto`/`PortfolioDto` served for a custody client

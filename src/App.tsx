@@ -14,6 +14,8 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { CustodySettlements } from './screens/CustodySettlements';
+import { MessageBrowser } from './screens/MessageBrowser';
+import { CustodyAdmin } from './screens/CustodyAdmin';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import type { DataState, Screen, SetUiState } from './types';
 
@@ -187,6 +189,10 @@ export function App() {
 
             {show['custody-settlements'] && <CustodySettlements m={m} />}
             {show['position-check'] && <PositionCheck />}
+
+            {show['message-browser'] && <MessageBrowser />}
+
+            {show['custody-admin'] && <CustodyAdmin />}
           </div>
         </main>
       </div>
