@@ -100,7 +100,7 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
       subtitle = 'Payments are not available for migrated custody clients.';
     }
   }
-  if (screen === 'home' && c) title = `Good afternoon, ${c.displayName.split(/\s+/)[0]}`;
+  if (screen === 'home' && c) title = `Good afternoon, ${isCustody ? c.displayName : c.displayName.split(/s+/)[0]}`;
 
   const navGroups = isCustody
     ? NAV_GROUPS.map((g, i) => i === 0 ? { ...g, items: [...g.items, ['custody-holdings', 'Custodian statements'] as [Screen, string]] } : g)
