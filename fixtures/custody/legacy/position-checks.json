@@ -1,0 +1,14 @@
+{
+  "breaks":[
+    {"accountId":2001,"safeCode":"16598","date":"2026-07-17","previousDate":"2026-07-10","isin":"GB00ZZ011962","previousQty":"800","settledNet":"0","expectedQty":"800","reportedQty":"1600","difference":"800","status":"RESOLVED"},
+    {"accountId":2038,"safeCode":"16558","date":"2026-06-26","previousDate":"2026-06-19","isin":"GB00ZZ003373","previousQty":"0","settledNet":"1250","expectedQty":"1250","reportedQty":"0","difference":"-1250","status":"OPEN"},
+    {"accountId":2038,"safeCode":"16558","date":"2026-07-03","previousDate":"2026-06-26","isin":"GB00ZZ003373","previousQty":"0","settledNet":"0","expectedQty":"0","reportedQty":"1250","difference":"1250","status":"NEW"},
+    {"accountId":2074,"safeCode":"14380","date":"2026-07-31","previousDate":"2026-07-24","isin":"GB00ZZ000908","previousQty":"0","settledNet":"0","expectedQty":"0","reportedQty":"900","difference":"900","status":"CHASED"},
+    {"accountId":2125,"safeCode":"10554","date":"2026-09-18","previousDate":"2026-09-11","isin":"LU00ZZ014180","previousQty":"8462.307","settledNet":"0","expectedQty":"8462.307","reportedQty":"12238.377","difference":"3776.070","status":"NEW"},
+    {"accountId":2129,"safeCode":"11397","date":"2026-09-18","previousDate":"2026-09-11","isin":"LU00ZZ013430","previousQty":"0","settledNet":"0","expectedQty":"0","reportedQty":"2775.949","difference":"2775.949","status":"NEW"},
+    {"accountId":2145,"safeCode":"16056","date":"2026-07-17","previousDate":"2026-07-10","isin":"GB00ZZ001500","previousQty":"0","settledNet":"210","expectedQty":"210","reportedQty":"0","difference":"-210","status":"NEW"}
+  ],
+  "accounts":120,
+  "checks":3065,
+  "breakCount":7
+}

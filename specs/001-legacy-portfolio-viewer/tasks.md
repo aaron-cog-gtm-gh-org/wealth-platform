@@ -26,9 +26,9 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Purpose**: Scripts, fixtures and the legacy harness
 
-- [ ] T001 Add `test:unit` (`tsx --test server/custody/__tests__/*.test.ts`), `custody:ingest` and `custody:migrate-legacy` scripts to package.json, and vendor the legacy `db/seed/` and `archive/` into data/legacy-pv/ (read by db:setup; `LEGACY_PV_DIR` override)
-- [ ] T002 [P] Copy one archive file per edge case in spec.md "Edge Cases" (RPLC + NEWM/DUPL for 16558/2026-06-26, cross-day CANC for 16056, 8-digit safes 11397/10554, 1-dp amount, FAMT, ACTI//N, SUBSAFE, LF-only, unknown ISIN GB00ZZ004322) from `$LEGACY/archive` into fixtures/custody/archive-sample/ with a provenance README.md
-- [ ] T003 [P] Create .NET 4.8 console harness tools/legacy-parity/ (csproj referencing `$LEGACY/src/PV.Core`, Program.cs emitting JSON for every statement, confirmation list and position check) with README.md build/run instructions
+- [x] T001 Add `test:unit` (`tsx --test server/custody/__tests__/*.test.ts`), `custody:ingest` and `custody:migrate-legacy` scripts to package.json, and vendor the legacy `db/seed/` and `archive/` into data/legacy-pv/ (read by db:setup; `LEGACY_PV_DIR` override)
+- [x] T002 [P] Copy one archive file per edge case in spec.md "Edge Cases" (RPLC + NEWM/DUPL for 16558/2026-06-26, cross-day CANC for 16056, 8-digit safes 11397/10554, 1-dp amount, FAMT, ACTI//N, SUBSAFE, LF-only, unknown ISIN GB00ZZ004322) from `$LEGACY/archive` into fixtures/custody/archive-sample/ with a provenance README.md
+- [x] T003 [P] Create .NET 4.8 console harness tools/legacy-parity/ (csproj referencing `$LEGACY/src/PV.Core`, Program.cs emitting JSON for every statement, confirmation list and position check) with README.md build/run instructions
 
 ---
 
@@ -38,24 +38,24 @@ make parser, rules and parity tests mandatory for this feature.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Add all `custody_*` tables, constraints and indexes from data-model.md to server/db/schema.sql (including drops so the script stays re-runnable)
-- [ ] T005 [P] Add a small deterministic custody seed (one user per role, 3 clients, 4 accounts, instruments, one break note) to server/db/seed.sql
-- [ ] T006 [P] Widen `Currency` to add `GBP`/`EUR` and add all custody DTOs from contracts/api.md to src/api/types.ts; add GBP (£) and EUR formatting and GBP totals in src/format.ts (FR-024)
-- [ ] T007 [P] Implement SWIFT block/field tokenizer, decimal (string fixed-point, reject thousands separators) and date parsing in server/custody/swift/parse.ts, handling CRLF and LF-only files and continuation lines
-- [ ] T008 [P] Unit tests for T007 in server/custody/__tests__/parse.test.ts (`21637,5`→`21637.50`, `1250,`, `0,5`, `1.250,50` rejected, LF-only)
-- [ ] T009 Implement MT535 mapping (23G, 98A::STAT, 97A::SAFE→number, SUBSAFE flattening, ACTI//N empty flag, 35B description, 90A/90B, 93B::AGGR UNIT/FAMT, 19A::HOLD value + reporting value) in server/custody/swift/mt535.ts
-- [ ] T010 Implement MT544–547 mapping (SEME/PREV, 23G, TRAD/SETT, 35B, 36B, 97A→number, optional 19A::ESTT, direction, free-of-payment) in server/custody/swift/mt54x.ts
-- [ ] T011 [P] Unit tests for T009/T010 against fixtures/custody/archive-sample/ in server/custody/__tests__/mt535.test.ts and server/custody/__tests__/mt54x.test.ts
-- [ ] T012 Implement pure rules in server/custody/rules.ts: effective statement (R-5), global cancellation matching, reconcile() per (ISIN, qty type), plus `legacy` variants reproducing BR-1..BR-5 exactly
-- [ ] T013 [P] Unit tests for T012 in server/custody/__tests__/rules.test.ts covering D-1..D-4 in both `corrected` and `legacy` modes
-- [ ] T014 Implement idempotent ingester in server/custody/ingest.ts (walk archive layout, SHA-256, per-file transaction into custody_messages + derived tables, recompute effective statements and cancellations, add unknown ISINs to custody_instruments with source `CUSTODIAN`, write custody_ingest_runs) with CLI entry `--archive <dir>`
-- [ ] T015 [P] Implement legacy reference migration in server/custody/migrate-legacy.ts reading `$LEGACY/db/seed/01..05_*.sql` into custody_users (no hashes), custody_clients, custody_accounts (type normalization), custody_instruments, custody_break_notes + LEGACY_MIGRATION history (`O`→OPEN, `C`→RESOLVED)
-- [ ] T016 Implement server/custody/platform-view.ts mapping a custody client to `HouseholdDto`/`PortfolioDto` (GBP, latest effective statement, no-source panels flagged unavailable) and wire `npm run db:setup` (server/db/setup.ts) to run migrate-legacy and ingest the committed archive (FR-025)
-- [ ] T017 Create server/repositories/custody.ts skeleton and mount `/api/custody` routes with 400/404 handling in server/app.ts
-- [ ] T018 [P] Replace the fixed `HOUSEHOLD_ID` with the selected client from `?client=` and add custody fetch helpers in src/api/client.ts
-- [ ] T019 Run tools/legacy-parity over `$LEGACY/archive` + seed and commit outputs to fixtures/custody/legacy/ (statements.json, confirmations.json, position-checks.json); confirm 7 legacy breaks
-- [ ] T020 Parity test in server/custody/__tests__/parity.test.ts: run parser + rules over `$LEGACY_ARCHIVE` (skip if unset) and diff against fixtures/custody/legacy/, allowing only the D-1..D-5 deviations enumerated in legacy-as-built.md §8
-- [ ] T021 Oracle integration test in server/custody/__tests__/ingest.int.test.ts: full archive → SC-001 counts; second run → 0 new (SC-007)
+- [x] T004 Add all `custody_*` tables, constraints and indexes from data-model.md to server/db/schema.sql (including drops so the script stays re-runnable)
+- [x] T005 [P] Add a small deterministic custody seed (one user per role, 3 clients, 4 accounts, instruments, one break note) to server/db/seed.sql
+- [x] T006 [P] Widen `Currency` to add `GBP`/`EUR` and add all custody DTOs from contracts/api.md to src/api/types.ts; add GBP (£) and EUR formatting and GBP totals in src/format.ts (FR-024)
+- [x] T007 [P] Implement SWIFT block/field tokenizer, decimal (string fixed-point, reject thousands separators) and date parsing in server/custody/swift/parse.ts, handling CRLF and LF-only files and continuation lines
+- [x] T008 [P] Unit tests for T007 in server/custody/__tests__/parse.test.ts (`21637,5`→`21637.50`, `1250,`, `0,5`, `1.250,50` rejected, LF-only)
+- [x] T009 Implement MT535 mapping (23G, 98A::STAT, 97A::SAFE→number, SUBSAFE flattening, ACTI//N empty flag, 35B description, 90A/90B, 93B::AGGR UNIT/FAMT, 19A::HOLD value + reporting value) in server/custody/swift/mt535.ts
+- [x] T010 Implement MT544–547 mapping (SEME/PREV, 23G, TRAD/SETT, 35B, 36B, 97A→number, optional 19A::ESTT, direction, free-of-payment) in server/custody/swift/mt54x.ts
+- [x] T011 [P] Unit tests for T009/T010 against fixtures/custody/archive-sample/ in server/custody/__tests__/mt535.test.ts and server/custody/__tests__/mt54x.test.ts
+- [x] T012 Implement pure rules in server/custody/rules.ts: effective statement (R-5), global cancellation matching, reconcile() per (ISIN, qty type), plus `legacy` variants reproducing BR-1..BR-5 exactly
+- [x] T013 [P] Unit tests for T012 in server/custody/__tests__/rules.test.ts covering D-1..D-4 in both `corrected` and `legacy` modes
+- [x] T014 Implement idempotent ingester in server/custody/ingest.ts (walk archive layout, SHA-256, per-file transaction into custody_messages + derived tables, recompute effective statements and cancellations, add unknown ISINs to custody_instruments with source `CUSTODIAN`, write custody_ingest_runs) with CLI entry `--archive <dir>`
+- [x] T015 [P] Implement legacy reference migration in server/custody/migrate-legacy.ts reading `$LEGACY/db/seed/01..05_*.sql` into custody_users (no hashes), custody_clients, custody_accounts (type normalization), custody_instruments, custody_break_notes + LEGACY_MIGRATION history (`O`→OPEN, `C`→RESOLVED)
+- [x] T016 Implement server/custody/platform-view.ts mapping a custody client to `HouseholdDto`/`PortfolioDto` (GBP, latest effective statement, no-source panels flagged unavailable) and wire `npm run db:setup` (server/db/setup.ts) to run migrate-legacy and ingest the committed archive (FR-025)
+- [x] T017 Create server/repositories/custody.ts skeleton and mount `/api/custody` routes with 400/404 handling in server/app.ts
+- [x] T018 [P] Replace the fixed `HOUSEHOLD_ID` with the selected client from `?client=` and add custody fetch helpers in src/api/client.ts
+- [x] T019 Run tools/legacy-parity over `$LEGACY/archive` + seed and commit outputs to fixtures/custody/legacy/ (statements.json, confirmations.json, position-checks.json); confirm 7 legacy breaks
+- [x] T020 Parity test in server/custody/__tests__/parity.test.ts: run parser + rules over `$LEGACY_ARCHIVE` (skip if unset) and diff against fixtures/custody/legacy/, allowing only the D-1..D-5 deviations enumerated in legacy-as-built.md §8
+- [x] T021 Oracle integration test in server/custody/__tests__/ingest.int.test.ts: full archive → SC-001 counts; second run → 0 new (SC-007)
 
 **Checkpoint**: Foundation ready — `npm run db:setup` loads all legacy data into Oracle, parity proven
 

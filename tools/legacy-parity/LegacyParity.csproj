@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <!-- Checkout of aaron-cog-gtm-gh-org/legacy-wealth-platform; override with /p:LegacyRoot=... -->
+    <LegacyRoot Condition=" '$(LegacyRoot)' == '' ">$(MSBuildThisFileDirectory)..\..\..\legacy-wealth-platform</LegacyRoot>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{5E0A68A4-DE4D-438A-AD0B-5784D2FDB6F0}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>LegacyParity</RootNamespace>
+    <AssemblyName>LegacyParity</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(LegacyRoot)\src\PV.Core\PV.Core.csproj">
+      <Project>{A1B2C3D4-1111-4111-8111-111111111111}</Project>
+      <Name>PV.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(LegacyRoot)\src\PV.Data\PV.Data.csproj">
+      <Project>{A1B2C3D4-2222-4222-8222-222222222222}</Project>
+      <Name>PV.Data</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
