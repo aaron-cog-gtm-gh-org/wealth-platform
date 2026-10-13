@@ -11,13 +11,18 @@ Browser (Vite, :5173) ──/api──▶ Express API (:3001) ──node-oracled
 
 | Path | What it is |
 | --- | --- |
-| `server/db/schema.sql` | DDL for every table (re-runnable: drops the app tables first) |
+| `server/db/schema.sql` | DDL for platform and custody tables (re-runnable: drops the app tables first) |
 | `server/db/seed.sql` | Deterministic test data: the Whitfield household, 25 holdings, 40 settlement exceptions, etc. |
-| `server/db/setup.ts` | Runs `schema.sql` then `seed.sql` against the configured database |
+| `server/db/setup.ts` | Runs the schema, seed data, legacy custody migration, and full archive ingest |
 | `server/db/pool.ts` | Connection pool; configured from environment variables |
 | `server/repositories/` | All SQL used by the API, grouped by domain (advisor, operations, portal) |
+| `server/repositories/custody.ts` | SQL queries for custody clients, portfolios, statements, breaks, messages, and ingestion |
+| `server/custody/` | SWIFT parsers, parity rules, archive ingest, legacy migration, and custody API router |
+| `data/legacy-pv/` | Bundled legacy seed data and MT535/MT54x archive |
+| `fixtures/custody/` | Custody parity fixtures |
 | `server/app.ts` | REST routes (`/api/households/:id/...`, `/api/ops/...`, `/api/portal/...`) |
 | `src/api/` | Typed API client and wire types used by the frontend |
+| [`docs/custody.md`](./custody.md) | Custody data loading, archive ingest runbook, access model, and parity modes |
 
 ## Configuration
 
@@ -47,7 +52,7 @@ npm install
 npm run db:up          # docker run -d --rm --name wealth-oracle -p 1521:1521 ... gvenzl/oracle-free:23-slim-faststart
 npm run db:wait        # blocks until the database accepts connections
 
-# 2. Create the schema and load the seed data (safe to re-run; it resets the data)
+# 2. Create the schema, load seed/reference data, and ingest the custody archive (about 3–5 min)
 npm run db:setup
 
 # 3. Run the API and the web app together
@@ -64,11 +69,12 @@ session and reset only the data between test runs:
 
 ```sh
 docker ps --filter name=wealth-oracle   # already running? skip db:up / db:wait
-npm run db:setup                        # drops, recreates and reseeds every table (~10 s)
+npm run db:setup                        # drops, recreates, reseeds, and ingests the archive (~3–5 min)
 ```
 
-`db:setup` gives the same clean, deterministic state as a fresh container, so there is no need to
-run `db:down` / `db:up` between tests. Stop the container only when you are finished for the day.
+`db:setup` gives the same clean, deterministic state as a fresh container, including the full custody
+archive ingest, so there is no need to run `db:down` / `db:up` between tests. Stop the container only
+when you are finished for the day.
 
 On Apple Silicon Macs the image runs natively (it is multi-arch); no Rosetta flags are needed.
 
@@ -87,6 +93,9 @@ docker run -d --rm --name wealth-oracle -p 1521:1521 \
 Use the plain `23-slim` tag here. The `-faststart` tags ship with a prebuilt database inside
 `/opt/oracle/oradata`, and an empty tmpfs mounted on top would hide it, so the container builds a
 new database on first boot (a few minutes) instead.
+
+For custody archive commands, paths, and expected ingest results, see
+[`docs/custody.md`](./custody.md).
 
 ### Automated tests with Testcontainers
 

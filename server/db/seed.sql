@@ -486,3 +486,22 @@ INSERT INTO payees (payee_id, client_id, display_order, payee_name, description,
 INSERT INTO payment_rails (rail_name, display_order, daily_limit, fee, speed_label, arrival_label) VALUES ('Wire', 1, 250000, 25, 'Same day if approved by 4:00 PM ET', 'Today by 5:30 PM ET');
 INSERT INTO payment_rails (rail_name, display_order, daily_limit, fee, speed_label, arrival_label) VALUES ('EFT', 2, 100000, 0, '1–2 business days', 'Wed 14-Oct-2026');
 INSERT INTO payment_rails (rail_name, display_order, daily_limit, fee, speed_label, arrival_label) VALUES ('Interac e-Transfer', 3, 3000, 0, 'Within 30 minutes', 'Within 30 minutes');
+
+-- custody (legacy Portfolio Viewer) deterministic seed: one user per role, three clients, four
+-- accounts, instruments and one break note. `npm run db:setup` then replaces the reference data
+-- with the full legacy migration; use `db:setup schema.sql seed.sql` to keep only this seed.
+INSERT INTO custody_users (user_name, display_name, role, is_active) VALUES ('SEEDADV', 'Seed Adviser', 'ADVISER', 1);
+INSERT INTO custody_users (user_name, display_name, role, is_active) VALUES ('SEEDOPS', 'Seed Operations', 'OPS', 1);
+INSERT INTO custody_users (user_name, display_name, role, is_active) VALUES ('SEEDADM', 'Seed Administrator', 'ADMIN', 1);
+INSERT INTO custody_clients (client_id, client_ref, client_name, surname, forename, adviser, status) VALUES (9001, 'SEED-0001', 'Mrs A Penrose', 'Penrose', 'A', 'SEEDADV', 'ACTIVE');
+INSERT INTO custody_clients (client_id, client_ref, client_name, surname, forename, adviser, status) VALUES (9002, 'SEED-0002', 'Mr B Treloar', 'Treloar', 'B', 'SEEDADV', 'ACTIVE');
+INSERT INTO custody_clients (client_id, client_ref, client_name, surname, forename, adviser, status) VALUES (9003, 'SEED-0003', 'The Carnmoor Trust', 'The Carnmoor Trust', NULL, NULL, 'DORMANT');
+INSERT INTO custody_accounts (account_id, client_id, safe_no, account_type, legacy_account_type, reporting_ccy, open_date, close_date) VALUES (9901, 9001, 99001, 'ISA', 'Stocks & Shares ISA', 'GBP', DATE '2020-04-06', NULL);
+INSERT INTO custody_accounts (account_id, client_id, safe_no, account_type, legacy_account_type, reporting_ccy, open_date, close_date) VALUES (9902, 9001, 99002, 'SIPP', 'SIPP', 'GBP', DATE '2019-06-10', NULL);
+INSERT INTO custody_accounts (account_id, client_id, safe_no, account_type, legacy_account_type, reporting_ccy, open_date, close_date) VALUES (9903, 9002, 99003, 'GIA', 'General Investment Account', 'GBP', DATE '2021-01-15', NULL);
+INSERT INTO custody_accounts (account_id, client_id, safe_no, account_type, legacy_account_type, reporting_ccy, open_date, close_date) VALUES (9904, 9003, 99004, 'GIA', 'Discretionary', 'GBP', DATE '2016-03-01', DATE '2024-12-31');
+INSERT INTO custody_instruments (isin, name, source) VALUES ('GB00ZZ001500', 'Ashby Networks PLC Ord', 'LEGACY_REF');
+INSERT INTO custody_instruments (isin, name, source) VALUES ('GB00ZZ011962', 'Seed Instrument GB00ZZ011962', 'LEGACY_REF');
+INSERT INTO custody_instruments (isin, name, source) VALUES ('LU00ZZ013430', 'Seed Instrument LU00ZZ013430', 'LEGACY_REF');
+INSERT INTO custody_break_notes (account_id, isin, statement_date, status, cause, note, updated_by, updated_at) VALUES (9901, 'GB00ZZ001500', DATE '2026-07-17', 'OPEN', 'MISSING_CONFIRM', 'Seed break note', 'SEEDOPS', TIMESTAMP '2026-07-17 15:20:00');
+INSERT INTO custody_break_note_history (history_id, account_id, isin, statement_date, status, cause, note, changed_by, changed_at, source) VALUES (1, 9901, 'GB00ZZ001500', DATE '2026-07-17', 'OPEN', 'MISSING_CONFIRM', 'Seed break note', 'SEEDOPS', TIMESTAMP '2026-07-17 15:20:00', 'USER');

@@ -3,6 +3,11 @@ import type { Model } from '../model';
 
 export function ActivityStatus({ m }: { m: Model }) {
   const { pending, txns } = m;
+  if (m.isCustody) {
+    return <div style={{ background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px', padding: '18px', color: 'rgba(25,25,25,.56)' }}>
+      Transaction activity is not available for migrated custody clients.
+    </div>;
+  }
   return (
     <>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

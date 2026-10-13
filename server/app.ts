@@ -4,6 +4,8 @@ import { query } from './db/pool';
 import { getAlternatives, getHousehold, getPerformance, getPortfolio, getRebalance } from './repositories/advisor';
 import { getSettlementExceptions } from './repositories/operations';
 import { getActivity, getPayments } from './repositories/portal';
+import { custodyJson, custodyRouter } from './custody/router';
+import { optionalPage, searchClients } from './repositories/custody';
 
 type Handler = (req: Request) => Promise<unknown>;
 
@@ -28,6 +30,8 @@ export function createApp() {
   app.get('/api/ops/queues/:queue/settlement-exceptions', json(req => getSettlementExceptions(req.params.queue)));
   app.get('/api/portal/clients/:id/activity', json(req => getActivity(req.params.id)));
   app.get('/api/portal/clients/:id/payments', json(req => getPayments(req.params.id)));
+  app.get('/api/clients', custodyJson(req => searchClients(typeof req.query.q === 'string' ? req.query.q : '', optionalPage(req.query.page))));
+  app.use('/api/custody', custodyRouter());
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     console.error(err.message);
     res.status(503).json({ error: 'Service unavailable' });
