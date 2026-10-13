@@ -100,13 +100,13 @@ make parser, rules and parity tests mandatory for this feature.
 
 **Independent Test**: quickstart.md §3 break counts (2 / 7) + §4 step 4
 
-- [ ] T033 [US3] Implement `positionCheck(date, accountId?, mode)` using rules.ts over Oracle data, joined to custody_break_notes, in server/repositories/custody.ts
-- [ ] T034 [US3] Implement `patchBreakNote` (partial update + history row in one transaction) and `getBreakHistory` in server/repositories/custody.ts
-- [ ] T035 [US3] Add `GET /api/custody/position-checks`, `PATCH /api/custody/breaks/...`, `GET .../history` (OPS, ADMIN) in server/app.ts
-- [ ] T036 [P] [US3] Build src/screens/PositionCheck.tsx (account or Check All, inline status/cause/note edit pre-filled with current values, author name field remembered in localStorage, history drawer, legacy-mode toggle)
-- [ ] T037 [US3] Register `position-check` in the operations nav next to Settlement Exceptions in src/model/shell.ts
-- [ ] T038 [US3] Integration test in server/custody/__tests__/position-check.int.test.ts: 2 corrected / 7 legacy breaks over full archive, author stored, note-only PATCH keeps status, 13 migrated notes
-- [ ] T039 [US3] Add position-check states to scripts/visual-diff.mjs
+- [x] T033 [US3] Implement `positionCheck(date, accountId?, mode)` using rules.ts over Oracle data, joined to custody_break_notes, in server/repositories/custody.ts
+- [x] T034 [US3] Implement `patchBreakNote` (partial update + history row in one transaction) and `getBreakHistory` in server/repositories/custody.ts
+- [x] T035 [US3] Add `GET /api/custody/position-checks`, `PATCH /api/custody/breaks/...`, `GET .../history` (OPS, ADMIN) in server/app.ts
+- [x] T036 [P] [US3] Build src/screens/PositionCheck.tsx (account or Check All, inline status/cause/note edit pre-filled with current values, author name field remembered in localStorage, history drawer, legacy-mode toggle)
+- [x] T037 [US3] Register `position-check` in the operations nav next to Settlement Exceptions in src/model/shell.ts
+- [x] T038 [US3] Integration test in server/custody/__tests__/position-check.int.test.ts: 2 corrected / 7 legacy breaks over full archive, author stored, note-only PATCH keeps status, 13 migrated notes
+- [x] T039 [US3] Add position-check states to scripts/visual-diff.mjs
 
 **Checkpoint**: PositionCheck.aspx replaced with audit history
 

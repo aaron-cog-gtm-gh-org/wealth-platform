@@ -5,7 +5,7 @@ import type { DataState, Screen } from '../types';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
-  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', '']] },
+  { label: 'Operations', items: [['exceptions', 'Settlement exceptions', ''], ['position-check', 'Position check']] },
   { label: 'Client portal preview', items: [['home', 'Client home'], ['activity', 'Activity & status'], ['money', 'Move money']] },
 ];
 
@@ -18,6 +18,7 @@ const META: Record<Screen, [string, string, string]> = {
   home: ['Client portal / Home', 'Good afternoon, Eleanor', 'Last sign-in 08-Oct-2026 from iPhone'],
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
+  'position-check': ['Operations / Custody', 'Position check', 'Custodian MT535 statements vs previous statement + settled MT54x movements'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -29,6 +30,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   home: ['Welcome to RBC Wealth', 'Your accounts will appear here once your first deposit arrives. Most transfers take 3–5 business days.', 'Make a deposit'],
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
+  'position-check': ['No custody statements loaded', 'Position checks run once custodian MT535 statements have been ingested. Run an ingest from the custody archive to populate this screen.', 'View ingestion status'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -40,6 +42,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   home: ['We can’t show your balances right now', 'Something went wrong on our side. Your money is safe and no transactions are affected. Try again in a few minutes, or call 1-800-555-0199.', 'Call us'],
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
+  'position-check': ['Position check could not run', 'The custody service did not respond. No break notes were changed. Retry, or check the ingestion status for the custody archive.', 'View ingestion status'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
@@ -51,7 +54,7 @@ export const totalSource = (d: Data) =>
   `Sum of ${d.holdings.length} positions across ${d.accounts.length} accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun`;
 
 export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null) {
-  const isOps = screen === 'exceptions';
+  const isOps = screen === 'exceptions' || screen === 'position-check';
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const [crumb, title, subtitle] = META[screen];
 

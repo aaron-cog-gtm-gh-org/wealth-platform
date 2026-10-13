@@ -9,6 +9,7 @@ import { PortfolioDetail } from './screens/PortfolioDetail';
 import { RebalanceOrders } from './screens/RebalanceOrders';
 import { Alternatives } from './screens/Alternatives';
 import { SettlementExceptions } from './screens/SettlementExceptions';
+import { PositionCheck } from './screens/PositionCheck';
 import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
@@ -182,6 +183,8 @@ export function App() {
             {show.activity && <ActivityStatus m={m} />}
 
             {show.money && <MoveMoney m={m} />}
+
+            {show['position-check'] && <PositionCheck />}
           </div>
         </main>
       </div>
