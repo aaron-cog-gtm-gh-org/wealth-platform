@@ -3,6 +3,7 @@
 // file at an already-ingested path is an error. Effective statements, cancellations and account
 // links are recomputed over the whole store after every run (rules.ts, corrected mode).
 //   npm run custody:ingest -- [--archive <dir>]   (default data/legacy-pv/archive or $LEGACY_PV_DIR/archive)
+import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import oracledb from 'oracledb';
@@ -57,21 +58,30 @@ async function insertMessage(conn: Conn, id: number, runId: number, e: ArchiveEn
   );
 }
 
-async function ensureInstruments(conn: Conn, items: { isin: string; desc: string | null }[]) {
+async function ensureInstruments(conn: Conn, items: { isin: string; desc: string | null }[], knownInstruments: Set<string>) {
   const seen = new Map<string, string>();
   for (const i of items) if (!seen.has(i.isin)) seen.set(i.isin, i.desc ?? `Unknown instrument ${i.isin}`);
-  if (!seen.size) return;
+  const missing = [...seen].filter(([isin]) => !knownInstruments.has(isin));
+  if (!missing.length) return [];
   await conn.executeMany(
     `MERGE INTO custody_instruments t USING (SELECT :isin AS isin, :name AS name FROM dual) s ON (t.isin = s.isin)
      WHEN NOT MATCHED THEN INSERT (isin, name, source) VALUES (s.isin, SUBSTR(s.name, 1, 120), 'CUSTODIAN')`,
-    [...seen].map(([isin, name]) => ({ isin, name })),
+    missing.map(([isin, name]) => ({ isin, name })),
   );
+  return missing.map(([isin]) => isin);
 }
 
-async function insertDerived(conn: Conn, messageId: number, p: ParsedArchiveFile) {
+async function insertDerived(
+  conn: Conn,
+  messageId: number,
+  p: ParsedArchiveFile,
+  ids: { statement: number; confirmation: number },
+  knownInstruments: Set<string>,
+): Promise<string[]> {
+  const newInstruments: string[] = [];
   if (p.kind === 'statement') {
     const s = p.statement;
-    const statementId = await nextId(conn, 'custody_statements', 'statement_id');
+    const statementId = ids.statement;
     await conn.execute(
       `INSERT INTO custody_statements (statement_id, message_id, safe_no, statement_date, function_code, file_seq, is_empty)
        VALUES (:id, :msg, :safe, ${D('d')}, :fn, :seq, :empty)`,
@@ -87,7 +97,7 @@ async function insertDerived(conn: Conn, messageId: number, p: ParsedArchiveFile
           pt: l.priceType, ccy: l.ccy, mv: l.marketValue, rv: l.reportingValue, sub: l.subsafe,
         })),
       );
-      await ensureInstruments(conn, s.lines.map(l => ({ isin: l.isin, desc: l.custodianDesc })));
+      newInstruments.push(...await ensureInstruments(conn, s.lines.map(l => ({ isin: l.isin, desc: l.custodianDesc })), knownInstruments));
     }
   } else if (p.kind === 'confirmation') {
     const c = p.confirmation;
@@ -96,13 +106,14 @@ async function insertDerived(conn: Conn, messageId: number, p: ParsedArchiveFile
          trade_date, settle_date, isin, qty, qty_type, amount, amount_ccy)
        VALUES (:id, :msg, :safe, :mt, :dir, :seme, :prev, :fn, ${D('td')}, ${D('sd')}, :isin, TO_NUMBER(:qty), :qt, TO_NUMBER(:amt), :ccy)`,
       {
-        id: await nextId(conn, 'custody_confirmations', 'confirmation_id'), msg: messageId, safe: c.safeNo, mt: c.mtType,
+        id: ids.confirmation, msg: messageId, safe: c.safeNo, mt: c.mtType,
         dir: c.direction, seme: c.seme, prev: c.prevRef, fn: c.functionCode, td: c.tradeDate, sd: c.settleDate, isin: c.isin,
         qty: c.qty, qt: c.qtyType, amt: c.amount, ccy: c.amountCcy,
       },
     );
-    await ensureInstruments(conn, [{ isin: c.isin, desc: c.custodianDesc }]);
+    newInstruments.push(...await ensureInstruments(conn, [{ isin: c.isin, desc: c.custodianDesc }], knownInstruments));
   }
+  return newInstruments;
 }
 
 /** Recompute derived flags over the whole store (corrected rules), then link rows to accounts by safe number. */
@@ -157,6 +168,13 @@ export async function ingestArchive(conn: Conn, archiveDir = defaultArchiveDir()
 
   let filesNew = 0, filesDuplicate = 0, parseErrors = 0;
   const errors: IngestSummary['errors'] = [];
+  const ids = {
+    statement: await nextId(conn, 'custody_statements', 'statement_id'),
+    confirmation: await nextId(conn, 'custody_confirmations', 'confirmation_id'),
+  };
+  const knownInstruments = new Set((await conn.execute<{ ISIN: string }>(
+    `SELECT isin FROM custody_instruments`, [], { outFormat: oracledb.OUT_FORMAT_OBJECT },
+  )).rows?.map(r => r.ISIN) ?? []);
   let messageId = await nextId(conn, 'custody_messages', 'message_id');
   for (const e of entries) {
     const bytes = readArchiveBytes(archiveDir, e);
@@ -166,22 +184,28 @@ export async function ingestArchive(conn: Conn, archiveDir = defaultArchiveDir()
     if (prior) throw new IngestConflictError(`${e.sourceFile} was already ingested with different content (sha256 ${prior} ≠ ${sha})`);
     const text = bytes.toString('utf8');
     const parsed = parseArchiveText(e, text);
+    let newInstruments: string[] = [];
     try {
       await insertMessage(conn, messageId, runId, e, sha, text, parsed);
-      await insertDerived(conn, messageId, parsed);
+      newInstruments = await insertDerived(conn, messageId, parsed, ids, knownInstruments);
       await conn.commit();
     } catch (err) {
       await conn.rollback();
       throw new Error(`Ingest failed for ${e.sourceFile}: ${(err as Error).message}`);
     }
     known.set(e.sourceFile, sha);
+    for (const isin of newInstruments) knownInstruments.add(isin);
     messageId++;
+    if (parsed.kind === 'statement') ids.statement++;
+    if (parsed.kind === 'confirmation') ids.confirmation++;
     filesNew++;
     if (parsed.kind === 'error') { parseErrors++; errors.push({ sourceFile: e.sourceFile, error: parsed.error }); }
     if (opts.log && filesNew % 1000 === 0) opts.log(`  ${filesNew} new files…`);
   }
 
+  const recomputeStarted = performance.now();
   const { unmatchedCancellations } = await recomputeDerived(conn);
+  console.log(`recomputeDerived: ${(performance.now() - recomputeStarted).toFixed(0)} ms`);
   await conn.execute(
     `UPDATE custody_ingest_runs SET finished_at = SYSTIMESTAMP, files_seen = :seen, files_new = :nw, files_duplicate = :dup,
        parse_errors = :pe WHERE run_id = :id`,
