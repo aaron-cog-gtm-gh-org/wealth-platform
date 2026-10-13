@@ -27,8 +27,19 @@ description: Test the RBC Wealth Platform React implementation against its inter
 - Move money: payee changes update the checks panel; EFT/Interac limits differ from available cash. Validate blocked review, then review/edit/confirm a valid amount.
 - Confirmation shows a fixed reference and tracking, not the amount. Activity is seeded demonstration data, not a persisted transaction ledger.
 
+# Custody versus legacy Portfolio Viewer
+- Reuse running services and loaded custody data when requested; do not run `db:setup` just for comparison, since it resets the database.
+- Legacy IIS Express is normally at `http://localhost:8081/Login.aspx`. Authenticate with credentials supplied for the local database; do not assume production or seed passwords.
+- Legacy deep links: `Holdings.aspx?acct=<accountId>&stmt=<yyyyMMdd>` and `PositionCheck.aspx?acct=<accountId>&stmt=<yyyyMMdd>`. The latter runs the check on load; do not edit reconciliation notes merely to verify parity.
+- In the new app, numeric `?client=<clientId>&screen=portfolio|c360` selects custody; omit `client` for the default HH-WHITFIELD regression check.
+- Compare a historical legacy holdings page with `/api/custody/accounts/<id>/statements/<yyyy-MM-dd>`, not with the client Portfolio adapter: `/api/custody/clients/<id>/portfolio` uses each account's latest effective statement.
+- `/api/custody/position-checks?accountId=<id>&date=<yyyy-MM-dd>` defaults to corrected rules; append `&mode=legacy` for legacy rules. A sample with identical results does not prove the modes diverge correctly on other inputs.
+- Open JSON routes directly in Chrome. Pretty-print and browser Find provide readable evidence without using the developer console to fetch authenticated data.
+- Chrome zoom can apply across localhost ports. Restore 100% for the modern frontend after enlarging legacy/JSON text.
+- If a selected-client screen goes blank after loading, capture the console exception and the default-client regression independently. Working custody JSON is not proof that its existing UI renders correctly.
+
 # Devin Secrets Needed
-None for local mockup/application parity testing.
+None for local mockup/application parity testing. Legacy Portfolio Viewer login uses a password set only in the local `pvsql` container; never store it here.
 
 ## Oracle backend
 
@@ -41,7 +52,7 @@ The app loads its data from the API (`server/`), which reads Oracle. Before any 
 4. Without the API, every screen shows the Error state, which is expected.
 
 Reuse one Oracle container: never stop/restart `wealth-oracle` between test runs. `npm run db:setup`
-(~10 s) restores the deterministic seed, which is all a fresh container would give you.
+(~3 min: includes legacy migration + the 6,044-file custody archive ingest) restores the deterministic seed, which is all a fresh container would give you.
 
 `npm run test:db` checks the stack end to end in its own Testcontainers Oracle (2–3 min). Run it once
 at the end (or in CI), not per iteration. If it hangs:

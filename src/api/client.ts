@@ -35,7 +35,11 @@ export const selectedClient = (search: string = typeof window === 'undefined' ? 
 /** `?client=` value for a selection (used by the client picker). */
 export const clientParam = (sel: ClientSelection) => (sel.kind === 'custody' ? String(sel.clientId) : sel.id);
 
-const EMPTY_PERFORMANCE: PerformanceDto = { periods: [] };
+// Legacy custody has no performance history: flat zero series keep the existing screens renderable.
+const PERIOD_CODES = ['1M', '3M', 'YTD', '1Y', '3Y', 'Since inception'];
+const EMPTY_PERFORMANCE: PerformanceDto = {
+  periods: PERIOD_CODES.map(code => ({ code, startDate: '', portfolioReturnPct: 0, benchmarkReturnPct: 0, portfolio: [0, 0], benchmark: [0, 0] })),
+};
 const EMPTY_REBALANCE: RebalanceDto = { proposal: { id: '', status: 'Not available', trackingErrorBeforePct: 0, trackingErrorAfterPct: 0 }, trades: [], checks: [], drift: [] };
 const EMPTY_ALTERNATIVES: AlternativesDto = { commitments: [], capitalCalls: [], distributions: [] };
 const EMPTY_ACTIVITY: ActivityDto = { feed: [], pending: [], transactions: [] };
