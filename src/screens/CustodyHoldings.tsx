@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getCustodyClient, getStatement, getStatementDates, selectedClient } from '../api/client';
 import type { CustodyClientSummary, CustodyStatement, CustodyStatementDate } from '../api/types';
 import { decMoney, decQuantity, dayMonthYear } from '../format';
+import { settlementsHref } from '../model/custody-settlements';
+import { SourceMessageLink } from './SourceMessageLink';
 
 const card = { background: '#fff', border: '1px solid #e1e5eb', borderRadius: '6px' };
 const muted = 'rgba(25,25,25,.56)';
@@ -125,6 +127,13 @@ export function CustodyHoldings() {
 
   const account = client.accounts.find(a => a.accountId === accountId);
   const selectedDate = dates.find(d => d.date === date);
+  const statementDateIndex = statement ? dates.findIndex(d => d.date === statement.date) : -1;
+  const previousStatementDate = statement
+    ? (statementDateIndex >= 0 ? dates[statementDateIndex + 1]?.date : undefined) ?? statement.date
+    : null;
+  const settlementsUrl = statement && clientId !== null && accountId !== null
+    ? settlementsHref(clientId, accountId, { from: previousStatementDate ?? statement.date, to: statement.date })
+    : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -181,7 +190,8 @@ export function CustodyHoldings() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '0 12px 10px', color: muted, fontSize: '11px' }}>
             <span>Function {statement.functionCode}</span>
             <span>·</span>
-            <span>Message {statement.messageId}</span>
+            <SourceMessageLink messageId={statement.messageId} label={`Message ${statement.messageId}`} />
+            {settlementsUrl && <a href={settlementsUrl} style={{ color: '#005daa', fontSize: '11px', textDecoration: 'none' }}>Settlements since previous statement</a>}
             {selectedDate && selectedDate.superseded > 0 && (
               <span>· Effective statement — latest RPLC, else latest NEWM (duplicates ignored)</span>
             )}
@@ -214,6 +224,7 @@ export function CustodyHoldings() {
                   <span style={{ font: "11px 'IBM Plex Mono',monospace" }}>{line.isin}</span>
                   <span style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
                     <span>{line.name}</span>
+                    {line.messageId !== statement.messageId && <SourceMessageLink messageId={line.messageId} label="source" />}
                     {!line.nameVerified && (
                       <span title="Name from custodian message; ISIN not in reference data" style={{ padding: '1px 6px', borderRadius: '9px', background: '#fdf0dd', color: '#94520a', fontSize: '10px', fontWeight: 600 }}>
                         Unverified instrument

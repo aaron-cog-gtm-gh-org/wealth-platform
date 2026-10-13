@@ -121,7 +121,7 @@ make parser, rules and parity tests mandatory for this feature.
 - [x] T040 [US4] Implement `listMessages(type, date, safe, page)` and `getMessage(id)` in server/repositories/custody.ts
 - [x] T041 [US4] Add `GET /api/custody/messages[/:messageId]` (OPS, ADMIN) in server/app.ts
 - [x] T042 [P] [US4] Build src/screens/MessageBrowser.tsx (filters, paging, escaped `<pre>` raw text preserving line endings) and add its states to scripts/visual-diff.mjs
-- [ ] T043 [US4] Add source-message links (by `messageId`) from CustodyHoldings, CustodySettlements and PositionCheck screens
+- [x] T043 [US4] Add source-message links (by `messageId`) from CustodyHoldings, CustodySettlements and PositionCheck screens
 
 **Checkpoint**: MessageBrowser.aspx replaced
 
