@@ -1,0 +1,2132 @@
+{
+  "household": {
+    "id": "HH-WHITFIELD",
+    "name": "Whitfield family",
+    "mandate": "Discretionary + Advisory",
+    "nextReviewDate": "2026-11-04",
+    "advisorName": "Aaron Diamond, CFP",
+    "totalFeeRatePct": 1.07,
+    "income90d": 58420,
+    "coupons90d": 31880,
+    "dividends90d": 26540,
+    "taxLots": 61,
+    "altNetIrrPct": 9.8,
+    "primaryClient": {
+      "id": "C-00418823",
+      "legalName": "Eleanor Margaret Whitfield",
+      "displayName": "Eleanor Whitfield",
+      "dateOfBirth": "1961-04-17",
+      "taxResidency": "Canada (ON) · SIN on file",
+      "occupation": "Retired · former CFO",
+      "riskProfile": "Balanced growth",
+      "riskScore": 6,
+      "timeHorizon": "10+ years",
+      "kycStatus": "Current",
+      "kycReviewedDate": "2026-03-14",
+      "kycNextRefreshDate": "2027-03-14",
+      "suitabilitySignedDate": "2026-03-14",
+      "preferredContact": "Email · weekday mornings",
+      "powerOfAttorney": "Claire Whitfield (property)",
+      "fundingAccountKey": "NR"
+    },
+    "members": [
+      {
+        "name": "Eleanor Whitfield",
+        "relationship": "Primary · client since 2009",
+        "accounts": "NR (joint), RRSP"
+      },
+      {
+        "name": "David Whitfield",
+        "relationship": "Spouse · joint owner",
+        "accounts": "NR (joint)"
+      },
+      {
+        "name": "Whitfield Holdings Ltd.",
+        "relationship": "Holding company · Eleanor 60%, David 40%",
+        "accounts": "Corporate"
+      },
+      {
+        "name": "Claire Whitfield",
+        "relationship": "Daughter · POA (property)",
+        "accounts": "No accounts"
+      }
+    ],
+    "tasks": [
+      {
+        "title": "RRSP underweight bonds by 2.6 pts",
+        "nextStep": "Review proposed rebalance RB-2026-0412",
+        "due": "Today",
+        "priority": "HIGH"
+      },
+      {
+        "title": "Capital call notice · Northgate IV",
+        "nextStep": "$85,000 due 28-Oct · confirm funding from corporate account",
+        "due": "16 days",
+        "priority": "MEDIUM"
+      },
+      {
+        "title": "Annual review prep",
+        "nextStep": "Agenda, performance pack and IPS check",
+        "due": "04-Nov",
+        "priority": "NORMAL"
+      },
+      {
+        "title": "RRIF conversion planning",
+        "nextStep": "Eleanor turns 71 in 2032 · add to review agenda",
+        "due": "04-Nov",
+        "priority": "LOW"
+      },
+      {
+        "title": "Beneficiary update requested",
+        "nextStep": "Signed form received 06-Oct · Ops verifying",
+        "due": "With Ops",
+        "priority": "LOW"
+      }
+    ],
+    "communications": [
+      {
+        "channel": "Email · Eleanor",
+        "date": "2026-10-08",
+        "summary": "Asked about the Northgate capital call and whether USD cash can cover it."
+      },
+      {
+        "channel": "Call · 22 min · David",
+        "date": "2026-09-29",
+        "summary": "Discussed Shopify gain and timing a partial sale in the corporate account."
+      },
+      {
+        "channel": "Secure message sent",
+        "date": "2026-09-15",
+        "summary": "Q2 private investments statement and NAV explanation."
+      },
+      {
+        "channel": "Meeting · in person",
+        "date": "2026-06-12",
+        "summary": "Mid-year review. Agreed to trim Canadian dividend fund toward target."
+      }
+    ],
+    "documents": [
+      {
+        "title": "Q3 2026 consolidated statement",
+        "date": "2026-10-06"
+      },
+      {
+        "title": "Northgate IV capital call notice #9",
+        "date": "2026-10-05"
+      },
+      {
+        "title": "Investment Policy Statement v4",
+        "date": "2026-03-14"
+      },
+      {
+        "title": "KYC & suitability record",
+        "date": "2026-03-14"
+      },
+      {
+        "title": "2025 T5 / T3 tax pack",
+        "date": "2026-02-28"
+      }
+    ],
+    "fees": [
+      {
+        "label": "Management fee",
+        "rate": "0.85% tiered",
+        "amount": 51240
+      },
+      {
+        "label": "Fund MER (embedded)",
+        "rate": "0.21% avg",
+        "amount": 11980
+      },
+      {
+        "label": "Trading commissions",
+        "rate": "14 trades",
+        "amount": 1390
+      }
+    ]
+  },
+  "portfolio": {
+    "accounts": [
+      {
+        "key": "NR",
+        "accountNo": "4417-8821",
+        "name": "Non-registered investment",
+        "shortName": "Non-registered",
+        "ownership": "Joint (Eleanor & David)",
+        "management": "Discretionary",
+        "currencies": "CAD",
+        "driftPts": 1.8,
+        "driftStatus": "WARN",
+        "dayChangePct": 0.31
+      },
+      {
+        "key": "RR",
+        "accountNo": "4417-9034",
+        "name": "RRSP",
+        "shortName": "RRSP",
+        "ownership": "Eleanor",
+        "management": "Advisory",
+        "currencies": "CAD",
+        "driftPts": -2.6,
+        "driftStatus": "ALERT",
+        "dayChangePct": 0.12
+      },
+      {
+        "key": "CO",
+        "accountNo": "4418-1157",
+        "name": "Whitfield Holdings Ltd.",
+        "shortName": "Whitfield Holdings Ltd.",
+        "ownership": "Corporate",
+        "management": "Advisory",
+        "currencies": "CAD + USD",
+        "driftPts": 1.1,
+        "driftStatus": "OK",
+        "dayChangePct": 0.42
+      }
+    ],
+    "assetClasses": [
+      {
+        "name": "Cash",
+        "targetWeightPct": 3,
+        "priceSource": "Ledger balance · sum of 214 ledger entries since account open"
+      },
+      {
+        "name": "Equities",
+        "targetWeightPct": 30,
+        "priceSource": "Last trade 14:45 ET (15-min delayed) · custodian: RBC Investor Services"
+      },
+      {
+        "name": "Bonds",
+        "targetWeightPct": 26,
+        "priceSource": "Evaluated price 14:30 ET · ICE · clean price + accrued per Act/365"
+      },
+      {
+        "name": "Funds",
+        "targetWeightPct": 28,
+        "priceSource": "NAV 09-Oct-2026 from Fundserv · forward-priced"
+      },
+      {
+        "name": "Alternatives",
+        "targetWeightPct": 13,
+        "priceSource": "Manager NAV 30-Jun-2026 + calls/distributions since · approved by R. Osei 14-Aug-2026"
+      }
+    ],
+    "holdings": [
+      {
+        "accountKey": "NR",
+        "assetClass": "Cash",
+        "name": "CAD cash",
+        "identifier": "Ledger balance",
+        "quantity": 184220,
+        "price": 1,
+        "marketValue": 184220,
+        "costBasis": 184220,
+        "dayChangePct": 0,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Cash",
+        "name": "USD cash",
+        "identifier": "USD sub-account",
+        "quantity": 96397,
+        "price": 1.3683,
+        "marketValue": 131900,
+        "costBasis": 131900,
+        "dayChangePct": 0,
+        "currency": "USD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Cash",
+        "name": "CAD cash",
+        "identifier": "Ledger balance",
+        "quantity": 42150,
+        "price": 1,
+        "marketValue": 42150,
+        "costBasis": 42150,
+        "dayChangePct": 0,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Equities",
+        "name": "Royal Bank of Canada",
+        "identifier": "RY · TSX",
+        "quantity": 2400,
+        "price": 192.4,
+        "marketValue": 461760,
+        "costBasis": 298400,
+        "dayChangePct": 0.84,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Equities",
+        "name": "Enbridge Inc.",
+        "identifier": "ENB · TSX",
+        "quantity": 5200,
+        "price": 61.85,
+        "marketValue": 321620,
+        "costBasis": 268000,
+        "dayChangePct": -0.41,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Equities",
+        "name": "Canadian National Railway",
+        "identifier": "CNR · TSX",
+        "quantity": 1800,
+        "price": 158.2,
+        "marketValue": 284760,
+        "costBasis": 301500,
+        "dayChangePct": 0.22,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Equities",
+        "name": "Shopify Inc. Cl A",
+        "identifier": "SHOP · TSX",
+        "quantity": 1500,
+        "price": 152.3,
+        "marketValue": 228450,
+        "costBasis": 141000,
+        "dayChangePct": 2.13,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Equities",
+        "name": "Brookfield Corp.",
+        "identifier": "BN · TSX",
+        "quantity": 3600,
+        "price": 84.1,
+        "marketValue": 302760,
+        "costBasis": 211000,
+        "dayChangePct": 0.65,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Equities",
+        "name": "Microsoft Corp.",
+        "identifier": "MSFT · NASDAQ · USD",
+        "quantity": 520,
+        "price": 512.4,
+        "marketValue": 364580,
+        "costBasis": 248000,
+        "dayChangePct": -0.18,
+        "currency": "USD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Equities",
+        "name": "Alimentation Couche-Tard",
+        "identifier": "ATD · TSX",
+        "quantity": 3100,
+        "price": 79.45,
+        "marketValue": 246295,
+        "costBasis": 230100,
+        "dayChangePct": -0.32,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Equities",
+        "name": "Johnson & Johnson",
+        "identifier": "JNJ · NYSE · USD",
+        "quantity": 900,
+        "price": 178.2,
+        "marketValue": 219450,
+        "costBasis": 196000,
+        "dayChangePct": 0.11,
+        "currency": "USD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Bonds",
+        "name": "Govt of Canada 3.25% 01-Dec-2034",
+        "identifier": "CA135087R895 · AA+ · accrued $2,180",
+        "quantity": 600000,
+        "price": 98.42,
+        "marketValue": 590520,
+        "costBasis": 584000,
+        "dayChangePct": 0.06,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Bonds",
+        "name": "Province of Ontario 3.65% 02-Jun-2033",
+        "identifier": "CA68333ZAV98 · AA- · accrued $5,120",
+        "quantity": 400000,
+        "price": 99.15,
+        "marketValue": 396600,
+        "costBasis": 401200,
+        "dayChangePct": 0.04,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Bonds",
+        "name": "Province of Quebec 4.40% 01-Dec-2055",
+        "identifier": "CA74814ZFK24 · AA- · accrued $1,240",
+        "quantity": 250000,
+        "price": 96.8,
+        "marketValue": 242000,
+        "costBasis": 255000,
+        "dayChangePct": -0.12,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Bonds",
+        "name": "Bell Canada 5.15% 14-Nov-2031",
+        "identifier": "CA07813ZCN18 · BBB · accrued $6,980",
+        "quantity": 300000,
+        "price": 103.1,
+        "marketValue": 309300,
+        "costBasis": 300900,
+        "dayChangePct": 0.02,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Bonds",
+        "name": "RBC Deposit Note 4.63% 01-May-2028",
+        "identifier": "CA780086XC51 · AA · accrued $1,560",
+        "quantity": 250000,
+        "price": 101.45,
+        "marketValue": 253625,
+        "costBasis": 250000,
+        "dayChangePct": 0.01,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Bonds",
+        "name": "US Treasury 4.25% 15-Nov-2030",
+        "identifier": "US91282CJL64 · AA+ · USD",
+        "quantity": 200000,
+        "price": 100.62,
+        "marketValue": 275360,
+        "costBasis": 271000,
+        "dayChangePct": 0.03,
+        "currency": "USD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Funds",
+        "name": "RBC Canadian Dividend Fund Sr F",
+        "identifier": "RBF6270 · Fundserv",
+        "quantity": 8420.112,
+        "price": 98.14,
+        "marketValue": 826350,
+        "costBasis": 640000,
+        "dayChangePct": 0.38,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Funds",
+        "name": "PH&N Bond Fund Sr F",
+        "identifier": "RBF1330 · Fundserv",
+        "quantity": 41230.5,
+        "price": 10.12,
+        "marketValue": 417252,
+        "costBasis": 430000,
+        "dayChangePct": 0.05,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "RR",
+        "assetClass": "Funds",
+        "name": "RBC Global Equity Focus Fund Sr F",
+        "identifier": "RBF6670 · Fundserv",
+        "quantity": 12880.4,
+        "price": 31.66,
+        "marketValue": 407794,
+        "costBasis": 322000,
+        "dayChangePct": 0.47,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Funds",
+        "name": "BlueBay Global Inv. Grade Corp Bond Sr F",
+        "identifier": "RBF1910 · Fundserv",
+        "quantity": 28450,
+        "price": 10.84,
+        "marketValue": 308398,
+        "costBasis": 300000,
+        "dayChangePct": 0.03,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Funds",
+        "name": "RBC Short Term Canadian Bond ETF",
+        "identifier": "RBO · TSX",
+        "quantity": 12000,
+        "price": 19.62,
+        "marketValue": 235440,
+        "costBasis": 236000,
+        "dayChangePct": 0.02,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Funds",
+        "name": "RBC U.S. Dividend Fund Sr F",
+        "identifier": "RBF6280 · Fundserv",
+        "quantity": 6210,
+        "price": 52.18,
+        "marketValue": 324038,
+        "costBasis": 270000,
+        "dayChangePct": 0.21,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "CO",
+        "assetClass": "Alternatives",
+        "name": "Northgate Infrastructure Partners IV",
+        "identifier": "Commitment $1,000,000 · 62% called",
+        "quantity": 620000,
+        "price": 1.149,
+        "marketValue": 712400,
+        "costBasis": 620000,
+        "dayChangePct": 0,
+        "currency": "CAD"
+      },
+      {
+        "accountKey": "NR",
+        "assetClass": "Alternatives",
+        "name": "Lakeshore Private Credit Fund II",
+        "identifier": "Commitment $750,000 · 64% called",
+        "quantity": 480000,
+        "price": 0.977,
+        "marketValue": 468900,
+        "costBasis": 480000,
+        "dayChangePct": 0,
+        "currency": "CAD"
+      }
+    ],
+    "fxRates": [
+      {
+        "base": "USD",
+        "quote": "CAD",
+        "rate": 1.3683,
+        "source": "WM/Reuters 14:00 ET"
+      }
+    ]
+  },
+  "performance": {
+    "periods": [
+      {
+        "code": "1M",
+        "startDate": "2026-09-12",
+        "portfolioReturnPct": 0.4,
+        "benchmarkReturnPct": 0.35,
+        "portfolio": [
+          0,
+          -0.01772971254007327,
+          0.009814667734400517,
+          0.038397337623379574,
+          0.04837149749374893,
+          0.07731988725263114,
+          0.07460918937982067,
+          0.0900232800158188,
+          0.10053542074094994,
+          0.10938987653191497,
+          0.10570221084706508,
+          0.12714548429993242,
+          0.14311927333534752,
+          0.18637162182607475,
+          0.20012456513134308,
+          0.20476311315665516,
+          0.2532115991935697,
+          0.25016205775516726,
+          0.2730134992898845,
+          0.27854168887249964,
+          0.30341011313118355,
+          0.3421194941401193,
+          0.4
+        ],
+        "benchmark": [
+          0,
+          -0.011965637281167577,
+          0.003292868866357509,
+          0.02588304816296339,
+          0.036246439103029104,
+          0.06562584745004832,
+          0.06462278196941003,
+          0.07691617813875422,
+          0.08040732439802029,
+          0.08328892389001356,
+          0.08050800109468347,
+          0.10484735619462901,
+          0.11150389159396892,
+          0.1527097496836343,
+          0.1677466458637611,
+          0.16491511537637624,
+          0.20943998799812294,
+          0.20646117464181293,
+          0.22691298169320281,
+          0.23655429844450054,
+          0.2556650023375855,
+          0.28482943302303093,
+          0.35
+        ]
+      },
+      {
+        "code": "3M",
+        "startDate": "2026-07-12",
+        "portfolioReturnPct": 2.1,
+        "benchmarkReturnPct": 1.8,
+        "portfolio": [
+          0,
+          -0.10768347122845758,
+          0.08156594063944679,
+          0.18574808364167117,
+          0.3433473262899167,
+          0.4883142172134369,
+          0.7383837268485397,
+          0.905559611255492,
+          1.1339009806883706,
+          1.0871466399791545,
+          1.3311723280381855,
+          1.3117357526418525,
+          1.566641618389147,
+          1.6628615024228866,
+          1.5597355438682379,
+          1.8143397992265988,
+          1.8608447061376279,
+          1.9619517838422769,
+          1.9199272036656683,
+          1.8261114868108486,
+          1.8471250879759764,
+          2.004323588782391,
+          2.1577346457871447,
+          2.250197809072268,
+          2.464182876665517,
+          2.5265600832541795,
+          2.1
+        ],
+        "benchmark": [
+          0,
+          -0.10584985488354792,
+          0.0871137648065245,
+          0.1769159617980426,
+          0.31954977698348497,
+          0.4809852747601801,
+          0.6574038759583841,
+          0.7907059410634497,
+          1.0298812471887762,
+          0.9838917810784704,
+          1.1798137936896136,
+          1.1236352884819125,
+          1.3076498346622765,
+          1.388377805977607,
+          1.3440483865590096,
+          1.580862324193226,
+          1.5765657789075695,
+          1.6883678712659276,
+          1.6733237662582017,
+          1.6333919210996888,
+          1.6597192727486476,
+          1.8183771869761813,
+          1.9377281609894228,
+          2.0121187239538623,
+          2.2099566452654735,
+          2.2848040980334146,
+          1.8
+        ]
+      },
+      {
+        "code": "YTD",
+        "startDate": "2026-01-01",
+        "portfolioReturnPct": 7.84,
+        "benchmarkReturnPct": 7.12,
+        "portfolio": [
+          0,
+          -0.5064743860394108,
+          0.1641208968621311,
+          0.7455593952651879,
+          0.6785489549980264,
+          0.5088828354034961,
+          0.748754121697673,
+          0.4694520124546497,
+          0.14280381553266408,
+          0.9530648747072861,
+          1.1584199504293597,
+          0.8584265752539164,
+          1.3089928423286383,
+          1.455925437981228,
+          0.9831070738713755,
+          1.500603819705082,
+          1.8670697640276837,
+          1.7444168624898497,
+          1.6739446765908714,
+          1.2161564784121497,
+          1.3607607241902318,
+          2.138181650874662,
+          2.3523768444532425,
+          2.378689436349408,
+          2.931194150578974,
+          2.6712644932046845,
+          3.4571773357046673,
+          3.357057804250466,
+          3.795768883802263,
+          4.252021530443442,
+          4.174097400691966,
+          3.688241025768707,
+          3.3347560289280302,
+          3.1352216486752154,
+          3.07564704047239,
+          2.87267644123802,
+          3.3510686049792326,
+          3.4259163533148924,
+          4.212521074165276,
+          4.122508842389339,
+          7.84
+        ],
+        "benchmark": [
+          0,
+          -0.5169341482857865,
+          0.17055533320419275,
+          0.8418781610292374,
+          0.6605817818515476,
+          0.5342054604426982,
+          0.9256567068950349,
+          0.8007209054591509,
+          0.6787050162064212,
+          1.2644037809055315,
+          1.5985773407892963,
+          1.3039601967854237,
+          1.6319574946375737,
+          1.6332706851937204,
+          1.0858026893853592,
+          1.5146249324491545,
+          1.909449087354917,
+          1.7925489480667502,
+          1.8829894042037185,
+          1.350113074385576,
+          1.4455670815623394,
+          1.9617511047446308,
+          2.0483106822464565,
+          2.107033720669631,
+          2.542536517479259,
+          2.334572605247167,
+          2.9065183820637857,
+          2.939131127215032,
+          3.1887029722930778,
+          3.42299327961193,
+          3.2398926410877196,
+          2.937987322078862,
+          2.572855830967153,
+          2.519814666407207,
+          2.5437339428158343,
+          2.5146807629653987,
+          3.00826723103312,
+          3.1225674619342776,
+          3.7805694468346633,
+          3.5993202409292175,
+          7.12
+        ]
+      },
+      {
+        "code": "1Y",
+        "startDate": "2025-10-12",
+        "portfolioReturnPct": 11.6,
+        "benchmarkReturnPct": 10.4,
+        "portfolio": [
+          0,
+          -0.8149257614650561,
+          -0.9945128616229512,
+          -0.718032978550403,
+          -0.9848548287776195,
+          -1.1756592987281331,
+          -0.44047440348186495,
+          0.7520233841163142,
+          1.2265373952727257,
+          1.0567027392041057,
+          1.7256591731539699,
+          1.358568379350486,
+          0.8600908170441729,
+          1.1734712692785407,
+          1.9208761203101112,
+          2.502596200866687,
+          1.8648842448467349,
+          1.7126404008025848,
+          1.1883211541018297,
+          0.7398020951321432,
+          1.4028634034070413,
+          1.966850206541365,
+          1.5977016023335162,
+          1.0008562847583318,
+          1.8710911499902387,
+          1.2267247645947879,
+          1.0396839950791024,
+          0.7683583485182044,
+          1.7227518540696667,
+          2.054153309886559,
+          2.651761690210011,
+          1.8468846581581668,
+          2.026428152704167,
+          1.4094089466560615,
+          1.9979571765941166,
+          2.9089877869048686,
+          3.6739086197491755,
+          4.291660776390753,
+          4.342046498056167,
+          4.230298119555369,
+          4.4027080981067765,
+          5.270870936924785,
+          6.169303874964648,
+          6.698684873900268,
+          6.283662214229588,
+          7.135313977137177,
+          7.530693464257793,
+          8.427350894559877,
+          9.566401655060856,
+          9.233324727776003,
+          10.165150102827516,
+          9.742114287629416,
+          11.6
+        ],
+        "benchmark": [
+          0,
+          -0.7996307926188366,
+          -1.0331040360973702,
+          -0.861540401248327,
+          -1.263411791406857,
+          -1.6584187141326348,
+          -0.9577064923402425,
+          0.16404281556356753,
+          0.5257492365135567,
+          0.5608962507752212,
+          1.1560664430594376,
+          0.6181283105881547,
+          0.1893076518700026,
+          0.40515356619849485,
+          1.3047270700733766,
+          1.724786797739652,
+          1.3109901440820608,
+          1.1500952879983442,
+          0.6950282583476174,
+          0.37754881257719763,
+          0.7327674612739903,
+          1.2724374804261314,
+          0.9594733305654828,
+          0.5539133279331554,
+          1.4015059960944136,
+          0.6889318383469856,
+          0.4506618331366502,
+          0.43364105244606765,
+          1.0514942748400817,
+          1.3122958535045826,
+          1.6887438613461063,
+          0.8381322324456327,
+          0.7853753095763616,
+          0.16180416195243735,
+          0.5679204317040364,
+          1.1269545793870244,
+          2.0372094311457163,
+          2.5056040075457666,
+          2.5336577200217434,
+          2.387083665444554,
+          2.6298524651968163,
+          3.122903772990733,
+          3.9817660651656643,
+          4.204190400194187,
+          3.7194315382600918,
+          4.248841405796187,
+          4.553756831793375,
+          5.259453598812063,
+          6.225152292035127,
+          6.126311952275465,
+          6.90265657286116,
+          6.670811349776488,
+          10.4
+        ]
+      },
+      {
+        "code": "3Y",
+        "startDate": "2023-10-12",
+        "portfolioReturnPct": 28.9,
+        "benchmarkReturnPct": 26.2,
+        "portfolio": [
+          0,
+          -1.787840465135902,
+          -0.05204674242459839,
+          2.6007991349697726,
+          5.985730767425541,
+          5.334983851527736,
+          7.662102440378987,
+          10.525721489670763,
+          12.018892770361674,
+          10.96504002044212,
+          13.177512681095529,
+          13.76661043689873,
+          12.951794730688967,
+          15.172414436993895,
+          15.720539453581635,
+          14.337624087754769,
+          13.225086718369052,
+          16.24138512160517,
+          18.08914362070762,
+          17.97030808699134,
+          19.889088149537624,
+          23.266418065125,
+          22.916444075702472,
+          21.832126449814528,
+          20.381674136149844,
+          21.397949926286177,
+          21.97271550459923,
+          23.464657301698175,
+          24.853022779031086,
+          23.376974296362373,
+          25.99039098567315,
+          27.763542278361797,
+          29.369772747683633,
+          30.660178538336798,
+          33.37130659233207,
+          35.10983958435153,
+          28.9
+        ],
+        "benchmark": [
+          0,
+          -1.4190495994741665,
+          0.6988683005253424,
+          3.4375201558758053,
+          5.84988737999182,
+          5.141331057178819,
+          7.100837613669271,
+          9.994143993932443,
+          10.75010583279744,
+          10.506326765866286,
+          11.835994637163713,
+          11.893568960286803,
+          10.933703340504195,
+          12.692204910190107,
+          13.530157196888766,
+          12.797813876823161,
+          11.714828936442625,
+          13.804620049902699,
+          15.682274679552378,
+          16.13060397463242,
+          17.36336665035888,
+          20.345436855102808,
+          19.576892307139005,
+          18.74635819080025,
+          17.69030669146463,
+          18.317787837493924,
+          19.27305134554048,
+          20.064248543093264,
+          21.236506164284794,
+          20.554364143819495,
+          22.747698613672586,
+          24.50116686838234,
+          25.719833429184064,
+          27.470006636436164,
+          29.344205683698583,
+          31.268253968283695,
+          26.2
+        ]
+      },
+      {
+        "code": "Since inception",
+        "startDate": "2009-03-02",
+        "portfolioReturnPct": 142.3,
+        "benchmarkReturnPct": 128.7,
+        "portfolio": [
+          0,
+          -10.350536798138112,
+          -4.878262427856647,
+          -6.078687692337057,
+          6.535317254979156,
+          4.869696760516162,
+          0.10475945226790451,
+          2.433942880195851,
+          7.732562919750764,
+          20.25222653456416,
+          14.55087957960719,
+          19.3960183957123,
+          12.4728749094088,
+          25.822565840902385,
+          38.469257626093274,
+          52.82130795193898,
+          44.06910378317618,
+          34.08499486888775,
+          32.93825025400532,
+          38.02792646033811,
+          32.94115699522408,
+          35.24747233221564,
+          42.366681810754066,
+          47.10398376837529,
+          41.31722661101226,
+          40.008569796858964,
+          35.39506920371693,
+          39.77962348807776,
+          54.16646527389122,
+          64.14172504559494,
+          68.94741317070721,
+          75.62884174058011,
+          75.22140530891478,
+          73.74106918247567,
+          78.13948343599789,
+          90.86631995615915,
+          100.89916210817702,
+          95.73010615585325,
+          87.42451372794065,
+          77.87338769157772,
+          70.52538417006204,
+          64.36036588361671,
+          72.16316462607561,
+          68.60613116302204,
+          69.00473995729179,
+          78.30967620876615,
+          84.3040225257254,
+          86.14931939847904,
+          76.76532318782787,
+          74.2745803131431,
+          87.43502154874274,
+          84.16089298762716,
+          86.29775975526346,
+          76.46564394768575,
+          76.72729390939308,
+          68.14341232309138,
+          60.72032286714577,
+          65.37081097639965,
+          62.90784124838415,
+          67.37119938398659,
+          142.3
+        ],
+        "benchmark": [
+          0,
+          -7.764855930444834,
+          -6.143887036083679,
+          -6.264665196565126,
+          2.396975981135514,
+          0.30651810958779635,
+          -2.2431334182572256,
+          0.6637135451175555,
+          2.485698671351744,
+          11.688497434950827,
+          5.5188405932818725,
+          9.797548829136554,
+          4.522251030717719,
+          18.513838889263003,
+          30.085795212302585,
+          43.08092535379398,
+          35.19001015772183,
+          24.113744548719946,
+          25.475799656552184,
+          32.90173257746632,
+          28.953250273961007,
+          31.80699347001271,
+          39.0782544655105,
+          44.81788127848472,
+          38.2979485459438,
+          37.97120182654313,
+          31.479562657273295,
+          33.955810972379766,
+          45.87964189059963,
+          55.83009630945005,
+          60.807916955305075,
+          66.05755668087205,
+          68.74208005532955,
+          70.52238408800721,
+          73.61801306496032,
+          82.60775891395697,
+          91.21410570224435,
+          87.23763763867602,
+          80.05332515441437,
+          70.04030544318653,
+          65.83171307128883,
+          57.69321006993785,
+          62.6309444551368,
+          58.4293805645493,
+          61.14486820254157,
+          71.53865577618076,
+          77.23998933424117,
+          76.45865888085027,
+          70.86488196263899,
+          71.83050199443326,
+          84.5096809473138,
+          84.61667164624481,
+          86.12849347219012,
+          79.8950317397573,
+          83.3465022278653,
+          78.47716264917321,
+          72.47545718585516,
+          78.37183337333732,
+          74.36592789898805,
+          81.46705280803148,
+          128.7
+        ]
+      }
+    ]
+  },
+  "rebalance": {
+    "proposal": {
+      "id": "RB-2026-0412",
+      "status": "Draft",
+      "trackingErrorBeforePct": 1.9,
+      "trackingErrorAfterPct": 0.6
+    },
+    "trades": [
+      {
+        "side": "SELL",
+        "instrument": "RBC Canadian Dividend Fund Sr F",
+        "accountKey": "NR",
+        "quantity": "1,200.000 units",
+        "value": 117768,
+        "estCost": 0,
+        "realizedGain": 26560,
+        "route": "Fundserv · NAV 12-Oct",
+        "note": "Forward-priced · cut-off 16:00 ET"
+      },
+      {
+        "side": "SELL",
+        "instrument": "Shopify Inc. Cl A",
+        "accountKey": "CO",
+        "quantity": "400 sh",
+        "value": 60920,
+        "estCost": 9.95,
+        "realizedGain": 23320,
+        "route": "RBC DS Equity desk",
+        "note": "Limit $151.80 · day"
+      },
+      {
+        "side": "SELL",
+        "instrument": "Alimentation Couche-Tard",
+        "accountKey": "RR",
+        "quantity": "1,400 sh",
+        "value": 111230,
+        "estCost": 9.95,
+        "realizedGain": 0,
+        "route": "RBC DS Equity desk",
+        "note": "Registered · no tax impact"
+      },
+      {
+        "side": "BUY",
+        "instrument": "Govt of Canada 3.25% 01-Dec-2034",
+        "accountKey": "RR",
+        "quantity": "100,000 face",
+        "value": 98420,
+        "estCost": 150,
+        "realizedGain": 0,
+        "route": "RBC CM Fixed Income",
+        "note": "Indicative 98.42 + accrued $363"
+      },
+      {
+        "side": "BUY",
+        "instrument": "Province of Ontario 3.65% 02-Jun-2033",
+        "accountKey": "NR",
+        "quantity": "50,000 face",
+        "value": 49575,
+        "estCost": 90,
+        "realizedGain": 0,
+        "route": "RBC CM Fixed Income",
+        "note": "Indicative 99.15 + accrued $640"
+      },
+      {
+        "side": "BUY",
+        "instrument": "Canadian National Railway",
+        "accountKey": "RR",
+        "quantity": "300 sh",
+        "value": 47460,
+        "estCost": 9.95,
+        "realizedGain": 0,
+        "route": "RBC DS Equity desk",
+        "note": "Market · day"
+      },
+      {
+        "side": "BUY",
+        "instrument": "Microsoft Corp.",
+        "accountKey": "RR",
+        "quantity": "80 sh",
+        "value": 56100,
+        "estCost": 9.95,
+        "realizedGain": 0,
+        "route": "RBC DS US Equity",
+        "note": "USD · FX converted at execution"
+      }
+    ],
+    "checks": [
+      {
+        "code": "MANDATE_LIMITS",
+        "name": "Mandate limits",
+        "status": "PASS",
+        "detail": "All accounts within IPS bands after trades (equity 25–35%, fixed income 20–32%)."
+      },
+      {
+        "code": "CONCENTRATION",
+        "name": "Single-issuer concentration",
+        "status": "PASS",
+        "detail": "Largest issuer after trades: Govt of Canada 8.0% (limit 10%)."
+      },
+      {
+        "code": "RESTRICTED_LIST",
+        "name": "Restricted & watch lists",
+        "status": "PASS",
+        "detail": "No instruments on RBC restricted list. RY: employee pre-clearance not required for client accounts."
+      },
+      {
+        "code": "CASH_AVAILABILITY",
+        "name": "Cash availability",
+        "status": "LIVE",
+        "detail": null
+      },
+      {
+        "code": "SUITABILITY",
+        "name": "Suitability vs risk profile",
+        "status": "PASS",
+        "detail": "Portfolio risk score 5.8 after trades vs client profile 6/10."
+      },
+      {
+        "code": "FUND_CUTOFF",
+        "name": "Fund dealing cut-off",
+        "status": "WARN",
+        "detail": "Fund order placed 14:47 ET prices at 12-Oct NAV if submitted before 16:00 ET. 1h 13m remaining."
+      },
+      {
+        "code": "TAX_IMPACT",
+        "name": "Tax impact",
+        "status": "WARN",
+        "detail": "Realized capital gains $49,880 ($26,560 joint NR, $23,320 corporate). Client informed on 29-Sep call."
+      },
+      {
+        "code": "SUPERFICIAL_LOSS",
+        "name": "Superficial loss",
+        "status": "PASS",
+        "detail": "No repurchases of instruments sold at a loss in the last 30 days."
+      }
+    ],
+    "drift": [
+      {
+        "assetClass": "Cash",
+        "beforePts": 1.2,
+        "afterPts": 0.9
+      },
+      {
+        "assetClass": "Equities",
+        "beforePts": -1.6,
+        "afterPts": -0.4
+      },
+      {
+        "assetClass": "Bonds",
+        "beforePts": -1.8,
+        "afterPts": -0.3
+      },
+      {
+        "assetClass": "Funds",
+        "beforePts": 1.4,
+        "afterPts": 0
+      },
+      {
+        "assetClass": "Alternatives",
+        "beforePts": 0.8,
+        "afterPts": 0.8
+      }
+    ]
+  },
+  "alternatives": {
+    "commitments": [
+      {
+        "fundName": "Northgate Infrastructure Partners IV",
+        "accountKey": "CO",
+        "currency": "CAD",
+        "vintage": 2021,
+        "commitment": 1000000,
+        "called": 620000,
+        "distributions": 92000,
+        "nav": 712400,
+        "navDate": "2026-06-30",
+        "navStatus": "APPROVED",
+        "administrator": "SS&C",
+        "enteredBy": "M. Tremblay",
+        "approvedBy": "R. Osei",
+        "approvedDate": "2026-08-14"
+      },
+      {
+        "fundName": "Lakeshore Private Credit Fund II",
+        "accountKey": "NR",
+        "currency": "CAD",
+        "vintage": 2023,
+        "commitment": 750000,
+        "called": 480000,
+        "distributions": 61200,
+        "nav": 468900,
+        "navDate": "2026-06-30",
+        "navStatus": "APPROVED",
+        "administrator": "SS&C",
+        "enteredBy": "M. Tremblay",
+        "approvedBy": "R. Osei",
+        "approvedDate": "2026-08-14"
+      }
+    ],
+    "capitalCalls": [
+      {
+        "due": "28-Oct-2026",
+        "description": "Northgate IV · call #10",
+        "amount": 85000,
+        "status": "Notice received"
+      },
+      {
+        "due": "Jan-2027",
+        "description": "Lakeshore II · est.",
+        "amount": 60000,
+        "status": "Estimate"
+      },
+      {
+        "due": "Mar-2027",
+        "description": "Northgate IV · est.",
+        "amount": 110000,
+        "status": "Estimate"
+      },
+      {
+        "due": "Jun-2027",
+        "description": "Lakeshore II · est.",
+        "amount": 75000,
+        "status": "Estimate"
+      }
+    ],
+    "distributions": [
+      {
+        "date": "2026-09-15",
+        "fund": "Lakeshore II",
+        "type": "Income",
+        "amount": 14800
+      },
+      {
+        "date": "2026-06-30",
+        "fund": "Northgate IV",
+        "type": "Return of capital",
+        "amount": 38000
+      },
+      {
+        "date": "2026-06-15",
+        "fund": "Lakeshore II",
+        "type": "Income",
+        "amount": 13900
+      },
+      {
+        "date": "2026-03-31",
+        "fund": "Northgate IV",
+        "type": "Income",
+        "amount": 22000
+      },
+      {
+        "date": "2026-03-15",
+        "fund": "Lakeshore II",
+        "type": "Income",
+        "amount": 12600
+      }
+    ]
+  },
+  "exceptions": {
+    "queue": {
+      "name": "Wealth Ops – Toronto",
+      "openedToday": 7,
+      "clearedToday": 23,
+      "medianResolveMinutes": 190,
+      "autoAssignTime": "15:00",
+      "buyInDay": 7
+    },
+    "causes": [
+      {
+        "name": "Insufficient securities",
+        "suggestedAction": "Borrow or recall from stock-loan desk",
+        "actionShort": "Recall loan",
+        "explanation": "Counterparty did not have the shares available on settlement date. RBC has 1,200 shares on loan that can be recalled to cover delivery."
+      },
+      {
+        "name": "SSI mismatch",
+        "suggestedAction": "Re-send instruction with corrected SSI",
+        "actionShort": "Re-send SSI",
+        "explanation": "Counterparty BIC on our instruction does not match their standing settlement instructions on file. Their updated SSI was received 08-Oct."
+      },
+      {
+        "name": "Late affirmation",
+        "suggestedAction": "Chase broker to affirm in CTM",
+        "actionShort": "Chase broker",
+        "explanation": "Trade was not affirmed by the broker before the cut-off. Affirmation usually lands within one business day once chased."
+      },
+      {
+        "name": "Cash shortfall",
+        "suggestedAction": "Fund from sweep account or approve overdraft",
+        "actionShort": "Fund from sweep",
+        "explanation": "Cash in the settling account is below the amount due. The linked sweep account has sufficient balance to cover it."
+      },
+      {
+        "name": "Unmatched instruction",
+        "suggestedAction": "Contact counterparty to match trade details",
+        "actionShort": "Contact counterparty",
+        "explanation": "No matching instruction from the counterparty at the depository. Usually caused by a booking delay on their side."
+      },
+      {
+        "name": "Quantity / price mismatch",
+        "suggestedAction": "Verify fill against broker confirm",
+        "actionShort": "Verify confirm",
+        "explanation": "Our booked quantity or price differs from the counterparty confirmation. Compare against the broker fill before amending."
+      },
+      {
+        "name": "Corporate action pending",
+        "suggestedAction": "Hold until event processed",
+        "actionShort": "Place on hold",
+        "explanation": "A corporate action on this instrument affects entitlements. Settlement should wait until the event is processed."
+      }
+    ],
+    "exceptions": [
+      {
+        "id": "SF-48260",
+        "ageDays": 11,
+        "value": 1942050,
+        "instrument": "Microsoft Corp.",
+        "side": "Receive",
+        "accountNo": "4436-5279",
+        "counterparty": "Goldman Sachs & Co.",
+        "cause": "Quantity / price mismatch",
+        "owner": null
+      },
+      {
+        "id": "SF-48155",
+        "ageDays": 10,
+        "value": 1290200,
+        "instrument": "Manulife Financial",
+        "side": "Deliver",
+        "accountNo": "4442-3295",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Quantity / price mismatch",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48197",
+        "ageDays": 10,
+        "value": 56930,
+        "instrument": "Shopify Inc. Cl A",
+        "side": "Deliver",
+        "accountNo": "4468-3593",
+        "counterparty": "BNY Mellon",
+        "cause": "Cash shortfall",
+        "owner": "S. Okafor"
+      },
+      {
+        "id": "SF-48344",
+        "ageDays": 10,
+        "value": 35050,
+        "instrument": "Canadian National Railway",
+        "side": "Deliver",
+        "accountNo": "4482-6125",
+        "counterparty": "CDS Clearing",
+        "cause": "Unmatched instruction",
+        "owner": "S. Okafor"
+      },
+      {
+        "id": "SF-48211",
+        "ageDays": 9,
+        "value": 458510,
+        "instrument": "Royal Bank of Canada",
+        "side": "Receive",
+        "accountNo": "4403-6014",
+        "counterparty": "Euroclear",
+        "cause": "Late affirmation",
+        "owner": null
+      },
+      {
+        "id": "SF-48169",
+        "ageDays": 9,
+        "value": 456520,
+        "instrument": "Telus Corp.",
+        "side": "Deliver",
+        "accountNo": "4442-8300",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Cash shortfall",
+        "owner": "M. Tremblay"
+      },
+      {
+        "id": "SF-48302",
+        "ageDays": 9,
+        "value": 335070,
+        "instrument": "Telus Corp.",
+        "side": "Receive",
+        "accountNo": "4465-7268",
+        "counterparty": "BNY Mellon",
+        "cause": "Corporate action pending",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48372",
+        "ageDays": 8,
+        "value": 424590,
+        "instrument": "Bell Canada 5.15% 2031",
+        "side": "Deliver",
+        "accountNo": "4473-8624",
+        "counterparty": "CDS Clearing",
+        "cause": "Cash shortfall",
+        "owner": "S. Okafor"
+      },
+      {
+        "id": "SF-48162",
+        "ageDays": 8,
+        "value": 301850,
+        "instrument": "Telus Corp.",
+        "side": "Receive",
+        "accountNo": "4465-9559",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Corporate action pending",
+        "owner": null
+      },
+      {
+        "id": "SF-48288",
+        "ageDays": 7,
+        "value": 65580,
+        "instrument": "Microsoft Corp.",
+        "side": "Deliver",
+        "accountNo": "4476-1868",
+        "counterparty": "Fundserv · PH&N",
+        "cause": "Quantity / price mismatch",
+        "owner": null
+      },
+      {
+        "id": "SF-48134",
+        "ageDays": 6,
+        "value": 847100,
+        "instrument": "US Treasury 4.25% 2030",
+        "side": "Receive",
+        "accountNo": "4423-3770",
+        "counterparty": "BNY Mellon",
+        "cause": "SSI mismatch",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48218",
+        "ageDays": 5,
+        "value": 2356550,
+        "instrument": "Bell Canada 5.15% 2031",
+        "side": "Deliver",
+        "accountNo": "4417-6882",
+        "counterparty": "RBC Investor Services",
+        "cause": "Late affirmation",
+        "owner": "M. Tremblay"
+      },
+      {
+        "id": "SF-48351",
+        "ageDays": 5,
+        "value": 1328020,
+        "instrument": "PH&N Bond Fund Sr F",
+        "side": "Receive",
+        "accountNo": "4436-9708",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Corporate action pending",
+        "owner": null
+      },
+      {
+        "id": "SF-48365",
+        "ageDays": 4,
+        "value": 1459790,
+        "instrument": "Govt of Canada 3.25% 2034",
+        "side": "Receive",
+        "accountNo": "4493-2126",
+        "counterparty": "DTC / Pershing",
+        "cause": "Quantity / price mismatch",
+        "owner": "L. Chen"
+      },
+      {
+        "id": "SF-48141",
+        "ageDays": 4,
+        "value": 1225420,
+        "instrument": "Royal Bank of Canada",
+        "side": "Receive",
+        "accountNo": "4487-5698",
+        "counterparty": "CDS Clearing",
+        "cause": "SSI mismatch",
+        "owner": null
+      },
+      {
+        "id": "SF-48239",
+        "ageDays": 3,
+        "value": 2045030,
+        "instrument": "Govt of Canada 3.25% 2034",
+        "side": "Receive",
+        "accountNo": "4482-8503",
+        "counterparty": "Fundserv · PH&N",
+        "cause": "SSI mismatch",
+        "owner": "M. Tremblay"
+      },
+      {
+        "id": "SF-48358",
+        "ageDays": 3,
+        "value": 1174890,
+        "instrument": "Brookfield Corp.",
+        "side": "Receive",
+        "accountNo": "4477-1837",
+        "counterparty": "RBC Investor Services",
+        "cause": "Cash shortfall",
+        "owner": null
+      },
+      {
+        "id": "SF-48225",
+        "ageDays": 3,
+        "value": 936100,
+        "instrument": "Province of Ontario 3.65% 2033",
+        "side": "Receive",
+        "accountNo": "4448-5584",
+        "counterparty": "CDS Clearing",
+        "cause": "SSI mismatch",
+        "owner": null
+      },
+      {
+        "id": "SF-48232",
+        "ageDays": 3,
+        "value": 757690,
+        "instrument": "Microsoft Corp.",
+        "side": "Deliver",
+        "accountNo": "4436-1938",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Quantity / price mismatch",
+        "owner": "S. Okafor"
+      },
+      {
+        "id": "SF-48204",
+        "ageDays": 3,
+        "value": 626720,
+        "instrument": "Microsoft Corp.",
+        "side": "Receive",
+        "accountNo": "4479-8859",
+        "counterparty": "Euroclear",
+        "cause": "Corporate action pending",
+        "owner": null
+      },
+      {
+        "id": "SF-48393",
+        "ageDays": 2,
+        "value": 1056900,
+        "instrument": "Apple Inc.",
+        "side": "Deliver",
+        "accountNo": "4436-8037",
+        "counterparty": "Goldman Sachs & Co.",
+        "cause": "SSI mismatch",
+        "owner": null
+      },
+      {
+        "id": "SF-48120",
+        "ageDays": 2,
+        "value": 238110,
+        "instrument": "Royal Bank of Canada",
+        "side": "Deliver",
+        "accountNo": "4440-5656",
+        "counterparty": "RBC Investor Services",
+        "cause": "Insufficient securities",
+        "owner": "L. Chen"
+      },
+      {
+        "id": "SF-48330",
+        "ageDays": 2,
+        "value": 204600,
+        "instrument": "Manulife Financial",
+        "side": "Deliver",
+        "accountNo": "4412-5909",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Cash shortfall",
+        "owner": null
+      },
+      {
+        "id": "SF-48148",
+        "ageDays": 1,
+        "value": 1955100,
+        "instrument": "Royal Bank of Canada",
+        "side": "Deliver",
+        "accountNo": "4479-9542",
+        "counterparty": "Euroclear",
+        "cause": "Corporate action pending",
+        "owner": "M. Tremblay"
+      },
+      {
+        "id": "SF-48190",
+        "ageDays": 1,
+        "value": 1784860,
+        "instrument": "PH&N Bond Fund Sr F",
+        "side": "Deliver",
+        "accountNo": "4430-5795",
+        "counterparty": "Euroclear",
+        "cause": "Cash shortfall",
+        "owner": "R. Singh"
+      },
+      {
+        "id": "SF-48295",
+        "ageDays": 1,
+        "value": 611110,
+        "instrument": "Shopify Inc. Cl A",
+        "side": "Receive",
+        "accountNo": "4451-8111",
+        "counterparty": "Goldman Sachs & Co.",
+        "cause": "Late affirmation",
+        "owner": "L. Chen"
+      },
+      {
+        "id": "SF-48386",
+        "ageDays": 0,
+        "value": 2073830,
+        "instrument": "Govt of Canada 3.25% 2034",
+        "side": "Receive",
+        "accountNo": "4433-5833",
+        "counterparty": "CDS Clearing",
+        "cause": "Unmatched instruction",
+        "owner": null
+      },
+      {
+        "id": "SF-48323",
+        "ageDays": 0,
+        "value": 1945170,
+        "instrument": "Province of Ontario 3.65% 2033",
+        "side": "Deliver",
+        "accountNo": "4434-4140",
+        "counterparty": "Goldman Sachs & Co.",
+        "cause": "Insufficient securities",
+        "owner": "M. Tremblay"
+      },
+      {
+        "id": "SF-48176",
+        "ageDays": 0,
+        "value": 1647310,
+        "instrument": "Enbridge Inc.",
+        "side": "Receive",
+        "accountNo": "4454-4389",
+        "counterparty": "RBC Investor Services",
+        "cause": "Insufficient securities",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48253",
+        "ageDays": 0,
+        "value": 1480870,
+        "instrument": "Canadian National Railway",
+        "side": "Receive",
+        "accountNo": "4477-5375",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Quantity / price mismatch",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48127",
+        "ageDays": 0,
+        "value": 1227070,
+        "instrument": "Shopify Inc. Cl A",
+        "side": "Receive",
+        "accountNo": "4458-8439",
+        "counterparty": "RBC Investor Services",
+        "cause": "SSI mismatch",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48274",
+        "ageDays": 0,
+        "value": 808990,
+        "instrument": "RBC Canadian Dividend Fund Sr F",
+        "side": "Deliver",
+        "accountNo": "4449-4275",
+        "counterparty": "DTC / Pershing",
+        "cause": "Quantity / price mismatch",
+        "owner": "R. Singh"
+      },
+      {
+        "id": "SF-48183",
+        "ageDays": 0,
+        "value": 793010,
+        "instrument": "US Treasury 4.25% 2030",
+        "side": "Deliver",
+        "accountNo": "4409-9814",
+        "counterparty": "Goldman Sachs & Co.",
+        "cause": "Late affirmation",
+        "owner": null
+      },
+      {
+        "id": "SF-48267",
+        "ageDays": 0,
+        "value": 772540,
+        "instrument": "PH&N Bond Fund Sr F",
+        "side": "Deliver",
+        "accountNo": "4431-1762",
+        "counterparty": "RBC Investor Services",
+        "cause": "Cash shortfall",
+        "owner": "R. Singh"
+      },
+      {
+        "id": "SF-48281",
+        "ageDays": 0,
+        "value": 742430,
+        "instrument": "Govt of Canada 3.25% 2034",
+        "side": "Deliver",
+        "accountNo": "4483-1244",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Unmatched instruction",
+        "owner": "R. Singh"
+      },
+      {
+        "id": "SF-48316",
+        "ageDays": 0,
+        "value": 631580,
+        "instrument": "US Treasury 4.25% 2030",
+        "side": "Deliver",
+        "accountNo": "4448-3320",
+        "counterparty": "DTC / Pershing",
+        "cause": "Cash shortfall",
+        "owner": null
+      },
+      {
+        "id": "SF-48309",
+        "ageDays": 0,
+        "value": 261170,
+        "instrument": "Manulife Financial",
+        "side": "Deliver",
+        "accountNo": "4492-8017",
+        "counterparty": "CDS Clearing",
+        "cause": "Corporate action pending",
+        "owner": "A. Nguyen"
+      },
+      {
+        "id": "SF-48246",
+        "ageDays": 0,
+        "value": 238820,
+        "instrument": "Telus Corp.",
+        "side": "Deliver",
+        "accountNo": "4455-4800",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "SSI mismatch",
+        "owner": "L. Chen"
+      },
+      {
+        "id": "SF-48379",
+        "ageDays": 0,
+        "value": 175000,
+        "instrument": "Enbridge Inc.",
+        "side": "Deliver",
+        "accountNo": "4406-8137",
+        "counterparty": "RBC Investor Services",
+        "cause": "Corporate action pending",
+        "owner": "L. Chen"
+      },
+      {
+        "id": "SF-48337",
+        "ageDays": 0,
+        "value": 42190,
+        "instrument": "Enbridge Inc.",
+        "side": "Deliver",
+        "accountNo": "4467-1152",
+        "counterparty": "Fidelity Clearing Canada",
+        "cause": "Insufficient securities",
+        "owner": "S. Okafor"
+      }
+    ]
+  },
+  "activity": {
+    "feed": [
+      {
+        "date": "2026-10-09",
+        "description": "Dividend · Royal Bank of Canada",
+        "account": "Non-registered",
+        "amount": 2208
+      },
+      {
+        "date": "2026-10-09",
+        "description": "Bought PH&N Bond Fund Sr F",
+        "account": "RRSP",
+        "amount": -25000
+      },
+      {
+        "date": "2026-10-06",
+        "description": "Interest · CAD cash",
+        "account": "Non-registered",
+        "amount": 612.4
+      },
+      {
+        "date": "2026-10-01",
+        "description": "Coupon · Bell Canada 5.15%",
+        "account": "Whitfield Holdings",
+        "amount": 7725
+      },
+      {
+        "date": "2026-09-30",
+        "description": "Management fee · Q3",
+        "account": "All accounts",
+        "amount": -17080
+      },
+      {
+        "date": "2026-09-15",
+        "description": "Distribution · Lakeshore II",
+        "account": "Non-registered",
+        "amount": 14800
+      }
+    ],
+    "pending": [
+      {
+        "title": "Wire to TD Canada Trust ···4471",
+        "amount": 40000,
+        "status": "Second approval in progress",
+        "eta": "Expected today by 4:00 PM",
+        "currentStep": 2,
+        "steps": [
+          {
+            "name": "Submitted",
+            "time": "13:12"
+          },
+          {
+            "name": "Screening",
+            "time": "13:13"
+          },
+          {
+            "name": "Approval",
+            "time": "by 16:00"
+          },
+          {
+            "name": "Sent",
+            "time": null
+          },
+          {
+            "name": "Received",
+            "time": "by 17:30"
+          }
+        ]
+      },
+      {
+        "title": "Buy PH&N Bond Fund Sr F",
+        "amount": 25000,
+        "status": "Waiting for fund price",
+        "eta": "Price known tonight · settles 14-Oct",
+        "currentStep": 1,
+        "steps": [
+          {
+            "name": "Placed",
+            "time": "09-Oct"
+          },
+          {
+            "name": "Priced",
+            "time": "12-Oct eve"
+          },
+          {
+            "name": "Settled",
+            "time": "14-Oct"
+          }
+        ]
+      },
+      {
+        "title": "Capital call · Northgate IV",
+        "amount": 85000,
+        "status": "Notice received · funding from corporate account",
+        "eta": "Due 28-Oct-2026",
+        "currentStep": 1,
+        "steps": [
+          {
+            "name": "Notice",
+            "time": "05-Oct"
+          },
+          {
+            "name": "Funding",
+            "time": "by 26-Oct"
+          },
+          {
+            "name": "Paid",
+            "time": "28-Oct"
+          },
+          {
+            "name": "Matched",
+            "time": null
+          }
+        ]
+      },
+      {
+        "title": "Beneficiary designation · RRSP",
+        "amount": null,
+        "status": "Form received · being verified",
+        "eta": "Usually 3–5 business days",
+        "currentStep": 1,
+        "steps": [
+          {
+            "name": "Received",
+            "time": "06-Oct"
+          },
+          {
+            "name": "Verified",
+            "time": null
+          },
+          {
+            "name": "Updated",
+            "time": null
+          }
+        ]
+      }
+    ],
+    "transactions": [
+      {
+        "tradeDate": "2026-10-12",
+        "settleDate": "2026-10-14",
+        "description": "Buy · PH&N Bond Fund Sr F",
+        "detail": "2,470.4 units at NAV tbc",
+        "accountKey": "RR",
+        "amount": -25000,
+        "status": "Awaiting price",
+        "nextStep": "NAV published ~19:00 ET"
+      },
+      {
+        "tradeDate": "2026-10-12",
+        "settleDate": "2026-10-12",
+        "description": "Wire out · TD Canada Trust ···4471",
+        "detail": "Ref PMT-2026-1012-08841",
+        "accountKey": "NR",
+        "amount": -40000,
+        "status": "In approval",
+        "nextStep": "Second approver by 16:00 ET"
+      },
+      {
+        "tradeDate": "2026-10-09",
+        "settleDate": "2026-10-09",
+        "description": "Dividend · Royal Bank of Canada",
+        "detail": "2,400 sh × $1.48 · eligible",
+        "accountKey": "NR",
+        "amount": 3552,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-10-08",
+        "settleDate": "2026-10-10",
+        "description": "Sell · Enbridge Inc.",
+        "detail": "800 sh at $62.10",
+        "accountKey": "NR",
+        "amount": 49670,
+        "status": "Settlement failed",
+        "nextStep": "Retrying 13-Oct · no action needed"
+      },
+      {
+        "tradeDate": "2026-10-08",
+        "settleDate": "2026-10-09",
+        "description": "Buy · Govt of Canada 3.25% 2034",
+        "detail": "50,000 face at 98.30 + accrued",
+        "accountKey": "RR",
+        "amount": -49332,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-10-06",
+        "settleDate": "2026-10-06",
+        "description": "Interest · CAD cash",
+        "detail": "Sept accrual at 2.15%",
+        "accountKey": "NR",
+        "amount": 612.4,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-10-05",
+        "settleDate": "2026-10-28",
+        "description": "Capital call · Northgate IV #10",
+        "detail": "Notice received",
+        "accountKey": "CO",
+        "amount": -85000,
+        "status": "Scheduled",
+        "nextStep": "Paid 28-Oct from USD/CAD cash"
+      },
+      {
+        "tradeDate": "2026-10-01",
+        "settleDate": "2026-10-01",
+        "description": "Coupon · Bell Canada 5.15%",
+        "detail": "300,000 face · semi-annual",
+        "accountKey": "CO",
+        "amount": 7725,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-09-30",
+        "settleDate": "2026-09-30",
+        "description": "Management fee · Q3 2026",
+        "detail": "0.85% tiered on avg AUA",
+        "accountKey": "NR",
+        "amount": -17080,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-09-29",
+        "settleDate": "2026-09-30",
+        "description": "Sell · Shopify Inc. Cl A",
+        "detail": "200 sh at $149.80",
+        "accountKey": "CO",
+        "amount": 29950,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-09-24",
+        "settleDate": "2026-09-24",
+        "description": "FX · USD → CAD",
+        "detail": "US$20,000 at 1.3651",
+        "accountKey": "CO",
+        "amount": 27302,
+        "status": "Settled",
+        "nextStep": null
+      },
+      {
+        "tradeDate": "2026-09-15",
+        "settleDate": "2026-09-15",
+        "description": "Distribution · Lakeshore II",
+        "detail": "Income · Q3",
+        "accountKey": "NR",
+        "amount": 14800,
+        "status": "Settled",
+        "nextStep": null
+      }
+    ]
+  },
+  "payments": {
+    "payees": [
+      {
+        "name": "TD Canada Trust ···4471",
+        "description": "David Whitfield · chequing",
+        "history": "Paid 6× since 2023",
+        "isNew": false
+      },
+      {
+        "name": "Ontario Land Registry Trust",
+        "description": "Lawyer trust account · Hughes LLP",
+        "history": "New · added 02-Oct",
+        "isNew": true
+      },
+      {
+        "name": "RBC Royal Bank ···0093",
+        "description": "Eleanor · chequing",
+        "history": "Paid 41×",
+        "isNew": false
+      }
+    ],
+    "rails": [
+      {
+        "name": "Wire",
+        "dailyLimit": 250000,
+        "fee": 25,
+        "speed": "Same day if approved by 4:00 PM ET",
+        "arrival": "Today by 5:30 PM ET"
+      },
+      {
+        "name": "EFT",
+        "dailyLimit": 100000,
+        "fee": 0,
+        "speed": "1–2 business days",
+        "arrival": "Wed 14-Oct-2026"
+      },
+      {
+        "name": "Interac e-Transfer",
+        "dailyLimit": 3000,
+        "fee": 0,
+        "speed": "Within 30 minutes",
+        "arrival": "Within 30 minutes"
+      }
+    ]
+  }
+}
