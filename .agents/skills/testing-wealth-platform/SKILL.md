@@ -15,6 +15,10 @@ description: Test the RBC Wealth Platform React implementation against its inter
 - Mockup initial screen and data state are props, not the app's query parameters. The comparison runner patches their defaults in a browser response.
 - UI navigation preserves app state; reloading restores seeded defaults. Browser Back/Forward changes screens, not payment wizard steps.
 
+# Unit tests
+- `npm test` (Vitest + Testing Library, jsdom) needs no servers; run it first. `npm run test:coverage` writes `coverage/`.
+- Screen smoke tests stub `fetch` from `src/test/fixtures/wealth-data.json` (seed snapshot). After seed changes, regenerate it from the running API with `loadWealthData()`.
+
 # Runtime visual comparison
 - `node scripts/visual-diff.mjs` opens real Chromium pages for all screen/state pairs and interactive cases, then writes paired PNGs and pixel diffs in `visual-diff-output`.
 - It requires the app and mockup HTTP servers. `CHROME`, `WIDTH`, `HEIGHT`, `APP_URL`, and `MOCK_URL` override defaults.

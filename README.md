@@ -18,6 +18,10 @@ Screens are addressed with query parameters: `?screen=c360|portfolio|orders|alts
 - `src/model/` — view models for the shell (`shell.ts`) and each screen (`screens.ts`)
 - `src/screens/` — one component per screen; `src/App.tsx` renders the header, navigation and page chrome
 
+## Unit tests
+
+`npm test` runs the Vitest suite (jsdom, no API or Oracle needed); `npm run test:coverage` adds a v8 coverage report in `coverage/`. Tests live next to the code as `*.test.ts(x)`: pure logic in `src/format.test.ts` and `src/data.test.ts`, and smoke renders of every `?screen=` × `?state=` combination in `src/screens/screens.test.tsx`. API responses are stubbed from `src/test/fixtures/wealth-data.json`, a snapshot of the seeded API; regenerate it after changing `server/db/seed.sql`.
+
 ## Visual regression
 
 `npm run visual-diff` screenshots every screen × data state plus scripted interaction flows in both the app and the mockup and pixel-diffs them into `visual-diff-output/`. It expects the dev server on `:5173` and the mockup folder served over HTTP (e.g. `python -m http.server 8090 -d design/mockups`). Override with `APP_URL`, `MOCK_URL`, `CHROME`, `WIDTH`, `HEIGHT`.
