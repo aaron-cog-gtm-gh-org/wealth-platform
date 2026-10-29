@@ -152,7 +152,7 @@ export function App() {
               <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", textAlign: "center" }}>
                 <div style={{ font: "600 15px Inter,sans-serif" }}>{emptyTitle}</div>
                 <div style={{ maxWidth: "460px", color: "rgba(25,25,25,.6)", textWrap: "pretty" }}>{emptyBody}</div>
-                <div style={{ marginTop: "6px", padding: "7px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
+                <div style={{ marginTop: "6px", padding: "7px 12px", border: "1px solid #00427a", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
               </div>
             </>)}
             {isError && (<>
@@ -160,7 +160,7 @@ export function App() {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#d6302f" }}></span><span style={{ font: "600 14px Inter,sans-serif" }}>{errTitle}</span></div>
                 <div style={{ color: "rgba(25,25,25,.7)", maxWidth: "720px", textWrap: "pretty" }}>{errBody}</div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                  <div onClick={m.retry} style={{ padding: "6px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>Retry</div>
+                  <div onClick={m.retry} style={{ padding: "6px 12px", border: "1px solid #00427a", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>Retry</div>
                   <div style={{ padding: "6px 12px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>{errAction}</div>
                 </div>
                 <div style={{ font: "11px 'IBM Plex Mono',monospace", color: "rgba(25,25,25,.5)" }}>{errRef}</div>

@@ -21,7 +21,7 @@ export function PortfolioDetail({ m }: { m: Model }) {
               <span style={{ fontWeight: "600" }}>Performance vs benchmark <span style={{ fontWeight: "400", color: "rgba(25,25,25,.56)" }}>· time-weighted, net of fees, CAD</span></span>
               <div style={{ display: "flex", gap: "2px", background: "rgba(0,0,0,.06)", borderRadius: "7px", padding: "2px" }}>
                 {periods.map((p, p_i) => (<Fragment key={p_i}>
-                  <div onClick={p.onClick} style={{ padding: "3px 9px", borderRadius: "5px", cursor: "pointer", background: p.bg, boxShadow: p.shadow, fontWeight: "500" }}>{p.id}</div>
+                  <div onClick={p.onClick} style={{ padding: "3px 9px", border: "1px solid #cfd5dd", borderRadius: "5px", cursor: "pointer", background: p.bg, boxShadow: p.shadow, fontWeight: "500" }}>{p.id}</div>
                 </Fragment>))}
               </div>
             </div>
