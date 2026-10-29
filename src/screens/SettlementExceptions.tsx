@@ -51,7 +51,7 @@ export function SettlementExceptions({ m }: { m: Model }) {
               <span style={{ fontSize: "11px", color: "rgba(25,25,25,.56)" }}>Suggested next action</span>
               <span style={{ fontWeight: "600" }}>{exSel.action}</span>
               <span style={{ color: "rgba(25,25,25,.7)", textWrap: "pretty" }}>{exSel.why}</span>
-              <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}><div style={{ flex: "1", padding: "7px", background: "#005daa", color: "#fff", borderRadius: "6px", textAlign: "center", fontWeight: "600" }}>{exSel.actionShort}</div><div style={{ padding: "7px 10px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Assign</div><div style={{ padding: "7px 10px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Escalate</div></div>
+              <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}><div style={{ flex: "1", padding: "7px", border: "1px solid #00427a", background: "#005daa", color: "#fff", borderRadius: "6px", textAlign: "center", fontWeight: "600" }}>{exSel.actionShort}</div><div style={{ padding: "7px 10px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Assign</div><div style={{ padding: "7px 10px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Escalate</div></div>
             </div>
             <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: "8px" }}>
               <span style={{ fontSize: "11px", color: "rgba(25,25,25,.56)" }}>Timeline</span>

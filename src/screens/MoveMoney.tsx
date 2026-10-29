@@ -32,11 +32,11 @@ export function MoveMoney({ m }: { m: Model }) {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}><span style={{ fontWeight: "600" }}>Send by</span>
                 <div style={{ display: "flex", gap: "2px", background: "rgba(0,0,0,.06)", borderRadius: "7px", padding: "2px", alignSelf: "flex-start" }}>
-                  {rails.map((r, r_i) => (<Fragment key={r_i}><div onClick={r.onClick} style={{ padding: "5px 12px", borderRadius: "5px", cursor: "pointer", background: r.bg, boxShadow: r.shadow, fontWeight: "500" }}>{r.n}</div></Fragment>))}
+                  {rails.map((r, r_i) => (<Fragment key={r_i}><div onClick={r.onClick} style={{ padding: "5px 12px", border: "1px solid #cfd5dd", borderRadius: "5px", cursor: "pointer", background: r.bg, boxShadow: r.shadow, fontWeight: "500" }}>{r.n}</div></Fragment>))}
                 </div>
                 <span style={{ color: "rgba(25,25,25,.6)" }}>{railNote}</span></div>
               {amountError && (<><div style={{ padding: "8px 11px", borderRadius: "6px", background: "#fdecec", color: "#a8201f" }}>{amountError}</div></>)}
-              <div style={{ display: "flex", justifyContent: "flex-end" }}><div onClick={toReview} style={{ padding: "9px 18px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Review payment</div></div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}><div onClick={toReview} style={{ padding: "9px 18px", border: "1px solid #00427a", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Review payment</div></div>
             </div>
           </>)}
           {m2 && (<>
@@ -45,7 +45,7 @@ export function MoveMoney({ m }: { m: Model }) {
                 {review.map((r, r_i) => (<Fragment key={r_i}><span style={{ color: "rgba(25,25,25,.56)" }}>{r.k}</span><span style={{ fontWeight: "600" }}>{r.v}</span></Fragment>))}
               </div>
               {needsApproval && (<><div style={{ padding: "9px 11px", borderRadius: "6px", background: "#fff8d6", color: "#5c4a00" }}>Payments over $25,000 are checked by a second RBC approver. We'll confirm with you by text before 4:00 PM ET today.</div></>)}
-              <div style={{ display: "flex", justifyContent: "space-between" }}><div onClick={toEdit} style={{ padding: "9px 14px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500", cursor: "pointer" }}>Edit</div><div onClick={toConfirm} style={{ padding: "9px 18px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Confirm and send</div></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><div onClick={toEdit} style={{ padding: "9px 14px", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500", cursor: "pointer" }}>Edit</div><div onClick={toConfirm} style={{ padding: "9px 18px", border: "1px solid #00427a", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}>Confirm and send</div></div>
             </div>
           </>)}
           {m3 && (<>
