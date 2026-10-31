@@ -62,6 +62,8 @@ node qa/tooling/qa.mjs export-videos \
 
 Attach the segment ZIP and every per-case video file from the export directory with `message_user`. The export command writes `manifest.json` with each relative source path and attempt status, and refuses to replace an existing export. After upload, save a JSON object mapping each exported video filename to its URL, then pass it to `structured`; recording fields use the matching upload URL when present and otherwise retain their relative evidence path. Include the segment ZIP attachment URL as `segmentZip` in child structured output.
 
+For the parent session's online report, merge the latest upload maps from every child, including corrected baselines and retests. Match exact exported filenames, including phase, label and retry; never substitute an older attempt's URL. After `structured --uploads`, check that every attempted case and gap recording is an HTTPS URL. A relative recording path means the upload map is incomplete, not that the browser test failed: retrieve the missing attachment and regenerate the projection without rerunning or editing evidence. Relative links remain correct in the offline bundle's `index.html`.
+
 ## Parent collection
 
 Read each child's attachments with `devin_session_interact` using `get_attachments`. Download the segment ZIP and videos with `download_attachment`, passing `{url}` for one attachment or `{urls}` for several, and save them locally. Use `unpack-segment` to validate and extract each accepted segment. Collect exactly one valid baseline segment per area under `qa-artifacts/$RUN_ID/baseline/<label>/` (the path must match the ZIP's `run-meta.json` label, e.g. `<area>` or `<area>-r2`); keep all valid product failures in the baseline.

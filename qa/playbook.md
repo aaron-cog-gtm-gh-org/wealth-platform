@@ -78,6 +78,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
 - **Done when**:
   - `validate-suite` reports `OK 50/50`, with at least one gap test or a written reason why the Wiki has no gaps.
   - `report` has zero errors.
+  - The online structured report uses HTTPS recording URLs for every attempted case and gap. Merge each child's latest upload map, including rerun labels; if a recording is still a relative path, fetch its exact exported attachment and regenerate `structured --uploads` without rerunning tests or relabeling evidence. Keep relative video links in the offline bundle.
   - Every baseline failure is either `fixed`, with a linked open PR and a green retest at that PR's head SHA, or explicitly `failing` with a stated reason.
   - The bundle opens offline, and its videos play.
 - **Validation**: re-run `validate-suite`, `report` and `bundle` on a clean checkout of `main` plus the collected `qa-artifacts`. The outputs must be identical, with the same `report.json` hash.
