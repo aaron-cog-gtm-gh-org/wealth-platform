@@ -30,20 +30,22 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 ## Answers to likely questions
 - **Why per-test videos and not one long recording?** Each row has its own evidence, so a reviewer can jump straight to the case they care about. Retried attempts keep separate recordings.
 - **How do you know a result wasn't faked?** The collector rejects any result that has no Playwright recording, duplicate case ownership, missing cases, and segments with mismatched revisions.
-- **Why are fixes not merged?** Fix PRs are left for human review. `main` keeps the test-only contributions, so the baseline stays reproducible.
+- **Why are tests and fixes not merged into main?** Fix PRs are left for human review. Generated tests live on the run's QA branch, so `main` stays a clean spreadsheet-to-tests starting point for the next demo.
 
 ## Launch a fresh live run
 
-Keep the completed rehearsal open while starting a separate session in **RBC Test** with the organization playbook `!wealth_qa` (or attach `qa/playbook.md` if publication is still awaiting approval):
+Keep the completed rehearsal open while starting a separate session in **RBC Test** with this repository selected. Use the current versioned `qa/playbook.md`, not an older replay-oriented playbook copy:
 
 ```text
-!wealth_qa
 Run Wealth Platform QA for aaron-cog-gtm-gh-org/wealth-platform at main.
+Follow qa/playbook.md in spreadsheet-first authoring mode.
 Generate a new run ID wm-qa-live-<UTC timestamp>; preserve all prior runs.
 Use qa/Wealth-Platform-Manual-QA.xlsx and qa/cases.json, and read DeepWiki then Jira KAN-12..KAN-18.
-Use replay mode for committed specs whose workbook and Wiki-gap coverage is current.
-Launch six isolated area children; record fresh per-test browser evidence for all 50 original cases and the separate gaps.
-Deduplicate findings against existing PRs and retest their heads; keep every remediation PR open and unmerged.
+Confirm main has no generated Playwright specs. Author new tests from the spreadsheet, not from historical test source or evidence.
+Launch six isolated area children; create and execute browser tests for all 50 original cases and separately identified Wiki gaps, recording each attempt.
+Integrate test-only PRs into a new run-specific QA branch, never main.
+After baseline execution, deduplicate findings against existing PRs and retest their exact heads using this run's newly authored tests.
+Keep every remediation PR open and unmerged; do not push changes to main.
 Deliver the structured per-case output and portable offline evidence ZIP.
 Synthetic data only; no Jira writes.
 ```

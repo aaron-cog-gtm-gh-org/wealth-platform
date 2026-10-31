@@ -2,6 +2,8 @@
 
 The harness validates the case workbook and Playwright suite, runs a frozen test segment, then collects child evidence into a report and portable ZIP. It does not infer passing results: a missing result is `not-run`, and missing recordings are collector errors.
 
+The demo starts from the spreadsheet: `main` has no generated Playwright case specs. Children author them during each demo and keep them on a run-specific QA branch. The harness, workbook, and application unit/integration tests remain available. Before authoring, `validate-suite` should report missing cases; that is not a reason to restore historical specs or mark coverage complete.
+
 ## Setup
 
 `@playwright/test` 1.60.0 and the QA scripts are pinned in the repository. On a fresh checkout, run:
@@ -43,9 +45,9 @@ QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --labe
 
 Record each verified fix in `qa-artifacts/$RUN_ID/fixes.json` under a `fixes` array, with its `signature`, `caseIds`, `prUrl`, `fixRevision`, and `retestLabel`. `fixRevision` must equal the revision captured by that retest segment.
 
-### Replay a committed suite
+### Author from the workbook
 
-For a fresh live run, use the replay path in `qa/playbook.md`: freeze `main`, reuse each verified area spec, and give the six children a new run ID. The commands and per-case evidence requirements are unchanged. Unchanged specs need no new test PR. The parent still reads Wiki/Jira, reviews coverage, collects fresh baseline evidence, and deduplicates failures against existing open fix PRs before retesting those heads. Keep all remediation PRs unmerged.
+For a fresh demo, follow `qa/playbook.md`: freeze the clean `main`, read Wiki/Jira, and have six children write new area specs from the manual cases. Integrate their test-only PRs into the run-specific QA branch, never `main`. Deduplicate product failures only after baseline execution; retest fixes using the newly authored assertions. Keep all remediation PRs unmerged and preserve earlier runs as historical evidence.
 
 ### Child evidence attachments
 
