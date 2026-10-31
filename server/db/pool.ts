@@ -1,32 +1,47 @@
-import oracledb from 'oracledb';
+import pg from 'pg';
+import type { QueryResultRow } from 'pg';
 
-oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+const { Pool, types } = pg;
+types.setTypeParser(20, value => Number(value));
+types.setTypeParser(1700, value => Number(value));
 
-// Defaults match the local test container described in docs/oracle-setup.md.
-export const dbConfig: oracledb.ConnectionAttributes = {
-  user: process.env.ORACLE_USER ?? 'wealth',
-  password: process.env.ORACLE_PASSWORD ?? 'wealth',
-  connectString: process.env.ORACLE_CONNECT_STRING ?? 'localhost:1521/FREEPDB1',
-};
+export const dbConfig = process.env.DATABASE_URL ?? 'postgres://wealth:wealth@127.0.0.1:5432/wealth';
+export const getConnectionString = (databaseUrl = dbConfig) => databaseUrl;
 
-let pool: oracledb.Pool | undefined;
+export function maintenanceConnectionString(databaseUrl = dbConfig) {
+  const url = new URL(databaseUrl);
+  url.pathname = '/postgres';
+  return url.toString();
+}
 
-export async function getPool() {
-  pool ??= await oracledb.createPool({ ...dbConfig, poolMin: 1, poolMax: 8 });
+let pool: pg.Pool | undefined;
+
+export function getPool() {
+  pool ??= new Pool({ connectionString: dbConfig });
   return pool;
 }
 
-export async function query<T>(sql: string, binds: oracledb.BindParameters = {}): Promise<T[]> {
-  const conn = await (await getPool()).getConnection();
+export async function query<T extends QueryResultRow>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const result = await getPool().query<T>(sql, params);
+  return result.rows;
+}
+
+export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+  const client = await getPool().connect();
   try {
-    const result = await conn.execute<T>(sql, binds);
-    return result.rows ?? [];
+    await client.query('BEGIN');
+    const value = await fn(client);
+    await client.query('COMMIT');
+    return value;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
-    await conn.close();
+    client.release();
   }
 }
 
 export async function closePool() {
-  await pool?.close(5);
+  await pool?.end();
   pool = undefined;
 }

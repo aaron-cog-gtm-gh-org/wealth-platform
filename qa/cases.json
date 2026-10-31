@@ -1,0 +1,1448 @@
+{
+  "cases": [
+    {
+      "id": "WM-TC-001",
+      "feature": "Clients",
+      "title": "Client list shows seeded synthetic clients with risk profile and KYC status",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "C1001 Eleanor Whitfield (Moderate, Current); C1002 James Chen (Conservative, Review due).",
+      "steps": [
+        {
+          "action": "Open the Clients area.",
+          "expected": "Client list shows exactly two clients: C1001 Eleanor Whitfield and C1002 James Chen."
+        },
+        {
+          "action": "Read the risk profile and KYC status shown for C1001.",
+          "expected": "C1001 shows risk profile Moderate and KYC status Current."
+        },
+        {
+          "action": "Read the risk profile and KYC status shown for C1002.",
+          "expected": "C1002 shows risk profile Conservative and KYC status Review due."
+        },
+        {
+          "action": "Reload the browser page (F5).",
+          "expected": "The same two clients are listed with unchanged risk profile and KYC values."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-002",
+      "feature": "Clients",
+      "title": "Client search finds clients by name and by client ID",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Search terms: 'Whitfield', 'C1002', 'Zhang'.",
+      "steps": [
+        {
+          "action": "Enter 'Whitfield' in the client search field.",
+          "expected": "Only C1001 Eleanor Whitfield is listed."
+        },
+        {
+          "action": "Replace the search text with 'C1002'.",
+          "expected": "Only C1002 James Chen is listed."
+        },
+        {
+          "action": "Replace the search text with 'Zhang'.",
+          "expected": "No clients are listed and an empty-result message is shown; no error is displayed."
+        },
+        {
+          "action": "Clear the search field.",
+          "expected": "Both C1001 and C1002 are listed again."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-003",
+      "feature": "Clients",
+      "title": "Selected client shows only that client's accounts with currency and cash",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "C1001 accounts: A1001 Whitfield Investment CAD 25,000.00; A1002 Whitfield Savings CAD 10,000.00. C1002 account: A1003 Chen USD Investment USD 15,000.00.",
+      "steps": [
+        {
+          "action": "Select client C1001 Eleanor Whitfield.",
+          "expected": "Client detail shows accounts A1001 Whitfield Investment (CAD 25,000.00) and A1002 Whitfield Savings (CAD 10,000.00)."
+        },
+        {
+          "action": "Check the account list for C1001 for any other account.",
+          "expected": "A1003 Chen USD Investment is not shown for C1001."
+        },
+        {
+          "action": "Select client C1002 James Chen.",
+          "expected": "Client detail shows only A1003 Chen USD Investment with cash USD 15,000.00."
+        },
+        {
+          "action": "Check the account list for C1002.",
+          "expected": "Neither A1001 nor A1002 is shown for C1002, and no CAD account is listed."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-004",
+      "feature": "Clients",
+      "title": "Advisor updates a client's risk profile and the change persists after reload",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Client C1001; risk profile Moderate -> Growth.",
+      "steps": [
+        {
+          "action": "Select client C1001 Eleanor Whitfield and open the profile edit control.",
+          "expected": "Edit form shows risk profile Moderate and KYC status Current."
+        },
+        {
+          "action": "Open the risk profile options.",
+          "expected": "Exactly three options are offered: Conservative, Moderate, Growth."
+        },
+        {
+          "action": "Open the KYC status options.",
+          "expected": "Exactly two options are offered: Current, Review due."
+        },
+        {
+          "action": "Set risk profile to Growth, leave KYC status as Current, and save.",
+          "expected": "A success confirmation is shown; C1001 shows risk profile Growth and KYC status Current."
+        },
+        {
+          "action": "Reload the browser page (F5). Select C1001 again.",
+          "expected": "C1001 still shows risk profile Growth and KYC status Current."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "A new entry records the C1001 risk profile change from Moderate to Growth."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-005",
+      "feature": "Clients",
+      "title": "Advisor updates a client's KYC status from Review due to Current",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Client C1002; KYC status Review due -> Current.",
+      "steps": [
+        {
+          "action": "Select client C1002 James Chen and open the profile edit control.",
+          "expected": "Edit form shows risk profile Conservative and KYC status Review due."
+        },
+        {
+          "action": "Set KYC status to Current, leave risk profile as Conservative, and save.",
+          "expected": "A success confirmation is shown; C1002 shows KYC status Current and risk profile Conservative."
+        },
+        {
+          "action": "Reload the browser page (F5). Select C1002 again.",
+          "expected": "C1002 still shows KYC status Current and risk profile Conservative."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "A new entry records the C1002 KYC status change from Review due to Current."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-006",
+      "feature": "Clients",
+      "title": "Abandoning a profile edit leaves the client unchanged and unaudited",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Client C1001; draft change risk Moderate -> Conservative, KYC Current -> Review due, not saved.",
+      "steps": [
+        {
+          "action": "Select client C1001 and open the profile edit control.",
+          "expected": "Edit form shows Moderate and Current."
+        },
+        {
+          "action": "Change risk profile to Conservative and KYC status to Review due, then cancel the edit without saving.",
+          "expected": "The edit form closes; C1001 still shows Moderate and Current."
+        },
+        {
+          "action": "Reload the browser page (F5). Select C1001 again.",
+          "expected": "C1001 shows Moderate and Current."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "No profile change entry exists for C1001."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-007",
+      "feature": "Clients",
+      "title": "Editing one client does not change any other client's profile",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Edit C1002 risk Conservative -> Growth; C1001 must stay Moderate / Current.",
+      "steps": [
+        {
+          "action": "Select client C1002 James Chen, set risk profile to Growth, and save.",
+          "expected": "C1002 shows risk profile Growth and KYC status Review due."
+        },
+        {
+          "action": "Select client C1001 Eleanor Whitfield.",
+          "expected": "C1001 still shows risk profile Moderate and KYC status Current."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the client list.",
+          "expected": "C1001 shows Moderate / Current and C1002 shows Growth / Review due."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "Exactly one new profile entry exists, and it references C1002 only."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-008",
+      "feature": "Clients",
+      "title": "Risk profile and KYC status edited together are saved as one consistent update",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=clients.",
+      "testData": "Client C1002; risk Conservative -> Moderate and KYC Review due -> Current in one save.",
+      "steps": [
+        {
+          "action": "Select client C1002 and open the profile edit control.",
+          "expected": "Edit form shows Conservative and Review due."
+        },
+        {
+          "action": "Set risk profile to Moderate and KYC status to Current, then save.",
+          "expected": "A success confirmation is shown; C1002 shows Moderate and Current."
+        },
+        {
+          "action": "Reload the browser page (F5). Select C1002 again.",
+          "expected": "C1002 shows both saved values, Moderate and Current; neither field has reverted."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "The audit history records both the risk profile and the KYC status change for C1002."
+        },
+        {
+          "action": "Select client C1001.",
+          "expected": "C1001 is unchanged at Moderate and Current."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-009",
+      "feature": "Portfolio",
+      "title": "Positions list shows quantity, price and market value calculated as quantity times price",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "P1001 A1001 RY 100 x 140.00 CAD = 14,000.00; P1002 A1002 BMO 80 x 125.00 CAD = 10,000.00; P1003 A1003 MSFT 40 x 420.00 USD = 16,800.00.",
+      "steps": [
+        {
+          "action": "Open the Portfolio area with no filters applied.",
+          "expected": "Exactly three positions are listed: RY in A1001, BMO in A1002 and MSFT in A1003."
+        },
+        {
+          "action": "Read the RY row.",
+          "expected": "RY Royal Bank of Canada shows quantity 100, price 140.00 CAD and market value CAD 14,000.00."
+        },
+        {
+          "action": "Read the BMO row.",
+          "expected": "BMO shows quantity 80, price 125.00 CAD and market value CAD 10,000.00."
+        },
+        {
+          "action": "Read the MSFT row.",
+          "expected": "MSFT shows quantity 40, price 420.00 USD and market value USD 16,800.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-010",
+      "feature": "Portfolio",
+      "title": "CAD and USD market value totals are shown separately with no mixed-currency total",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Expected totals: CAD 24,000.00 (RY + BMO); USD 16,800.00 (MSFT). Unconverted sum 40,800.00 must not appear.",
+      "steps": [
+        {
+          "action": "Open the Portfolio area with no filters applied and locate the totals.",
+          "expected": "Separate totals are shown: CAD 24,000.00 and USD 16,800.00."
+        },
+        {
+          "action": "Check the totals area and summary tiles for a single combined figure.",
+          "expected": "No total of 40,800.00 (or any other CAD+USD sum) is shown in any currency."
+        },
+        {
+          "action": "Reload the browser page (F5).",
+          "expected": "Totals are still CAD 24,000.00 and USD 16,800.00, shown separately."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-011",
+      "feature": "Portfolio",
+      "title": "Filtering by client C1001 shows only Whitfield positions and a CAD total",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Client filter: C1001 Eleanor Whitfield.",
+      "steps": [
+        {
+          "action": "Set the client filter to C1001 Eleanor Whitfield.",
+          "expected": "Only RY (A1001) and BMO (A1002) are listed."
+        },
+        {
+          "action": "Read the totals.",
+          "expected": "CAD total is 24,000.00; no USD total is shown, or the USD total is 0.00."
+        },
+        {
+          "action": "Check the list for MSFT or account A1003.",
+          "expected": "Neither MSFT nor A1003 appears."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-012",
+      "feature": "Portfolio",
+      "title": "Filtering by client C1002 shows only the USD position and a USD total",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Client filter: C1002 James Chen.",
+      "steps": [
+        {
+          "action": "Set the client filter to C1002 James Chen.",
+          "expected": "Only MSFT in A1003 is listed, quantity 40 at 420.00 USD."
+        },
+        {
+          "action": "Read the totals.",
+          "expected": "USD total is 16,800.00; no CAD total is shown, or the CAD total is 0.00."
+        },
+        {
+          "action": "Check the list for RY, BMO, A1001 or A1002.",
+          "expected": "None of them appears."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-013",
+      "feature": "Portfolio",
+      "title": "Filtering by account A1002 shows only that account's holding",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Account filter: A1002 Whitfield Savings.",
+      "steps": [
+        {
+          "action": "Set the client filter to C1001 and the account filter to A1002 Whitfield Savings.",
+          "expected": "Only BMO is listed: quantity 80, price 125.00 CAD, market value CAD 10,000.00."
+        },
+        {
+          "action": "Read the totals.",
+          "expected": "CAD total is 10,000.00; RY (A1001) is not included."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-014",
+      "feature": "Portfolio",
+      "title": "Filtering by instrument MSFT shows its USD valuation without conversion",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Instrument filter: MSFT.",
+      "steps": [
+        {
+          "action": "Clear all filters and set the instrument filter to MSFT.",
+          "expected": "Only P1003 MSFT in A1003 is listed."
+        },
+        {
+          "action": "Read the market value and totals.",
+          "expected": "Market value and total are USD 16,800.00, labelled USD; no CAD-converted amount is shown."
+        },
+        {
+          "action": "Change the instrument filter to RY.",
+          "expected": "Only RY in A1001 is listed, with a CAD 14,000.00 total and no USD total."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-015",
+      "feature": "Portfolio",
+      "title": "A client filter combined with another client's instrument returns no rows",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Client C1001 with instrument MSFT (MSFT is held only by C1002's account A1003).",
+      "steps": [
+        {
+          "action": "Set the client filter to C1001 Eleanor Whitfield.",
+          "expected": "RY and BMO are listed."
+        },
+        {
+          "action": "Set the instrument filter to MSFT.",
+          "expected": "No positions are listed and an empty-result message is shown."
+        },
+        {
+          "action": "Read the totals.",
+          "expected": "No USD 16,800.00 total is shown; any totals shown are 0.00 or absent. C1002 data does not appear."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-016",
+      "feature": "Portfolio",
+      "title": "Account filter options are scoped to the selected client",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Switch client filter C1002 -> C1001.",
+      "steps": [
+        {
+          "action": "Set the client filter to C1002 James Chen and open the account filter options.",
+          "expected": "Only A1003 Chen USD Investment is offered."
+        },
+        {
+          "action": "Select account A1003.",
+          "expected": "Only MSFT is listed."
+        },
+        {
+          "action": "Change the client filter to C1001 Eleanor Whitfield.",
+          "expected": "Account A1003 is no longer selected, MSFT is not listed, and RY and BMO are shown."
+        },
+        {
+          "action": "Open the account filter options.",
+          "expected": "Only A1001 and A1002 are offered; A1003 is not."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-017",
+      "feature": "Portfolio",
+      "title": "Combined account and instrument filter shows the single matching position",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "Low",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Account A1001 + instrument RY, then clear filters.",
+      "steps": [
+        {
+          "action": "Set the client filter to C1001, the account filter to A1001 and the instrument filter to RY.",
+          "expected": "Exactly one row is listed: RY, 100 x 140.00 CAD = CAD 14,000.00."
+        },
+        {
+          "action": "Clear all filters.",
+          "expected": "All three positions are listed again, with separate totals CAD 24,000.00 and USD 16,800.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-018",
+      "feature": "Portfolio",
+      "title": "An open order does not change holdings or market value",
+      "jiraKey": "KAN-13",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=portfolio.",
+      "testData": "Sell 10 RY from A1001 (left Open, not executed).",
+      "steps": [
+        {
+          "action": "In the Portfolio area, read the RY row for A1001.",
+          "expected": "RY shows quantity 100 and market value CAD 14,000.00."
+        },
+        {
+          "action": "Go to the Orders area and place a Sell order for 10 RY in account A1001.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Return to the Portfolio area and read the RY row.",
+          "expected": "RY still shows quantity 100 and market value CAD 14,000.00; CAD total is still 24,000.00."
+        },
+        {
+          "action": "Reload the browser page (F5). Re-check the Portfolio area.",
+          "expected": "RY quantity 100 and CAD 24,000.00 total are unchanged."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-019",
+      "feature": "Orders",
+      "title": "Advisor places a whole-share buy order within available cash",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Buy 10 RY at 140.00 CAD (estimated CAD 1,400.00); A1001 cash CAD 25,000.00.",
+      "steps": [
+        {
+          "action": "Open the Orders area and confirm the order list.",
+          "expected": "No orders are listed."
+        },
+        {
+          "action": "Start a new order: account A1001, side Buy, instrument RY, quantity 10, and submit.",
+          "expected": "The order is accepted; a new order shows A1001, Buy, RY, quantity 10, status Open."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "The Open Buy order for 10 RY in A1001 is still listed."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "An entry records the placement of the Buy 10 RY order for A1001."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-020",
+      "feature": "Orders",
+      "title": "Advisor places a sell order within the settled quantity",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Sell 40 RY; settled quantity 100.",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 40.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Read the available-to-sell quantity for RY in A1001 on the order ticket.",
+          "expected": "60 shares are available to sell (100 settled less 40 reserved)."
+        },
+        {
+          "action": "Open the Portfolio area.",
+          "expected": "RY in A1001 still shows quantity 100; the open sell has not changed holdings."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "The Open Sell 40 RY order is still listed."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-021",
+      "feature": "Orders",
+      "title": "Sequential sell orders cannot reserve more than the settled quantity",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 RY settled 100. Sell 70 (accept), Sell 50 (reject), Sell 30 (accept), Sell 1 (reject).",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 70.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Place a second order: account A1001, side Sell, instrument RY, quantity 50.",
+          "expected": "The order is rejected with a message that only 30 shares are available to sell; no new order is created."
+        },
+        {
+          "action": "Review the order list.",
+          "expected": "Exactly one order exists: Sell 70 RY, Open."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Still exactly one order (Sell 70 RY, Open)."
+        },
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 30.",
+          "expected": "The order is accepted with status Open; open sells for RY now total 100."
+        },
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 1.",
+          "expected": "The order is rejected because 0 shares are available; the list still shows two Open sell orders (70 and 30)."
+        },
+        {
+          "action": "Open the Portfolio area.",
+          "expected": "RY in A1001 still shows quantity 100."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-022",
+      "feature": "Orders",
+      "title": "Cancelling an open sell releases its reserved shares",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Sell 70 RY, cancel, then Sell 100 RY.",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 70.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 31.",
+          "expected": "The order is rejected; only 30 shares are available."
+        },
+        {
+          "action": "Cancel the Sell 70 RY order.",
+          "expected": "The order status changes to Cancelled."
+        },
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 100.",
+          "expected": "The order is accepted with status Open, because the cancelled order no longer reserves shares."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Sell 70 shows Cancelled and Sell 100 shows Open."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-023",
+      "feature": "Orders",
+      "title": "Buy order above available cash is rejected at the boundary",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 cash CAD 25,000.00; RY 140.00 CAD. Buy 179 = 25,060.00 (reject); Buy 178 = 24,920.00 (accept).",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 179.",
+          "expected": "The order is rejected for insufficient available cash (CAD 25,060.00 required, CAD 25,000.00 available); no order is created."
+        },
+        {
+          "action": "Review the order list and the A1001 cash in the Clients area.",
+          "expected": "No orders exist; A1001 cash is still CAD 25,000.00."
+        },
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 178.",
+          "expected": "The order is accepted with status Open (estimated CAD 24,920.00)."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Exactly one order exists: Buy 178 RY, Open."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-024",
+      "feature": "Orders",
+      "title": "Open buy orders reserve cash for subsequent buys",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 cash CAD 25,000.00. Buy 100 RY = 14,000.00 (accept); Buy 80 = 11,200.00 (reject, 11,000.00 available); Buy 78 = 10,920.00 (accept).",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 100.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Start another order: account A1001, side Buy, instrument RY, and read the available cash.",
+          "expected": "Available cash is CAD 11,000.00 (25,000.00 less 14,000.00 reserved)."
+        },
+        {
+          "action": "Enter quantity 80 and submit.",
+          "expected": "The order is rejected for insufficient available cash; no new order is created."
+        },
+        {
+          "action": "Change quantity to 78 and submit.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Exactly two Open buy orders exist (100 and 78 RY); no order for 80 exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-025",
+      "feature": "Orders",
+      "title": "Order quantity must be a positive whole number",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Buy RY with quantities 0, -5, 2.5, blank and 'ten'.",
+      "steps": [
+        {
+          "action": "Start an order for account A1001, side Buy, instrument RY with quantity 0 and submit.",
+          "expected": "A validation message requires a positive whole number of shares; no order is created."
+        },
+        {
+          "action": "Repeat with quantity -5.",
+          "expected": "Rejected with a validation message; no order is created."
+        },
+        {
+          "action": "Repeat with quantity 2.5.",
+          "expected": "Rejected because fractional shares are not allowed; no order is created."
+        },
+        {
+          "action": "Repeat with the quantity left blank, then with 'ten'.",
+          "expected": "Both are rejected with a validation message; no order is created."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "No orders exist and A1001 cash is CAD 25,000.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-026",
+      "feature": "Orders",
+      "title": "Orders can be placed only for instruments held in the selected account",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "Account A1002 holds BMO only; A1003 holds MSFT only.",
+      "steps": [
+        {
+          "action": "Start a new order and select account A1002.",
+          "expected": "The instrument choice offers BMO only; RY and MSFT are not offered."
+        },
+        {
+          "action": "Change the account to A1003.",
+          "expected": "The instrument choice offers MSFT only, and the BMO selection is cleared."
+        },
+        {
+          "action": "Change the account to A1001.",
+          "expected": "The instrument choice offers RY only."
+        },
+        {
+          "action": "Review the order list.",
+          "expected": "No orders have been created."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-027",
+      "feature": "Orders",
+      "title": "A cancelled order is final and cannot be cancelled again",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Buy 5 RY, cancelled once.",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 5.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Cancel the order.",
+          "expected": "Status changes to Cancelled."
+        },
+        {
+          "action": "Try to cancel the same order again.",
+          "expected": "No cancel action is available, or the attempt is rejected; the status stays Cancelled."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "The order still shows Cancelled."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "Exactly one cancellation entry exists for this order."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-028",
+      "feature": "Orders",
+      "title": "Cancelling an open buy releases its cash reservation",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Buy 150 RY = 21,000.00; Buy 30 = 4,200.00 (reject, 4,000.00 available); cancel; Buy 178 = 24,920.00 (accept).",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 150.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 30.",
+          "expected": "The order is rejected; only CAD 4,000.00 is available."
+        },
+        {
+          "action": "Cancel the Buy 150 RY order.",
+          "expected": "Status changes to Cancelled."
+        },
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 178.",
+          "expected": "The order is accepted with status Open."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Buy 150 shows Cancelled and Buy 178 shows Open; no Buy 30 order exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-029",
+      "feature": "Orders",
+      "title": "USD account buy orders are checked against USD cash only",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1003 cash USD 15,000.00; MSFT 420.00 USD. Buy 35 = 14,700.00 (accept); Buy 1 = 420.00 (reject, 300.00 available).",
+      "steps": [
+        {
+          "action": "Place an order: account A1003, side Buy, instrument MSFT, quantity 35.",
+          "expected": "The order is accepted with status Open; the estimate is in USD (USD 14,700.00)."
+        },
+        {
+          "action": "Place an order: account A1003, side Buy, instrument MSFT, quantity 1.",
+          "expected": "The order is rejected; only USD 300.00 is available. C1001's CAD cash is not counted."
+        },
+        {
+          "action": "Check accounts A1001 and A1002 in the Clients area.",
+          "expected": "A1001 is CAD 25,000.00 and A1002 is CAD 10,000.00, unchanged."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Orders area.",
+          "expected": "Exactly one order exists: Buy 35 MSFT in A1003, Open."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-030",
+      "feature": "Orders",
+      "title": "Only successful order placements and cancellations are audit logged",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=orders.",
+      "testData": "A1001 Buy 5 RY (accept), Sell 101 RY (reject), cancel the buy.",
+      "steps": [
+        {
+          "action": "Place an order: account A1001, side Buy, instrument RY, quantity 5.",
+          "expected": "Accepted with status Open."
+        },
+        {
+          "action": "Place an order: account A1001, side Sell, instrument RY, quantity 101.",
+          "expected": "Rejected because only 100 shares are available; no order is created."
+        },
+        {
+          "action": "Cancel the Buy 5 RY order.",
+          "expected": "Status changes to Cancelled."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "It shows exactly two order entries in time order: the Buy 5 RY placement and its cancellation. The rejected sell is not logged."
+        },
+        {
+          "action": "Reload the browser page (F5). Re-open the audit history.",
+          "expected": "The same two entries are shown."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-031",
+      "feature": "Move Money",
+      "title": "Reviewing a transfer shows the details without moving funds",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "A1001 -> A1002, CAD 1,000.00, reviewed but not confirmed.",
+      "steps": [
+        {
+          "action": "In the Move Money area, select from account A1001, to account A1002, enter amount 1000.00, and choose Review.",
+          "expected": "The review screen shows From A1001 Whitfield Investment, To A1002 Whitfield Savings, Amount CAD 1,000.00, and a Confirm action."
+        },
+        {
+          "action": "Without confirming, check the balances shown for A1001 and A1002.",
+          "expected": "A1001 is still CAD 25,000.00 and A1002 is still CAD 10,000.00."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "No completed transfer is listed; balances are CAD 25,000.00 and CAD 10,000.00."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "No transfer entry exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-032",
+      "feature": "Move Money",
+      "title": "Confirming a transfer moves both balances and shows a reference",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "A1001 -> A1002, CAD 1,000.00, confirmed.",
+      "steps": [
+        {
+          "action": "Create a transfer from A1001 to A1002 for 1000.00 and choose Review.",
+          "expected": "The review screen shows CAD 1,000.00 from A1001 to A1002."
+        },
+        {
+          "action": "Choose Confirm.",
+          "expected": "A confirmation shows status Completed and a transfer reference."
+        },
+        {
+          "action": "Check the balances.",
+          "expected": "A1001 is CAD 24,000.00 and A1002 is CAD 11,000.00."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "The completed transfer with the same reference is listed, and the balances are still CAD 24,000.00 and CAD 11,000.00."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "One entry records the CAD 1,000.00 transfer from A1001 to A1002 with its reference."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-033",
+      "feature": "Move Money",
+      "title": "Editing a reviewed transfer applies only the edited amount on confirm",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "Review CAD 1,000.00, edit to CAD 2,500.50, confirm.",
+      "steps": [
+        {
+          "action": "Create a transfer from A1001 to A1002 for 1000.00 and choose Review.",
+          "expected": "The review screen shows CAD 1,000.00; balances are unchanged."
+        },
+        {
+          "action": "Choose Edit, change the amount to 2500.50, and choose Review again.",
+          "expected": "The review screen shows CAD 2,500.50; balances are still CAD 25,000.00 and CAD 10,000.00."
+        },
+        {
+          "action": "Choose Confirm.",
+          "expected": "Status Completed with a reference; A1001 is CAD 22,499.50 and A1002 is CAD 12,500.50."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "Exactly one completed transfer (CAD 2,500.50) is listed; none for CAD 1,000.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-034",
+      "feature": "Move Money",
+      "title": "Transfer amount must be positive with at most two decimals",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "A1001 -> A1002 amounts: 0, -100, 100.123, blank, 'abc'; boundary 0.01.",
+      "steps": [
+        {
+          "action": "Select A1001 to A1002, enter amount 0, and choose Review.",
+          "expected": "A validation message requires an amount greater than zero; no review screen opens."
+        },
+        {
+          "action": "Repeat with -100 and then 100.123.",
+          "expected": "Both are rejected; 100.123 is rejected for having more than two decimals."
+        },
+        {
+          "action": "Repeat with a blank amount and then with 'abc'.",
+          "expected": "Both are rejected with a validation message."
+        },
+        {
+          "action": "Enter 0.01 and choose Review, then Confirm.",
+          "expected": "The review shows CAD 0.01; on confirm A1001 is CAD 24,999.99 and A1002 is CAD 10,000.01."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "Exactly one completed transfer (CAD 0.01) exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-035",
+      "feature": "Move Money",
+      "title": "Transfer to the same account is rejected",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "From A1001 to A1001, CAD 500.00.",
+      "steps": [
+        {
+          "action": "Select from account A1001 and open the to-account choice.",
+          "expected": "A1001 is not offered as a destination, or choosing it shows an error."
+        },
+        {
+          "action": "If A1001 can be chosen as the destination, enter 500.00 and choose Review.",
+          "expected": "The transfer is rejected with a message that source and destination must differ; no review screen opens."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "No transfer exists and A1001 is still CAD 25,000.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-036",
+      "feature": "Move Money",
+      "title": "Cross-client and cross-currency transfers are rejected",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "A1001 (C1001, CAD) -> A1003 (C1002, USD) and A1003 -> A1001, amount 100.00.",
+      "steps": [
+        {
+          "action": "Select from account A1001 and open the to-account choice.",
+          "expected": "Only A1002 is offered; A1003 is not offered, or choosing it shows an error."
+        },
+        {
+          "action": "If A1003 can be chosen, enter 100.00 and choose Review.",
+          "expected": "Rejected because the account belongs to a different client and currency; no review screen opens."
+        },
+        {
+          "action": "Select from account A1003 if it is offered, with A1001 or A1002 as the destination, enter 100.00, and choose Review.",
+          "expected": "Rejected; no transfer to another client's account or another currency is possible."
+        },
+        {
+          "action": "Check balances.",
+          "expected": "A1001 is CAD 25,000.00, A1002 is CAD 10,000.00 and A1003 is USD 15,000.00."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "No transfer exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-037",
+      "feature": "Move Money",
+      "title": "Transfer limit accounts for cash reserved by open buy orders",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "Orders: A1001 Buy 100 RY (CAD 14,000.00 reserved). Transfer A1001 -> A1002: 11,000.01 (reject), 11,000.00 (accept).",
+      "steps": [
+        {
+          "action": "In the Orders area, place an order: account A1001, side Buy, instrument RY, quantity 100.",
+          "expected": "Order accepted with status Open."
+        },
+        {
+          "action": "In the Move Money area, create a transfer from A1001 to A1002 for 11000.01 and choose Review (and Confirm if offered).",
+          "expected": "Rejected for insufficient available cash (CAD 11,000.00 available after open buys); balances are unchanged."
+        },
+        {
+          "action": "Change the amount to 11000.00, choose Review, then Confirm.",
+          "expected": "Completed with a reference; A1001 is CAD 14,000.00 and A1002 is CAD 21,000.00."
+        },
+        {
+          "action": "Reload the browser page (F5). Check the Orders area and the Move Money area.",
+          "expected": "The Open Buy 100 RY order is still present, and one completed transfer of CAD 11,000.00 is listed."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-038",
+      "feature": "Move Money",
+      "title": "Full available balance can be transferred and nothing more",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=money.",
+      "testData": "A1002 -> A1001 CAD 10,000.00 (accept), then A1002 -> A1001 CAD 0.01 (reject).",
+      "steps": [
+        {
+          "action": "Create a transfer from A1002 to A1001 for 10000.00, choose Review, then Confirm.",
+          "expected": "Completed with a reference; A1002 is CAD 0.00 and A1001 is CAD 35,000.00."
+        },
+        {
+          "action": "Create another transfer from A1002 to A1001 for 0.01 and choose Review (and Confirm if offered).",
+          "expected": "Rejected for insufficient available cash; balances are unchanged."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Move Money area.",
+          "expected": "One completed transfer is listed; A1002 is CAD 0.00 and A1001 is CAD 35,000.00."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-039",
+      "feature": "Rebalance",
+      "title": "Seeded model shows current and target weights with no drift",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "Equity 60/60, Fixed income 30/30, Cash 10/10.",
+      "steps": [
+        {
+          "action": "Open the Rebalance area.",
+          "expected": "Exactly three asset classes are shown, each once: Equity, Fixed income and Cash."
+        },
+        {
+          "action": "Read the current and target weights.",
+          "expected": "Equity 60% current and target, Fixed income 30%/30%, Cash 10%/10%; target total 100%."
+        },
+        {
+          "action": "Read the drift for each class.",
+          "expected": "Drift is 0% for every class, and each is marked within tolerance."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-040",
+      "feature": "Rebalance",
+      "title": "Valid target changes persist and the preview shows drift per class",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "Targets Equity 70, Fixed income 20, Cash 10 (total 100).",
+      "steps": [
+        {
+          "action": "Edit targets to Equity 70, Fixed income 20, Cash 10 and save.",
+          "expected": "Targets are saved with a confirmation; the total shows 100%."
+        },
+        {
+          "action": "Open the drift preview.",
+          "expected": "Equity: current 60 vs target 70, drift -10 (underweight). Fixed income: 30 vs 20, drift +10 (overweight). Cash: 10 vs 10, drift 0."
+        },
+        {
+          "action": "Compare how classes are flagged.",
+          "expected": "Equity and Fixed income are flagged as proposed changes; Cash is marked within tolerance."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Rebalance area.",
+          "expected": "Targets are still 70 / 20 / 10."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "An entry records the target change from 60/30/10 to 70/20/10."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-041",
+      "feature": "Rebalance",
+      "title": "Drift preview does not place orders or change holdings and cash",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "Targets Equity 50, Fixed income 40, Cash 10, then preview.",
+      "steps": [
+        {
+          "action": "Edit targets to Equity 50, Fixed income 40, Cash 10, save, and open the drift preview.",
+          "expected": "The preview shows Equity drift +10 (overweight) and Fixed income -10 (underweight), with no trades executed."
+        },
+        {
+          "action": "Open the Orders area.",
+          "expected": "No orders exist."
+        },
+        {
+          "action": "Open the Portfolio area.",
+          "expected": "RY 100, BMO 80 and MSFT 40 are unchanged; totals are CAD 24,000.00 and USD 16,800.00."
+        },
+        {
+          "action": "Open the Clients area and select C1001, then C1002.",
+          "expected": "A1001 CAD 25,000.00, A1002 CAD 10,000.00, A1003 USD 15,000.00 are unchanged."
+        },
+        {
+          "action": "Reload the browser page (F5). Re-check the Orders area.",
+          "expected": "Still no orders."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-042",
+      "feature": "Rebalance",
+      "title": "Targets that do not total exactly 100 are rejected",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "Equity 60, Fixed income 30, Cash 9 (99) and Cash 11 (101).",
+      "steps": [
+        {
+          "action": "Edit targets to Equity 60, Fixed income 30, Cash 9 and save.",
+          "expected": "Rejected with a message that targets must total exactly 100%; nothing is saved."
+        },
+        {
+          "action": "Change Cash to 11 (total 101) and save.",
+          "expected": "Rejected with the same message."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Rebalance area.",
+          "expected": "Targets are still 60 / 30 / 10."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "No target change entry exists."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-043",
+      "feature": "Rebalance",
+      "title": "Each target must be between 0 and 100",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "-10/80/30 (reject), 110/-10/0 (reject), 100/0/0 (accept).",
+      "steps": [
+        {
+          "action": "Edit targets to Equity -10, Fixed income 80, Cash 30 and save.",
+          "expected": "Rejected because each target must be between 0 and 100; nothing is saved."
+        },
+        {
+          "action": "Edit targets to Equity 110, Fixed income -10, Cash 0 and save.",
+          "expected": "Rejected; nothing is saved and the previous targets are kept."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Rebalance area.",
+          "expected": "Targets are 60 / 30 / 10."
+        },
+        {
+          "action": "Edit targets to Equity 100, Fixed income 0, Cash 0 and save.",
+          "expected": "Accepted; the preview shows Equity drift -40, Fixed income +30, Cash +10."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Rebalance area.",
+          "expected": "Targets are 100 / 0 / 0."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-044",
+      "feature": "Rebalance",
+      "title": "Blank or non-numeric targets are rejected and abandoned edits are not saved",
+      "jiraKey": "KAN-16",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=rebalance.",
+      "testData": "Equity 60, Fixed income 40, Cash blank; Cash 'ten'; then abandon 50/40/10.",
+      "steps": [
+        {
+          "action": "Edit targets to Equity 60, Fixed income 40, clear Cash, and save.",
+          "expected": "Rejected because every class needs a target; nothing is saved."
+        },
+        {
+          "action": "Enter 'ten' for Cash and save.",
+          "expected": "Rejected with a validation message; nothing is saved."
+        },
+        {
+          "action": "Enter Equity 50, Fixed income 40, Cash 10, then cancel the edit without saving.",
+          "expected": "The edit closes and targets show 60 / 30 / 10."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Rebalance area.",
+          "expected": "Targets are 60 / 30 / 10 and drift is 0 for all classes."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-045",
+      "feature": "Settlements",
+      "title": "Exception queue lists seeded exceptions and filters by status",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1001 A1001 Missing settlement instructions; EX1002 A1003 Cash reconciliation; both Open, unassigned.",
+      "steps": [
+        {
+          "action": "Open the Settlements area.",
+          "expected": "Two exceptions are listed: EX1001 (A1001, Missing settlement instructions) and EX1002 (A1003, Cash reconciliation)."
+        },
+        {
+          "action": "Read status and owner for each.",
+          "expected": "Both are Open and unassigned."
+        },
+        {
+          "action": "Filter by status Open.",
+          "expected": "EX1001 and EX1002 are both listed."
+        },
+        {
+          "action": "Filter by status In progress, then Resolved.",
+          "expected": "Both filters show no exceptions and an empty-result message."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-046",
+      "feature": "Settlements",
+      "title": "Assigning an owner and moving to In progress persists and is audited",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1001: owner A. Nguyen, status In progress.",
+      "steps": [
+        {
+          "action": "Open EX1001 and open the owner choice.",
+          "expected": "The owners offered are A. Nguyen and S. Patel."
+        },
+        {
+          "action": "Assign owner A. Nguyen and save.",
+          "expected": "EX1001 shows owner A. Nguyen."
+        },
+        {
+          "action": "Set status to In progress and save.",
+          "expected": "EX1001 shows status In progress."
+        },
+        {
+          "action": "Filter by status In progress.",
+          "expected": "Only EX1001 is listed; EX1002 is still Open and unassigned."
+        },
+        {
+          "action": "Reload the browser page (F5). Return to the Settlements area.",
+          "expected": "EX1001 still shows A. Nguyen and In progress."
+        },
+        {
+          "action": "Open the audit history.",
+          "expected": "Entries record the EX1001 owner assignment and the status change to In progress."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-047",
+      "feature": "Settlements",
+      "title": "An exception cannot be resolved without an owner",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1002 unassigned; note 'Cash break cleared with custodian statement'.",
+      "steps": [
+        {
+          "action": "Open EX1002, enter the note 'Cash break cleared with custodian statement', and try to resolve it with no owner.",
+          "expected": "Rejected with a message that an owner is required; EX1002 stays Open and unassigned."
+        },
+        {
+          "action": "Reload the browser page (F5). Open EX1002.",
+          "expected": "Status is Open, there is no owner, and no resolution is recorded."
+        },
+        {
+          "action": "Assign owner S. Patel, enter the same note, and resolve.",
+          "expected": "EX1002 shows status Resolved with owner S. Patel and the note."
+        },
+        {
+          "action": "Reload the browser page (F5). Open EX1002.",
+          "expected": "EX1002 is Resolved with owner S. Patel and the note."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-048",
+      "feature": "Settlements",
+      "title": "Resolution note must contain at least ten meaningful characters",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "High",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1001 owner A. Nguyen. Notes: 'Confirmed' (9 chars), ten spaces, 'Confirmed.' (10 chars).",
+      "steps": [
+        {
+          "action": "Open EX1001, assign owner A. Nguyen, and save.",
+          "expected": "EX1001 shows owner A. Nguyen."
+        },
+        {
+          "action": "Enter the note 'Confirmed' and try to resolve.",
+          "expected": "Rejected with a message that the note needs at least 10 characters; status is unchanged."
+        },
+        {
+          "action": "Replace the note with ten spaces and try to resolve.",
+          "expected": "Rejected; a blank note is not accepted and the status is unchanged."
+        },
+        {
+          "action": "Replace the note with 'Confirmed.' and resolve.",
+          "expected": "EX1001 shows status Resolved with the note 'Confirmed.'."
+        },
+        {
+          "action": "Reload the browser page (F5). Open EX1001.",
+          "expected": "EX1001 is Resolved, owner A. Nguyen, note 'Confirmed.'."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-049",
+      "feature": "Settlements",
+      "title": "A resolved exception cannot be reopened",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "Critical",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1001 resolved by A. Nguyen with note 'SSI received from custodian'.",
+      "steps": [
+        {
+          "action": "Open EX1001, assign owner A. Nguyen, enter the note 'SSI received from custodian', and resolve.",
+          "expected": "EX1001 shows status Resolved."
+        },
+        {
+          "action": "Try to change the status of EX1001 to Open.",
+          "expected": "No such option is available, or the change is rejected; the status stays Resolved."
+        },
+        {
+          "action": "Try to change the status of EX1001 to In progress.",
+          "expected": "No such option is available, or the change is rejected; the status stays Resolved."
+        },
+        {
+          "action": "Reload the browser page (F5). Open EX1001.",
+          "expected": "Still Resolved with owner A. Nguyen and the original note."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-050",
+      "feature": "Settlements",
+      "title": "Exception lifecycle is recorded in audit history without rejected attempts",
+      "jiraKey": "KAN-17",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17",
+      "priority": "Medium",
+      "preconditions": "Deterministic seed restored with the controlled test harness reset (not an in-app control), then browser reloaded. Start at /?screen=workspace&area=settlements.",
+      "testData": "EX1002: assign S. Patel, In progress, failed resolve with 'Done' (4 chars), resolve with 'Reconciled to bank statement'.",
+      "steps": [
+        {
+          "action": "Open EX1002, assign owner S. Patel, and set status to In progress.",
+          "expected": "EX1002 shows S. Patel and In progress."
+        },
+        {
+          "action": "Try to resolve with the note 'Done'.",
+          "expected": "Rejected; EX1002 is still In progress."
+        },
+        {
+          "action": "Resolve with the note 'Reconciled to bank statement'.",
+          "expected": "EX1002 shows Resolved."
+        },
+        {
+          "action": "Filter by status Resolved.",
+          "expected": "Only EX1002 is listed; EX1001 remains Open and unassigned."
+        },
+        {
+          "action": "Open the audit history for EX1002.",
+          "expected": "Entries appear in order: owner assigned (S. Patel), status set to In progress, resolved with the note. The rejected attempt is not logged."
+        },
+        {
+          "action": "Reload the browser page (F5). Re-open the audit history.",
+          "expected": "The same entries are shown."
+        }
+      ]
+    }
+  ]
+}

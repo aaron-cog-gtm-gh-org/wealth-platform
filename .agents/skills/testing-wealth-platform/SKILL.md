@@ -1,19 +1,21 @@
 ---
 name: testing-wealth-platform
-description: Test the RBC Wealth Platform React implementation against its interactive mockup on Windows.
+description: Test the Wealth Platform connected workflows and legacy mockup views with synthetic PostgreSQL data.
 ---
 
 # Local surfaces
-- The app is a simulated client with no login or real payment/order backend.
-- Check http://localhost:5173 before starting another Vite server. From the repo, use `node node_modules/vite/bin/vite.js --port 5173 --strictPort` if needed.
-- Serve the mockup with `python -m http.server 8090 -d design/mockups`; open `http://localhost:8090/RBC%20Wealth%20Platform.dc.html`.
-- If the Windows Git Bash npm shim fails, invoke npm's installed `npm-cli.js` using node instead. Locate the current toolcache version rather than assuming it.
-- Use `python -X utf8` when printing source containing currency, arrows, and Unicode punctuation on Windows.
+- Use Node 22 (`.nvmrc`) and Docker. On Linux, source `~/.nvm/nvm.sh` if Node is not on PATH.
+- The connected workspace persists synthetic client, order, transfer, allocation, settlement and audit data through Express and PostgreSQL. It is not a production banking system; there is no live trading or payment connection.
+- The original eight mockup screens remain separate, read-only/simulated surfaces. Do not mistake their local button state for persisted workspace behavior.
+- Check the existing API and Vite processes before starting duplicates. Restart the API after route or repository changes.
+- Serve the reference mockup separately with `python3 -m http.server 8090 -d design/mockups` only for visual parity work.
 
 # Routing and state
-- App URLs accept `?screen=c360|portfolio|orders|alts|exceptions|home|activity|money&state=Populated|Loading|Empty|Error`.
+- Connected routes use `?screen=workspace&area=clients|portfolio|orders|money|rebalance|settlements`.
+- Legacy routes use `?screen=c360|portfolio|orders|alts|exceptions|home|activity|money&state=Populated|Loading|Empty|Error`.
 - Mockup initial screen and data state are props, not the app's query parameters. The comparison runner patches their defaults in a browser response.
-- UI navigation preserves app state; reloading restores seeded defaults. Browser Back/Forward changes screens, not payment wizard steps.
+- Workspace mutations must survive reload and appear in the appropriate history/audit view. Legacy UI-only interactions reset on reload.
+- Browser Back/Forward must keep the route and selected feature aligned.
 
 # Runtime visual comparison
 - `node scripts/visual-diff.mjs` opens real Chromium pages for all screen/state pairs and interactive cases, then writes paired PNGs and pixel diffs in `visual-diff-output`.
@@ -21,7 +23,7 @@ description: Test the RBC Wealth Platform React implementation against its inter
 - Inspect the numeric diff output: exit 0 alone does not assert equality. Visually inspect representative pairs and every nonzero difference.
 - Record the main browser UI flow separately; headless comparisons do not produce useful desktop video.
 
-# High-signal interactions
+# High-signal legacy interactions
 - Orders: Microsoft Exclude clears the initial RRSP cash failure; route six orders; Include resets approval and restores failure.
 - Portfolio: Bonds chip shows six positions; period changes alter both paths and return figures.
 - Move money: payee changes update the checks panel; EFT/Interac limits differ from available cash. Validate blocked review, then review/edit/confirm a valid amount.
@@ -30,23 +32,20 @@ description: Test the RBC Wealth Platform React implementation against its inter
 # Devin Secrets Needed
 None for local mockup/application parity testing.
 
-## Oracle backend
+## PostgreSQL backend
 
-The app loads its data from the API (`server/`), which reads Oracle. Before any visual test:
+1. Run `npm ci`, then `npm run db:up && npm run db:wait`.
+2. Run `npm run db:setup` to recreate the deterministic synthetic data. This is destructive to the local sandbox, never a production migration command.
+3. Start `ENABLE_TEST_RESET=1 npm run dev:full` (API `3001`, Vite `5173`). Confirm `/api/health` and `/api/workflows/bootstrap` respond before testing.
+4. Reset between cases through `POST /api/test/reset`. The API must be explicitly started with `ENABLE_TEST_RESET=1`; a disabled reset is a preflight failure, not a reason to remove assertions.
+5. Keep one database per child session and run its cases serially. Never share mutable test state across parallel feature-area runs.
 
-1. `docker ps` — if `wealth-oracle` is not running: `npm run db:up && npm run db:wait`.
-2. `npm run db:setup` to reset the schema and seed (deterministic; needed for zero-pixel diffs).
-3. Start the API (`npm run api`, port 3001) **and** Vite (`npm run dev`); Vite proxies `/api`.
-   `curl localhost:3001/api/health` should return `{"status":"ok"}`.
-4. Without the API, every screen shows the Error state, which is expected.
+Run `npm run typecheck`, `npm run build`, and `npm run test:db` for shell-verifiable checks. Use the approved testing agent for driving the UI; it owns its own server/browser setup.
 
-Reuse one Oracle container: never stop/restart `wealth-oracle` between test runs. `npm run db:setup`
-(~10 s) restores the deterministic seed, which is all a fresh container would give you.
+## Manual-case QA runs
 
-`npm run test:db` checks the stack end to end in its own Testcontainers Oracle (2–3 min). Run it once
-at the end (or in CI), not per iteration. If it hangs:
-- After "Pulling image testcontainers/ryuk": the Docker credential helper is stuck; run
-  `docker pull testcontainers/ryuk:0.11.0` and retry.
-- At "Acquiring lock file": an earlier run is still alive (`kill_shell` does not kill its node
-  child). Stop node processes whose command line contains `container-check`, then retry.
-On this Windows VM, run npm scripts via `node <npm-cli.js> run <script>` (see above).
+- Start with DeepWiki, then verify current source: Wiki indexing can lag the working revision.
+- Use `qa/playbook.md`, `qa/cases.json` and `qa/requirements.md`; preserve the exact original 50 case IDs and Jira links.
+- Require actual browser assertions and a separate video for each case/attempt. An HTTP success or a child-session link is not substitute evidence.
+- Keep original failures and fixed reruns separate, with the tested revision and remediation PR. Never merge remediation fixes into the demo baseline without explicit instruction.
+- Name Wiki-derived additions `WM-GAP-*` and trace them to the corresponding Jira requirement. Do not inflate the original manual-case denominator.

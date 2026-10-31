@@ -13,6 +13,8 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
+import { Workspace } from './workspace/Workspace';
+import { isWorkspaceLocation, workspaceHref } from './workspace/model';
 import type { DataState, Screen, SetUiState } from './types';
 
 interface Location {
@@ -33,6 +35,10 @@ function preventHashLinks(e: MouseEvent) {
 }
 
 export function App() {
+  return isWorkspaceLocation() ? <Workspace /> : <LegacyApp />;
+}
+
+function LegacyApp() {
   const [loc, setLoc] = useState(readLocation);
   const [ui, setUi] = useState(INITIAL_UI_STATE);
   const [data, setData] = useState<Data | null>(null);
@@ -83,6 +89,7 @@ export function App() {
         </div>
         <div style={{ flex: "0 1 auto", minWidth: "0", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "14px", fontSize: "11px", color: "rgba(255,255,255,.9)", marginLeft: "auto" }}>
           <span style={{ minWidth: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>TSX open · data as of 14:47 ET · Mon 12-Oct-2026</span>
+          <a href={workspaceHref('clients')} style={{ flex: "none", padding: "5px 10px", background: "#ffd200", color: "#002d62", borderRadius: "6px", fontWeight: "700", fontSize: "12px", textDecoration: "none" }}>Wealth workspace</a>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "none" }}>
             <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#ffd200", color: "#002d62", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "11px" }}>{userInitials}</div>
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "13px", whiteSpace: "nowrap" }}><span style={{ fontWeight: "600", color: "#fff" }}>{userName}</span><span>{userRole}</span></div>
@@ -105,7 +112,7 @@ export function App() {
           <div style={{ flex: "1" }}></div>
           <div style={{ padding: "10px 16px", borderTop: "1px solid #eef0f3", fontSize: "11px", color: "rgba(25,25,25,.56)", display: "flex", flexDirection: "column", gap: "3px" }}>
             <span>Hover any figure with a dotted underline to see its source.</span>
-            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10px" }}>build 0.2.0-mock</span>
+            <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: "10px" }}>build 0.2.0</span>
           </div>
         </nav>
         <main style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column" }}>
