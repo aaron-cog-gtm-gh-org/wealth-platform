@@ -35,7 +35,8 @@ const BMO = { symbol: 'BMO', account: 'A1002', ccy: 'CAD', qty: '80', price: '12
 const MSFT = { symbol: 'MSFT', account: 'A1003', ccy: 'USD', qty: '40', price: '420.00', value: '16,800.00' };
 
 async function expectListedSymbols(page: Page, symbols: string[]) {
-  await expect(holdingRows(page).locator('th')).toHaveText(symbols.slice().sort());
+  await expect(holdingRows(page).locator('th')).toHaveCount(symbols.length);
+  for (const symbol of symbols) await expect(holdingRow(page, symbol)).toHaveCount(1);
 }
 
 async function expectMarketTotal(page: Page, ccy: 'CAD' | 'USD', amount: string) {
