@@ -21,6 +21,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run typecheck:qa
+      - run: npm run qa:test
+      - run: npm run qa -- validate-cases
       - run: npm run build
       - run: npm run test:unit
       - run: npm run db:up && npm run db:wait

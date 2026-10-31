@@ -5,6 +5,8 @@ visual-diff-output
 .vite/
 qa/artifacts/
 qa/evidence/
+qa-artifacts/
+qa-uploads/
 test-results/
 playwright-report/
 .venv/

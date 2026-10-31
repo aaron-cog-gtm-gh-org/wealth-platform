@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { buildReport } from '../lib/report.mjs';
 import { writeJson } from '../lib/common.mjs';
-import { addSegment, reportFixture, reportTest, tempDir, tinyConfig, tinyWorkbook } from './helpers.mjs';
+import { addSegment, reportFixture, reportTest, tinyConfig, tinyWorkbook } from './helpers.mjs';
 
 function singleConfig() {
   return {

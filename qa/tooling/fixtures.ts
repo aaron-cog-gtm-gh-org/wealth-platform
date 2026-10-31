@@ -24,7 +24,7 @@ try {
   cases = (JSON.parse(readFileSync(casesPath, 'utf8')) as { cases: CaseRecord[] }).cases;
   areas = JSON.parse(readFileSync(areasPath, 'utf8')) as AreasConfig;
 } catch (error) {
-  throw new Error(`Unable to load QA cases or areas config: ${(error as Error).message}`);
+  throw new Error(`Unable to load QA cases or areas config: ${(error as Error).message}`, { cause: error });
 }
 
 const byId = new Map(cases.map((testCase) => [testCase.id, testCase]));
@@ -88,7 +88,7 @@ export const test = base.extend<QaFixtures>({
         const response = await request.post(new URL(resetPath, apiUrl).toString());
         if (!response.ok()) throw new Error(String(response.status()));
       } catch (error) {
-        throw new Error(`QA reset failed: ${(error as Error).message}`);
+        throw new Error(`QA reset failed: ${(error as Error).message}`, { cause: error });
       }
       await use();
     },

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
+import { stripVTControlCharacters } from 'node:util';
 import path from 'node:path';
 import { caseIdFromTitle, diagnostic, normalizeRelative, readJson, writeJson } from './common.mjs';
 
-const ansiPattern = /\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 function attachmentPath(attachment, segmentDir, cwd) {
   if (!attachment.path) return null;
@@ -32,7 +32,7 @@ function attachmentPath(attachment, segmentDir, cwd) {
 
 function extractError(result) {
   const message = result.error?.message ?? result.errors?.[0]?.message ?? '';
-  return String(message).replace(ansiPattern, '').split(/\r?\n/, 1)[0];
+  return stripVTControlCharacters(String(message)).split(/\r?\n/, 1)[0];
 }
 
 function normalizeAttempt(result, segmentDir, cwd, errors, id, file) {
