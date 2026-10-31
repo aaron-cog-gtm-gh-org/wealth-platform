@@ -19,13 +19,14 @@ export async function bundleRun(runId, { artifacts = 'qa-artifacts', out, allowE
   for (const file of allFiles) {
     const relative = normalizeRelative(path.relative(runDir, file));
     const segmentFile = relative.startsWith('baseline/') || relative.startsWith('retest/');
-    if (segmentFile && (
+    const rejectedFile = relative.startsWith('rejected/');
+    if ((segmentFile && (
       relative.endsWith('/run-meta.json') ||
       relative.endsWith('/summary.json') ||
       relative.endsWith('/results.json') ||
       relative.includes('/test-results/') ||
       relative.includes('/html/')
-    )) files.push(file);
+    )) || rejectedFile) files.push(file);
   }
   const uniqueFiles = [...new Set(files)].sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
   const entries = uniqueFiles.map((file) => ({
