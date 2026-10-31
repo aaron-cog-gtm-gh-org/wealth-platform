@@ -34,6 +34,12 @@ export function readArea(search = window.location.search): Area {
 export const workspaceHref = (area: Area, extra: Record<string, string> = {}) =>
   '/?' + new URLSearchParams({ screen: 'workspace', area, ...extra }).toString();
 
+export function withSearchParam(search: string, key: string, value: string) {
+  const q = new URLSearchParams(search);
+  q.set(key, value);
+  return '?' + q.toString();
+}
+
 export const isOpen = (o: Order) => o.status === 'Open';
 
 /** Cash held back for open buy orders on an account (quantity × price). */
