@@ -34,13 +34,18 @@ Repeat `validate-suite` and `run` for each area slug. Workbook `feature` values 
 
 Baseline and retest examples use `QA_RETRIES=0`. `run` creates a fresh segment directory and refuses collisions; the Playwright config itself can reload an existing directory. Do not use Playwright retries or new runs to suppress product failures. Each test resets through `POST /api/test/reset`, captures `before.png` from `openArea` and attaches `after.png` automatically.
 
-After recording the baseline and making a fix, run a fresh retest segment:
+After recording the baseline, committing a fix, and opening its PR, restart the API from that fix revision and run a fresh retest segment. The retest base is the fix head, not the original baseline: the runner intentionally rejects application changes relative to its `--base-sha`.
 
 ```sh
-QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts
+FIX_SHA=$(git rev-parse HEAD)
+QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FIX_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts
 ```
 
 Record each verified fix in `qa-artifacts/$RUN_ID/fixes.json` under a `fixes` array, with its `signature`, `caseIds`, `prUrl`, `fixRevision`, and `retestLabel`. `fixRevision` must equal the revision captured by that retest segment.
+
+### Replay a committed suite
+
+For a fresh live run, use the replay path in `qa/playbook.md`: freeze `main`, reuse each verified area spec, and give the six children a new run ID. The commands and per-case evidence requirements are unchanged. Unchanged specs need no new test PR. The parent still reads Wiki/Jira, reviews coverage, collects fresh baseline evidence, and deduplicates failures against existing open fix PRs before retesting those heads. Keep all remediation PRs unmerged.
 
 ### Child evidence attachments
 
@@ -94,7 +99,9 @@ node qa/tooling/qa.mjs structured --run-id "$RUN_ID" --uploads "qa-uploads/$RUN_
 node qa/tooling/qa.mjs bundle --run-id "$RUN_ID"
 ```
 
-`report` writes `report.json`, `report.md`, and self-contained `index.html`; retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection:
+`report` writes `report.json`, `report.md`, and self-contained `index.html`; retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection. Each case includes its initial and retest application/API revisions; gap rows include their own revisions. A case without a retest has null retest status, revision and recording fields:
+
+Fix links come from explicit `fixes.json` case IDs, not merely from sharing an area retest. Gap rows retain baseline/retest phases and labels. `summary.gapTests` counts unique gap IDs; `summary.gapAttempts` counts the preserved phase rows.
 
 ```sh
 node qa/tooling/qa.mjs structured \

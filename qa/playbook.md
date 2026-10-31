@@ -18,6 +18,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Re-resolve to the merged SHA and record `FROZEN_SHA`.
    - Prove that the app is unchanged with `git diff --stat $BASE_SHA $FROZEN_SHA -- . ':(exclude)qa' ':(exclude)playwright.config.ts' ':(exclude).agents'`, which must print nothing.
    - Run `node qa/tooling/qa.mjs validate-cases` and `npm run qa:test`. Both must pass. Do not require any tests to exist yet.
+   - Inspect committed area specs for reuse. After the research step, select **replay** for each area whose existing tests cover its current workbook cases and assigned gaps; select **author** for missing or outdated coverage. Every mode records a fresh baseline under the new run ID.
 2. **Research Wiki-first, then Jira.**
    - Read the DeepWiki for `aaron-cog-gtm-gh-org/wealth-platform` (`devin_read_wiki_structure`, `devin_read_wiki_contents`, `devin_ask_wiki_question`) and list its documented user-facing behaviors per area.
    - Read KAN-12..KAN-18 through the Atlassian MCP.
@@ -26,16 +27,17 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Give each gap an area and a globally unique number block per child: clients 001–019, portfolio 020–039, orders 040–059, money 060–079, rebalance 080–089, settlements 090–099.
    - Do not tell children about suspected bugs, prior runs or existing bug PRs.
 3. **Spawn six QA children**, one per area (`clients`, `portfolio`, `orders`, `money`, `rebalance`, `settlements`), all at once.
-   - Use the "QA child prompt" in Specifications, the QA child output schema, `notify_on_response=true` and no tags.
+   - Use the "Replay QA child prompt" for reusable areas and the "QA child prompt" for authoring areas in Specifications, the QA child output schema, `notify_on_response=true` and no tags.
    - Pass each child its cases, its Jira story, and its gap list with IDs from its block, verbatim in the prompt. Children must not share or edit each other's spec files.
 4. **Collect and gate the baseline.**
    - When each child settles, read its structured output and attachments with `devin_session_interact` (`get` and `get_attachments`); download segment ZIPs and videos with `download_attachment` using `{url}` or `{urls}`.
-   - Review each test-only PR. Its diff may touch only `qa/tests/<area>.spec.ts`. Reject any app edit, `skip`/`fixme`/`fail`/`only`, retries, waits used as assertions, or assertions that do not check the case's expected results. Send such a child back with specific feedback.
+   - Review each area's test source against every workbook step and expected result, including replayed specs. For new test-only PRs, the diff may touch only `qa/tests/<area>.spec.ts`. Reject any app edit, `skip`/`fixme`/`fail`/`only`, retries, waits used as assertions, or assertions that do not check the case's expected results. Send such a child back with specific feedback.
    - Collect exactly one valid baseline segment per area into `qa-artifacts/$RUN_ID/baseline/<label>/` with `unpack-segment` (the target path must match the ZIP's `run-meta.json` label, e.g. `<area>` or `<area>-r2`). A valid segment remains baseline evidence even when its tests show product failures.
    - If an attempt is confirmed invalid because of an environment or test-authoring problem, preserve its ZIP unchanged as `qa-artifacts/$RUN_ID/rejected/<phase>-<label>.zip`, do not extract it, and add its ZIP name, reason, affected case IDs, and revision to `qa-artifacts/$RUN_ID/rejected/rejected.json`. Never classify a product failure as environmental or delete raw evidence.
    - A child may re-run only after a confirmed environment/test-authoring failure, and must pack and attach that invalid attempt first. Never re-run to erase a product failure. Selector repairs go through the test-only PR and a new baseline label.
 5. **Merge the test-only PRs.**
    - Merge each approved test-only PR into `main` on its own, with `--no-ff` and no squashing, and never together with a fix. Main may go red. That is the honest baseline.
+   - When replay creates no test PRs, keep `main` unchanged and set `TESTS_SHA=FROZEN_SHA`.
    - On the merged head (`TESTS_SHA`), run `node qa/tooling/qa.mjs validate-suite`. It must report `OK 50/50` plus the gap count. Fix any coverage error through the owning child, not by hand.
    - Run `node qa/tooling/qa.mjs report --run-id $RUN_ID`. It must report no `MISSING_CASE`, `DUPLICATE_OWNERSHIP`, `MISSING_EVIDENCE`, `MANUAL_RESULT`, `REVISION_MISMATCH`, `API_REVISION_UNVERIFIED`, or `SEED_MISMATCH` errors. If one appears, have the owning child produce a new segment under a new label. Never edit results.
 6. **Triage failures by signature.**
@@ -70,7 +72,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
   - Terminal, slideshow or hand-made recordings are not evidence.
   - Every recording link is relative inside the bundle.
 - **Report**:
-  - One row per case per phase: baseline, and retest where one exists. Each row has the case ID, title, feature, Jira key and link, test path, initial status and recording, fix PR, retest status and recording, and final status (`passed`, `fixed`, `failing`, `flaky` or `not-run`).
+  - One row per case per phase: baseline, and retest where one exists. Each row has the case ID, title, feature, Jira key and link, test path, initial status, application/API revisions and recording, fix PR, retest status, revisions and recording, and final status (`passed`, `fixed`, `failing`, `flaky` or `not-run`). Retest fields are null when no retest exists.
   - The report also lists the discovered gap tests (`WM-GAP-*`, mapped to KAN-18), and records the run ID, `BASE_SHA`/`FROZEN_SHA`/`TESTS_SHA`, the fix SHAs, the seed hash, and the invocation and attempt metadata.
   - The tooling exits 2 on any collector error, and the parent fixes the cause rather than suppressing it.
 - **Done when**:
@@ -80,7 +82,23 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
   - The bundle opens offline, and its videos play.
 - **Validation**: re-run `validate-suite`, `report` and `bundle` on a clean checkout of `main` plus the collected `qa-artifacts`. The outputs must be identical, with the same `report.json` hash.
 
-### QA child prompt (fill `<…>`; no tags)
+### Replay QA child prompt (fill `<…>`; no tags)
+```
+Repo aaron-cog-gtm-gh-org/wealth-platform. Area: <area> (Jira <KEY>, <url>). Run ID <RUN_ID>.
+Check out FROZEN_SHA <sha>. Read this repo's DeepWiki for <area>, Jira <KEY>,
+and .agents/skills/wealth-qa/SKILL.md. Review the committed qa/tests/<area>.spec.ts
+against every step and expected result for WM-TC-<first>..<last> in qa/cases.json
+and these assigned gaps: <WM-GAP-NNN, title, wikiRef>.
+If coverage is missing or contradicts the requirements, report the mismatch to the parent
+for authoring mode before execution. Otherwise leave the spec and app unchanged; no test PR is needed.
+1. Run `node qa/tooling/qa.mjs validate-suite --area <area>`; it must print OK.
+2. Start the isolated PostgreSQL/API/web environment from the QA skill and verify API revision <sha>.
+3. Run `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id <RUN_ID> --phase baseline --label <area> --base-sha <sha> -- qa/tests/<area>.spec.ts`.
+4. Treat product failures as findings. Preserve any confirmed invalid attempt as the authoring prompt specifies.
+5. Pack the segment, export all attempt videos, attach the ZIP and each video, and return the QA child output with prUrl:null.
+```
+
+### QA child prompt (authoring; fill `<…>`; no tags)
 ```
 Repo aaron-cog-gtm-gh-org/wealth-platform. Area: <area> (Jira <KEY>, <url>). Run ID <RUN_ID>.
 Check out FROZEN_SHA <sha> on a new branch devin/qa-<RUN_ID>-<area>. Follow .agents/skills/wealth-qa/SKILL.md.
@@ -107,6 +125,7 @@ Mode <new|existing>:
 - new: create a branch devin/qa-fix-<RUN_ID>-<slug> from TESTS_SHA <sha>.
 - existing: check out the head of PR #<n>. Do not open a new PR, and only retest unless the PR is clearly incomplete.
 Follow .agents/skills/wealth-qa/SKILL.md to start the app.
+For existing mode, reproduce, then proceed to steps 7–10 if the PR is complete. Use steps 2–6 only for a new or demonstrably incomplete fix.
 1. Reproduce with `npx playwright test qa/tests/<area>.spec.ts -g "<ID>"`.
 2. Add a focused server/unit regression test next to the code being fixed (for example, `server/**/*.test.ts` or the existing unit-test location). It must fail before the fix. Never edit `qa/**` and never change the original QA assertions.
 3. Make the smallest app fix.
@@ -121,7 +140,7 @@ Follow .agents/skills/wealth-qa/SKILL.md to start the app.
 ```
 
 ### Structured output schemas
-- QA child: `{area, branch, prUrl, headSha, frozenSha, validateSuite, segmentZip (attachment URL), rejectedAttempts:[{phase,label,segmentZip,reason,caseIds,revision}], segment, tests:[{id,title,status,attempts,videoAttachment}], findings:[{signature,caseIds,summary,errorExcerpt}], gapTests:[{id,title,wikiRef,status}]}`.
+- QA child: `{area, branch, prUrl (null for unchanged replay), headSha, frozenSha, validateSuite, segmentZip (attachment URL), rejectedAttempts:[{phase,label,segmentZip,reason,caseIds,revision}], segment, tests:[{id,title,status,attempts,videoAttachment}], findings:[{signature,caseIds,summary,errorExcerpt}], gapTests:[{id,title,wikiRef,status}]}`.
 - Remediation child: `{signature, caseIds, prUrl, existingPr, fixSha, retestLabel, segmentZip (attachment URL), rejectedAttempts:[{phase,label,segmentZip,reason,caseIds,revision}], retest:[{id,status,videoAttachment}]}`.
 - Parent: the output of `qa.mjs structured` (`runId`, revisions, seed, summary, `cases[]`, `gaps[]`, `errors[]`).
 

@@ -35,7 +35,8 @@ export function projectStructured(report, uploads = {}) {
       failing: report.summary.failing,
       flaky: report.summary.flaky,
       notRun: report.summary.notRun,
-      gapTests: report.summary.gapTests
+      gapTests: report.summary.gapTests,
+      gapAttempts: report.summary.gapAttempts ?? report.gapTests.length
     },
     errors: report.errors,
     cases: report.cases.map((item) => ({
@@ -47,9 +48,13 @@ export function projectStructured(report, uploads = {}) {
       jiraUrl: item.jiraUrl,
       testPath: item.testPath,
       initialStatus: item.initialStatus,
+      initialRevision: item.baseline?.revision ?? null,
+      initialApiRevision: item.baseline?.apiRevision ?? null,
       initialRecording: recording(item.baseline, uploadsByFile),
       fixPr: item.fixPr,
       retestStatus: item.retestStatus,
+      retestRevision: item.retest?.revision ?? null,
+      retestApiRevision: item.retest?.apiRevision ?? null,
       retestRecording: recording(item.retest, uploadsByFile),
       finalStatus: item.finalStatus
     })),
@@ -62,7 +67,12 @@ export function projectStructured(report, uploads = {}) {
       jiraUrl: item.jiraUrl,
       wikiRef: item.wikiRef,
       testPath: item.testPath,
+      phase: item.phase,
+      label: item.label,
       status: item.status,
+      fixPr: item.fixPr,
+      revision: item.revision,
+      apiRevision: item.apiRevision,
       recording: recording(item, uploadsByFile)
     }))
   };
