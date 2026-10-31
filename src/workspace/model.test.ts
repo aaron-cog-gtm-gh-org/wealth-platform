@@ -3,7 +3,7 @@ import test from 'node:test';
 import type { Bootstrap } from './api';
 import {
   availableCash, heldQuantity, instruments, openSellQuantity, readArea,
-  reservedCash, sortCurrencies, totalsByCurrency, workspaceHref,
+  reservedCash, sortCurrencies, totalsByCurrency, workspaceHref, orderTicketError,
 } from './model';
 
 function fixture(): Bootstrap {
@@ -64,4 +64,19 @@ test('instrument choices are unique and stable', () => {
   const data = fixture();
   data.positions.push({ ...data.positions[0], id: 'P3', accountId: 'A1002' });
   assert.deepEqual(instruments(data).map(instrument => instrument.symbol), ['BMO', 'RY']);
+});
+
+test('order ticket errors expire when workspace data is reloaded', () => {
+  const data = fixture();
+  const rejection = '30 shares available to sell.';
+  assert.equal(orderTicketError(rejection, data, data), rejection);
+  assert.equal(orderTicketError('Choose an account.', data, data), 'Choose an account.');
+  assert.equal(orderTicketError(null, data, data), null);
+  const cancelled = fixture();
+  cancelled.orders[3].status = 'Cancelled';
+  assert.equal(orderTicketError(rejection, data, cancelled), null);
+  assert.equal(orderTicketError('Choose an account.', data, cancelled), null);
+  assert.equal(orderTicketError(rejection, data, fixture()), null);
+  assert.equal(orderTicketError(null, data, fixture()), null);
+  assert.equal(orderTicketError(rejection, cancelled, cancelled), rejection);
 });

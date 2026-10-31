@@ -36,6 +36,10 @@ export const workspaceHref = (area: Area, extra: Record<string, string> = {}) =>
 
 export const isOpen = (o: Order) => o.status === 'Open';
 
+export function orderTicketError(error: string | null, validatedData: Bootstrap, currentData: Bootstrap) {
+  return validatedData === currentData ? error : null;
+}
+
 /** Cash held back for open buy orders on an account (quantity × price). */
 export function reservedCash(data: Bootstrap, accountId: string) {
   return data.orders

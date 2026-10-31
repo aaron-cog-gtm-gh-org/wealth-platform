@@ -4,7 +4,7 @@ import { api } from '../api';
 import type { Order, Side } from '../api';
 import { useWorkspace } from '../context';
 import { money, qty } from '../format';
-import { availableCash, heldQuantity, indicativePrice, openSellQuantity } from '../model';
+import { availableCash, heldQuantity, indicativePrice, openSellQuantity, orderTicketError } from '../model';
 import { EmptyRow, Notices, Panel, SortHeader, StatusPill, useAction, useSort } from '../ui';
 
 const SIDES: Side[] = ['Buy', 'Sell'];
@@ -31,7 +31,9 @@ function OrderTicket() {
   const [symbol, setSymbol] = useState('');
   const [side, setSide] = useState<Side>('Buy');
   const [quantity, setQuantity] = useState('');
-  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [validationError, setFieldError] = useState<string | null>(null);
+  const [validatedData, setValidatedData] = useState(data);
+  const fieldError = orderTicketError(validationError, validatedData, data);
   const action = useAction(reload);
   const ids = { account: useId(), symbol: useId(), symbolHint: useId(), qty: useId(), qtyHint: useId() };
 
@@ -48,6 +50,8 @@ function OrderTicket() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (validatedData !== data) action.clear();
+    setValidatedData(data);
     if (!accountId) return setFieldError('Choose an account.');
     if (!symbol) return setFieldError('Choose an instrument.');
     if (!validQty) return setFieldError(quantityError(quantity));
@@ -108,7 +112,7 @@ function OrderTicket() {
         <p className="ws-hint">Price comes from the account’s position price. Open buys reserve cash and open sells reserve shares until cancelled. Availability is confirmed by the order service when you place the order.</p>
 
         {fieldError && <div role="alert" className="ws-notice ws-notice--error">{fieldError}</div>}
-        <Notices error={action.error} success={action.success} />
+        <Notices error={orderTicketError(action.error, validatedData, data)} success={action.success} />
         <div className="ws-actions">
           <button type="submit" className="ws-btn ws-btn--primary" disabled={action.busy}>{action.busy ? 'Placing order…' : 'Place order'}</button>
         </div>
