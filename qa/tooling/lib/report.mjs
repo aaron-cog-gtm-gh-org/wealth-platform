@@ -139,7 +139,8 @@ function rejectedAttempts(runDir, errors) {
   return entries.flatMap((item, index) => {
     const zip = item?.zip;
     if (typeof zip !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(zip) || zip.includes('..') ||
-        typeof item.reason !== 'string' || !fs.existsSync(path.join(runDir, 'rejected', zip))) {
+        typeof item.reason !== 'string' || !fs.existsSync(path.join(runDir, 'rejected', zip)) ||
+        !fs.lstatSync(path.join(runDir, 'rejected', zip)).isFile()) {
       errors.push(diagnostic('INVALID_REJECTED_ATTEMPT', `rejected/rejected.json:${index}`, 'entry requires a safe existing ZIP filename and reason'));
       return [];
     }
