@@ -24,6 +24,7 @@ Browser (Vite, :5173) ──/api──▶ Express API (:3001) ──pg──▶ 
 | `DATABASE_URL` | `postgres://wealth:wealth@127.0.0.1:5432/wealth` | PostgreSQL connection string; setup creates this database if missing |
 | `API_HOST` | `127.0.0.1` | API bind address |
 | `API_PORT` | `3001` | API port |
+| `APP_REVISION` | Git HEAD at API startup | Revision exposed by `/api/health`; restart the API after switching revisions |
 | `WEALTH_DB_MODE` | `docker` when Docker works, otherwise `local` if PostgreSQL binaries are found | Select `docker` or `local` explicitly |
 | `WEALTH_DB_TMPFS` | unset | Set to `1` to mount the Docker database data directory on tmpfs |
 | `PG_BIN` | unset | Optional path to the PostgreSQL binaries directory |

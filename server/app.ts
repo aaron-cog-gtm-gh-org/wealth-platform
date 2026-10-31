@@ -1,4 +1,5 @@
 import express from 'express';
+import { execFileSync } from 'node:child_process';
 import type { NextFunction, Request, Response } from 'express';
 import { query } from './db/pool';
 import { getAlternatives, getHousehold, getPerformance, getPortfolio, getRebalance } from './repositories/advisor';
@@ -21,6 +22,14 @@ const json = (fn: Handler) => async (req: Request, res: Response, next: NextFunc
 
 export function createApp() {
   const app = express();
+  const revision = (() => {
+    if (process.env.APP_REVISION) return process.env.APP_REVISION;
+    try {
+      return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    } catch {
+      return 'unknown';
+    }
+  })();
   app.use('/api/workflows', express.json({ limit: '16kb' }), workflowRouter);
   app.use('/api/test', express.json({ limit: '16kb' }));
   if (process.env.ENABLE_TEST_RESET === '1') {
@@ -38,7 +47,7 @@ export function createApp() {
       }
     });
   }
-  app.get('/api/health', json(async () => { await query('SELECT 1'); return { status: 'ok' }; }));
+  app.get('/api/health', json(async () => { await query('SELECT 1'); return { status: 'ok', revision }; }));
   app.get('/api/households/:id', json(req => getHousehold(req.params.id)));
   app.get('/api/households/:id/portfolio', json(req => getPortfolio(req.params.id)));
   app.get('/api/households/:id/performance', json(req => getPerformance(req.params.id)));

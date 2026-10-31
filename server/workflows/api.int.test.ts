@@ -19,6 +19,14 @@ async function request(path: string, method: string, body?: unknown) {
   return jsonRequest(context.baseUrl, path, method, body);
 }
 
+test('health identifies the running application revision', async () => {
+  const { response, body } = await request('/health', 'GET');
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 'ok');
+  if (process.env.APP_REVISION) assert.equal(body.revision, process.env.APP_REVISION);
+  else assert.match(body.revision, /^[a-f0-9]{40}$/);
+});
+
 test('bootstrap contains exactly the seeded workflow records and wire types', async () => {
   const { response, body } = await request('/workflows/bootstrap', 'GET');
   assert.equal(response.status, 200);
