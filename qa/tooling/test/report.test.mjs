@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { buildReport } from '../lib/report.mjs';
+import { projectStructured } from '../lib/structured.mjs';
 import { writeJson } from '../lib/common.mjs';
 import { addSegment, reportFixture, reportTest, tinyConfig, tinyWorkbook } from './helpers.mjs';
 
@@ -39,6 +40,38 @@ test('report collects a passing baseline case', (t) => {
   assert.equal(result.report.cases[0].area, 'clients');
   assert.equal(result.report.cases[0].feature, 'Clients');
   assert.equal(result.report.baselineRows[0].primaryRecording, 'baseline/clients/test-results/wm-tc-001-retry0/video.webm');
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].initialRevision, 'baseline-clients-revision');
+  assert.equal(structured.cases[0].initialApiRevision, 'baseline-clients-revision');
+  assert.equal(structured.cases[0].retestRevision, null);
+  assert.equal(structured.cases[0].retestApiRevision, null);
+  assert.equal(structured.cases[0].retestStatus, null);
+});
+
+test('structured evidence traces each case and gap to its app and API revision', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [
+    testOptions('failed'), reportTest('WM-GAP-001', 'passed')
+  ], { revision: 'abcdef0123456789', apiRevision: 'abcdef0123456789' });
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [testOptions('passed')], {
+    revision: '1234567890abcdef', apiRevision: '1234567890abcdef',
+    fixPr: 'https://example.test/pull/1'
+  });
+  writeJson(path.join(fixture.root, 'artifacts', fixture.runId, 'fixes.json'), {
+    fixes: [{ signature: 'validation failure', caseIds: ['WM-TC-001'], prUrl: 'https://example.test/pull/1', fixRevision: '1234567890abcdef', retestLabel: 'fix-1' }]
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].initialRevision, 'abcdef0123456789');
+  assert.equal(structured.cases[0].initialApiRevision, 'abcdef0123456789');
+  assert.equal(structured.cases[0].retestRevision, '1234567890abcdef');
+  assert.equal(structured.cases[0].retestApiRevision, '1234567890abcdef');
+  assert.equal(structured.cases[0].initialStatus, 'failed');
+  assert.equal(structured.cases[0].finalStatus, 'fixed');
+  assert.equal(structured.gaps[0].revision, 'abcdef0123456789');
+  assert.equal(structured.gaps[0].apiRevision, 'abcdef0123456789');
 });
 
 test('report rejects an unknown API revision', (t) => {

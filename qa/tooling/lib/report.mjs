@@ -58,6 +58,7 @@ function annotateTest(test, segment, runDir, testCase, config) {
     trace: attempts.at(-1)?.trace ?? null,
     screenshots: attempts.flatMap((attempt) => attempt.screenshots),
     revision: segment.meta.revision ?? null,
+    apiRevision: segment.meta.apiRevision ?? null,
     baseRevision: segment.meta.baseRevision ?? null,
     phase: segment.meta.phase,
     label: segment.meta.label,
