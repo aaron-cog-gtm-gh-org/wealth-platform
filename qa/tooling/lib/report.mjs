@@ -78,6 +78,13 @@ function isLinkedFix(caseId, segment, fixes) {
   return fixes.some((fix) => (fix.caseIds ?? []).includes(caseId) && fix.retestLabel === segment.meta.label);
 }
 
+function apiRevisionMatches(meta) {
+  const apiRevision = typeof meta.apiRevision === 'string' ? meta.apiRevision.trim() : '';
+  const revision = typeof meta.revision === 'string' ? meta.revision.trim() : '';
+  return apiRevision !== '' && apiRevision !== 'unknown' && revision !== ''
+    && (apiRevision.startsWith(revision) || revision.startsWith(apiRevision));
+}
+
 function expectedCases(config, workbook) {
   if (workbook?.cases?.length) return workbook.cases;
   const generated = [];
@@ -158,7 +165,7 @@ const link=(label,url,cls)=>{if(!url)return null;if(!/^https?:\\/\\//i.test(url)
 const safeUrl=url=>typeof url==='string'&&!url.startsWith('/')&&!url.includes('..')?url:null;
 const summary=data.summary||{};
 const apiRevision=Array.isArray(data.apiRevision)?data.apiRevision.join(', '):data.apiRevision||'unknown';
-const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Revision',data.baselineRevisions?.join(', ')||'—'],['API revision',apiRevision],['Run',data.runId]];
+const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Revision',data.baselineRevisions?.join(', ')||'—'],['API revision',apiRevision],['Seed digest',data.seed?.sha256||'unknown'],['Reset digest',data.seed?.reset?.sha256||'unknown'],['Run',data.runId]];
 const chips=document.getElementById('chips');for(const [label,value] of chipData){const e=h('div');e.className='chip';e.append(document.createTextNode(String(value??0)+' '));const s=h('span',label);e.append(s);chips.append(e)}
 function makeTable(rows){
  if(!rows.length)return h('div','No results for this section.','empty');
@@ -195,6 +202,8 @@ function renderMarkdown(report) {
     `API revision(s): ${Array.isArray(report.apiRevision) ? report.apiRevision.join(', ') : report.apiRevision ?? 'unknown'}`,
     `Base revision: ${report.baseRevision ?? 'none'}`,
     `Fix revision(s): ${(report.fixRevisions ?? []).join(', ') || 'none'}`,
+    `Seed digest: ${report.seed?.sha256 ?? 'unknown'}`,
+    `Reset digest: ${report.seed?.reset?.sha256 ?? 'unknown'}`,
     `Summary: ${report.summary.passed} passed, ${report.summary.fixed} fixed, ${report.summary.failing} failing, ${report.summary.flaky} flaky, ${report.summary.notRun} not-run`,
     '',
     '## Errors and warnings',
@@ -254,6 +263,13 @@ export function buildReport(runId, {
     }
     if (!summary) continue;
     const meta = readJson(metaFile);
+    if (!apiRevisionMatches(meta)) {
+      errors.push(diagnostic(
+        'API_REVISION_UNVERIFIED',
+        relative,
+        `API revision ${meta.apiRevision ?? 'unknown'} does not prefix-match segment revision ${meta.revision ?? 'unknown'}`
+      ));
+    }
     const tests = summary.tests ?? [];
     for (const item of summary.errors ?? []) {
       errors.push(diagnostic(item.code, `${relative}/${item.path}`, item.message));
@@ -270,6 +286,12 @@ export function buildReport(runId, {
 
   const baselineSegments = segments.filter((segment) => segment.meta.phase === 'baseline');
   const retestSegments = segments.filter((segment) => segment.meta.phase === 'retest');
+  const baselineSeedDigests = [...new Set(baselineSegments
+    .map((segment) => segment.meta.seed?.sha256)
+    .filter((digest) => typeof digest === 'string' && digest.length > 0))];
+  if (baselineSeedDigests.length > 1) {
+    errors.push(diagnostic('SEED_MISMATCH', runId, 'baseline segments have different combined seed digests'));
+  }
   const baselineRevisions = [...new Set(baselineSegments.map((segment) => segment.meta.revision).filter(Boolean))].sort();
   const baseRevisions = [...new Set(baselineSegments.map((segment) => segment.meta.baseRevision ?? null))];
   if (baseRevisions.length > 1) errors.push(diagnostic('REVISION_MISMATCH', runId, 'baseline segments have different base revisions'));
@@ -383,7 +405,7 @@ export function buildReport(runId, {
   };
   const finishedDates = segments.map((segment) => segment.meta.finishedAt).filter(Boolean).sort();
   const generated = generatedAt ?? finishedDates.at(-1) ?? null;
-  const seeds = segments.map((segment) => segment.meta.seed).filter(Boolean);
+  const seed = baselineSegments.map((segment) => segment.meta.seed).find(Boolean) ?? null;
   const apiRevisions = [...new Set(segments.map((segment) => segment.meta.apiRevision ?? 'unknown'))].sort();
   const apiRevision = apiRevisions.length === 0 ? 'unknown' : apiRevisions.length === 1 ? apiRevisions[0] : apiRevisions;
   const fixRevisions = [...new Set([
@@ -397,7 +419,7 @@ export function buildReport(runId, {
     apiRevision: apiRevision ?? 'unknown',
     baseRevision,
     fixRevisions,
-    seed: seeds[0] ?? null,
+    seed,
     invocations: segments.map((segment) => ({ phase: segment.meta.phase, label: segment.meta.label, argv: segment.meta.invocation?.argv ?? [], env: segment.meta.invocation?.env ?? {} })),
     attemptCounts: {
       total: segments.reduce((count, segment) => count + segment.tests.reduce((sum, test) => sum + (test.attempts?.length ?? 0), 0), 0),

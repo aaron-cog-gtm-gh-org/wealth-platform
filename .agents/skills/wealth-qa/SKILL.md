@@ -25,9 +25,11 @@ description: Use when authoring or running Wealth Platform QA cases, Playwright 
    node qa/tooling/qa.mjs validate-suite --area clients
    FROZEN_SHA=$(git rev-parse HEAD)
    QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase baseline --label clients --base-sha "$FROZEN_SHA" -- qa/tests/clients.spec.ts
+   node qa/tooling/qa.mjs pack-segment --segment "qa-artifacts/$RUN_ID/baseline/clients" --out "qa-uploads/$RUN_ID/clients-baseline.zip"
    node qa/tooling/qa.mjs export-videos --segment "qa-artifacts/$RUN_ID/baseline/clients" --out "qa-uploads/$RUN_ID/clients"
    ```
 
-4. Keep the generated `run-meta.json`, `results.json`, `summary.json`, `test-results/`, and `html/` together in the segment.
-5. For a fix retest, use `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts`.
-6. Export attempt videos and after screenshots, then publish the segment using the evidence transport instructions in `qa/README.md`. Videos must be created by Playwright.
+4. Attach the segment ZIP and each exported per-case video with `message_user`. Videos must be created by Playwright.
+5. Treat test failures as product evidence; never rerun to get rid of a product failure. If a run is confirmed invalid for an environment or test-authoring reason, pack and attach its ZIP first, then rerun under a new label such as `clients-r2`. Keep both ZIPs and report the reason, affected case IDs, and revision.
+6. For a fix retest, use `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts`.
+7. Pack the retest with `pack-segment`, export attempt videos and after screenshots with `export-videos`, then attach the ZIP and each exported per-case video with `message_user`.

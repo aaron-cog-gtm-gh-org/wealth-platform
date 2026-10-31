@@ -109,15 +109,22 @@ export function reportTest(id, status, options = {}) {
 export function addSegment(root, runId, phase, label, tests, options = {}) {
   const directory = path.join(root, 'artifacts', runId, phase, label);
   fs.mkdirSync(directory, { recursive: true });
+  const revision = options.revision ?? `${phase}-${label}-revision`;
   const meta = {
     schema: 1,
     runId,
     phase,
     label,
     fixPr: options.fixPr ?? null,
-    revision: options.revision ?? `${phase}-${label}-revision`,
+    revision,
+    apiRevision: options.apiRevision ?? revision,
     baseRevision: options.baseRevision ?? 'base-sha',
-    seed: { id: 'seed-one', file: 'server/db/seed.sql', sha256: 'seed-hash' },
+    seed: options.seed ?? {
+      id: 'seed-one',
+      files: [{ file: 'server/db/schema.sql', sha256: 'schema-hash' }],
+      sha256: 'seed-hash',
+      reset: { files: ['server/db/workflow-seed.sql'], sha256: 'reset-hash' }
+    },
     invocation: { argv: ['node', 'qa/tooling/qa.mjs', 'run'], env: { QA_BASE_URL: 'http://localhost:5173' } },
     startedAt: '2025-01-01T00:00:00.000Z',
     finishedAt: options.finishedAt ?? (phase === 'baseline' ? '2025-01-01T00:01:00.000Z' : '2025-01-01T00:02:00.000Z'),

@@ -41,6 +41,73 @@ test('report collects a passing baseline case', (t) => {
   assert.equal(result.report.baselineRows[0].primaryRecording, 'baseline/clients/test-results/wm-tc-001-retry0/video.webm');
 });
 
+test('report rejects an unknown API revision', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], { apiRevision: 'unknown' });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.errors.some((item) => item.code === 'API_REVISION_UNVERIFIED'));
+});
+
+test('report rejects an API revision that does not prefix-match the segment revision', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], {
+    revision: 'abcdef0123456789',
+    apiRevision: '1234567'
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.errors.some((item) => item.code === 'API_REVISION_UNVERIFIED'));
+});
+
+test('baseline segments with different combined seed digests are SEED_MISMATCH errors', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], {
+    seed: { id: 'one', files: [], sha256: 'combined-one', reset: { files: [], sha256: 'reset-one' } }
+  });
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients-extra', [], {
+    seed: { id: 'two', files: [], sha256: 'combined-two', reset: { files: [], sha256: 'reset-two' } }
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.errors.some((item) => item.code === 'SEED_MISMATCH'));
+});
+
+test('retest seed digests may differ from the baseline seed digest', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  const baselineSeed = { id: 'base', files: [], sha256: 'baseline-digest', reset: { files: [], sha256: 'base-reset' } };
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], { seed: baselineSeed });
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [testOptions('passed')], {
+    seed: { id: 'retest', files: [], sha256: 'retest-digest', reset: { files: [], sha256: 'retest-reset' } }
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(!result.errors.some((item) => item.code === 'SEED_MISMATCH'));
+  assert.equal(result.report.seed.sha256, 'baseline-digest');
+});
+
+test('report markdown and HTML show the combined and reset seed digests', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], {
+    seed: {
+      id: 'seed',
+      files: [{ file: 'server/db/schema.sql', sha256: 'file-hash' }],
+      sha256: 'combined-seed-digest',
+      reset: { files: ['server/db/workflow-seed.sql'], sha256: 'reset-seed-digest' }
+    }
+  });
+  buildReport(fixture.runId, fixture.options);
+  const runDir = path.join(fixture.root, 'artifacts', fixture.runId);
+  const markdown = fs.readFileSync(path.join(runDir, 'report.md'), 'utf8');
+  const html = fs.readFileSync(path.join(runDir, 'index.html'), 'utf8');
+  assert.match(markdown, /Seed digest: combined-seed-digest/);
+  assert.match(markdown, /Reset digest: reset-seed-digest/);
+  assert.ok(html.includes('Seed digest'));
+  assert.ok(html.includes('combined-seed-digest'));
+  assert.ok(html.includes('reset-seed-digest'));
+});
+
 test('failed baseline becomes fixed in a separate retest row linked by fixes.json', (t) => {
   const config = singleConfig();
   const fixture = setup(t, tinyWorkbook(config), config);
