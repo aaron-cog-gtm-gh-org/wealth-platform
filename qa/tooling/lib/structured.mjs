@@ -35,7 +35,8 @@ export function projectStructured(report, uploads = {}) {
       failing: report.summary.failing,
       flaky: report.summary.flaky,
       notRun: report.summary.notRun,
-      gapTests: report.summary.gapTests
+      gapTests: report.summary.gapTests,
+      gapAttempts: report.summary.gapAttempts ?? report.gapTests.length
     },
     errors: report.errors,
     cases: report.cases.map((item) => ({
@@ -66,7 +67,10 @@ export function projectStructured(report, uploads = {}) {
       jiraUrl: item.jiraUrl,
       wikiRef: item.wikiRef,
       testPath: item.testPath,
+      phase: item.phase,
+      label: item.label,
       status: item.status,
+      fixPr: item.fixPr,
       revision: item.revision,
       apiRevision: item.apiRevision,
       recording: recording(item, uploadsByFile)

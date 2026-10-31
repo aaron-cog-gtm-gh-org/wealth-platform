@@ -176,7 +176,7 @@ function makeTable(rows){
  for(const row of rows){const line=h('tr');line.dataset.filter=[row.id,row.title,row.area,row.feature].join(' ').toLowerCase();
  line.append(h('td',row.id),h('td',row.title),h('td',row.area),h('td',row.feature));
  const jiraCell=h('td');const jira=link(row.jiraKey,row.jiraUrl,'jira');if(jira)jiraCell.append(jira);line.append(jiraCell);
- line.append(h('td',row.testPath||'—'));const statusCell=h('td');statusCell.append(h('span',row.status,'pill '+String(row.status).replace(/[^a-z]/gi,'')));line.append(statusCell);
+ const testCell=h('td',row.testPath||'—');testCell.append(h('div',row.phase+' · '+row.label),h('div','App: '+(row.revision||'unknown')),h('div','API: '+(row.apiRevision||'unknown')));line.append(testCell);const statusCell=h('td');statusCell.append(h('span',row.status,'pill '+String(row.status).replace(/[^a-z]/gi,'')));line.append(statusCell);
  const media=h('td');const recordings=row.recordings||[];const primary=recordings.at(-1)?.video||row.primaryRecording;
  if(primary){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=safeUrl(primary)||'';media.append(video)}
  const recordLinks=h('div');recordLinks.className='links';recordings.slice(0,-1).forEach((item,index)=>{const a=link('retry '+item.retry,safeUrl(item.video));if(a)recordLinks.append(a)});if(recordLinks.childNodes.length)media.append(recordLinks);line.append(media);
@@ -217,7 +217,7 @@ function renderMarkdown(report) {
     output.push(`| ${row.id} | ${row.area} | ${row.feature} | ${row.initialStatus} | ${row.retestStatus ?? '—'} | ${row.finalStatus} | [${row.jiraKey}](${row.jiraUrl}) | ${row.testPath ?? '—'} |`);
   }
   output.push('', '## Discovered gaps', '');
-  for (const gap of report.gapTests) output.push(`- ${gap.id}: ${gap.title} (${gap.feature}; ${gap.status}; ${gap.wikiRef ?? 'no wiki ref'})`);
+  for (const gap of report.gapTests) output.push(`- ${gap.id}: ${gap.title} (${gap.feature}; ${gap.phase}/${gap.label}; ${gap.status}; revision ${gap.revision}; ${gap.wikiRef ?? 'no wiki ref'})${gap.primaryRecording ? ` [recording](${gap.primaryRecording})` : ''}${gap.fixPr ? ` [fix PR](${gap.fixPr})` : ''}`);
   return `${output.join('\n')}\n`;
 }
 
@@ -367,10 +367,7 @@ export function buildReport(runId, {
       warnings.push(diagnostic('RETEST_WITHOUT_BASELINE_FAILURE', latestRetest.segment.relative, `${item.id} was retested without a baseline failure`));
     }
     const linkedFixes = linkedFixesFor(item.id, fixes);
-    const fixPrs = [...new Set([
-      ...linkedFixes.map((fix) => fix.prUrl),
-      ...(latestRetest?.segment.meta.fixPr ? [latestRetest.segment.meta.fixPr] : [])
-    ].filter(Boolean))];
+    const fixPrs = [...new Set(linkedFixes.map((fix) => fix.prUrl).filter(Boolean))];
     return {
       id: item.id,
       title: item.title ?? baseline?.title ?? '',
@@ -390,6 +387,10 @@ export function buildReport(runId, {
       retest: latestRetest?.row ?? null
     };
   });
+  for (const gap of gapTests) {
+    gap.fixPrs = [...new Set(linkedFixesFor(gap.id, fixes).map((fix) => fix.prUrl).filter(Boolean))];
+    gap.fixPr = gap.fixPrs[0] ?? null;
+  }
   const gapCountByStatus = gapTests.reduce((counts, gap) => {
     counts[gap.status] = (counts[gap.status] ?? 0) + 1;
     return counts;
@@ -401,7 +402,8 @@ export function buildReport(runId, {
     failing: caseSummaries.filter((item) => item.finalStatus === 'failing').length,
     flaky: caseSummaries.filter((item) => item.finalStatus === 'flaky').length,
     notRun: caseSummaries.filter((item) => item.finalStatus === 'not-run').length,
-    gapTests: gapTests.length,
+    gapTests: new Set(gapTests.map((gap) => gap.id)).size,
+    gapAttempts: gapTests.length,
     gapCounts: gapCountByStatus
   };
   const finishedDates = segments.map((segment) => segment.meta.finishedAt).filter(Boolean).sort();

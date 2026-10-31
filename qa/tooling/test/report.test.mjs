@@ -173,7 +173,32 @@ test('segment fixPr alone does not mark unrelated baseline failures fixed', (t) 
   const result = buildReport(fixture.runId, fixture.options);
   assert.equal(result.report.cases[0].finalStatus, 'failing');
   assert.equal(result.report.cases[0].retestStatus, 'passed');
-  assert.equal(result.report.cases[0].fixPr, 'https://example.test/pull/1');
+  assert.equal(result.report.cases[0].fixPr, null);
+  assert.deepEqual(result.report.cases[0].fixPrs, []);
+});
+
+test('gap retests keep their phases, explicit fix links and unique-test denominator', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'original', [
+    testOptions('passed'), reportTest('WM-GAP-001', 'failed')
+  ]);
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [
+    testOptions('passed'), reportTest('WM-GAP-001', 'passed')
+  ], { revision: 'fix-revision', fixPr: 'https://example.test/pull/1' });
+  writeJson(path.join(fixture.root, 'artifacts', fixture.runId, 'fixes.json'), {
+    fixes: [{ signature: 'recovery failure', caseIds: ['WM-GAP-001'], prUrl: 'https://example.test/pull/1', fixRevision: 'fix-revision', retestLabel: 'fix-1' }]
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.report.summary.gapTests, 1);
+  assert.equal(result.report.summary.gapAttempts, 2);
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].fixPr, null);
+  assert.deepEqual(structured.gaps.map((gap) => [gap.phase, gap.status, gap.fixPr]), [
+    ['baseline', 'failed', 'https://example.test/pull/1'],
+    ['retest', 'passed', 'https://example.test/pull/1']
+  ]);
 });
 
 test('failed case without retest remains failing', (t) => {
