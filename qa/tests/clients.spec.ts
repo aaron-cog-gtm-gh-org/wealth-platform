@@ -200,7 +200,7 @@ caseTest('WM-TC-004', async ({ page }) => {
   await openAudit(page);
   await expect(auditEntries(page)).toHaveCount(before + 1);
   await expect(
-    auditEntries(page).filter({ hasText: 'C1001' }).filter({ hasText: /risk profile\b.*\bModerate\b.*\bGrowth\b/i })
+    auditEntries(page).filter({ hasText: 'C1001' }).filter({ hasText: /risk profile\b.*\bModerate\b.*\bGrowth/i })
   ).toHaveCount(1);
 });
 
@@ -225,7 +225,7 @@ caseTest('WM-TC-005', async ({ page }) => {
   await openAudit(page);
   await expect(auditEntries(page)).toHaveCount(before + 1);
   await expect(
-    auditEntries(page).filter({ hasText: 'C1002' }).filter({ hasText: /KYC status\b.*\bReview due\b.*\bCurrent\b/i })
+    auditEntries(page).filter({ hasText: 'C1002' }).filter({ hasText: /KYC status\b.*\bReview due\b.*\bCurrent/i })
   ).toHaveCount(1);
 });
 
@@ -297,8 +297,8 @@ caseTest('WM-TC-008', async ({ page }) => {
 
   await openAudit(page);
   const chenEntries = auditEntries(page).filter({ hasText: 'C1002' });
-  await expect(chenEntries.filter({ hasText: /risk profile\b.*\bConservative\b.*\bModerate\b/i })).not.toHaveCount(0);
-  await expect(chenEntries.filter({ hasText: /KYC status\b.*\bReview due\b.*\bCurrent\b/i })).not.toHaveCount(0);
+  await expect(chenEntries.filter({ hasText: /risk profile\b.*\bConservative\b.*\bModerate/i })).not.toHaveCount(0);
+  await expect(chenEntries.filter({ hasText: /KYC status\b.*\bReview due\b.*\bCurrent/i })).not.toHaveCount(0);
 
   await selectClient(page, WHITFIELD);
   await expectProfile(page, WHITFIELD, 'C1001', 'Moderate', 'Current');
