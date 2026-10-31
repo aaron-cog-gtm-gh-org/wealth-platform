@@ -301,6 +301,8 @@ gapTest('WM-GAP-090', {
     const action = (await cells(target).nth(6).innerText()).trim();
     const owner = (await cells(target).nth(7).innerText()).trim();
     await target.click();
+    // Move off the row so the :hover style does not mask the selection highlight.
+    await page.mouse.move(0, 0);
     await expect(target).toHaveCSS('background-color', 'rgb(234, 241, 250)');
     await expect(rows.first()).not.toHaveCSS('background-color', 'rgb(234, 241, 250)');
     await expect(panel).toContainText(id);
