@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compareApiRevision, committedChangesError } from '../lib/run.mjs';
+import { compareApiRevision, committedChangesError, dirtyChangesError } from '../lib/run.mjs';
 
 const head = 'abcdef0123456789abcdef0123456789abcdef01';
 
@@ -29,4 +29,15 @@ test('base SHA permits committed QA specs but rejects committed app changes', ()
   const error = committedChangesError('base', ['qa/tests/clients.spec.ts', 'src/App.tsx']);
   assert.equal(error.code, 'APP_CHANGED');
   assert.match(error.message, /src\/App\.tsx/);
+});
+
+test('base SHA permits generated QA artifacts but still rejects other dirty files', () => {
+  assert.equal(
+    dirtyChangesError(['qa/tests/clients.spec.ts', 'qa-artifacts/'], 'qa-artifacts', '/repo'),
+    null
+  );
+  assert.equal(
+    dirtyChangesError(['qa-artifacts/smoke-int/report.json', 'src/App.tsx'], 'qa-artifacts', '/repo').code,
+    'DIRTY_FILES'
+  );
 });

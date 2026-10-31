@@ -86,6 +86,21 @@ export function committedChangesError(baseSha, files) {
     : null;
 }
 
+export function dirtyChangesError(files, artifacts, cwd) {
+  const artifactPath = normalizeRelative(path.relative(cwd, path.resolve(cwd, artifacts)));
+  const artifactPrefix = artifactPath && artifactPath !== '.' && !artifactPath.startsWith('../')
+    ? `${artifactPath}/`
+    : null;
+  const forbidden = files.filter((file) =>
+    !file.startsWith('qa/tests/')
+    && file !== artifactPath
+    && !(artifactPrefix && file.startsWith(artifactPrefix))
+  );
+  return forbidden.length
+    ? diagnostic('DIRTY_FILES', '.', `only qa/tests/** and ${artifactPath}/ may be dirty with --base-sha: ${forbidden.join(', ')}`)
+    : null;
+}
+
 function playwrightInfo() {
   const cli = require.resolve('@playwright/test/cli');
   let version = 'unknown';
@@ -160,8 +175,8 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
     else testFilesDiff = diff.stdout ? diff.stdout.split(/\r?\n/).map(normalizeRelative).sort() : [];
     const appChanged = committedChangesError(baseSha, testFilesDiff);
     if (appChanged) errors.push(appChanged);
-    const forbiddenDirty = dirty.filter((file) => !file.startsWith('qa/tests/'));
-    if (forbiddenDirty.length) errors.push(diagnostic('DIRTY_FILES', '.', `only qa/tests/** may be dirty with --base-sha: ${forbiddenDirty.join(', ')}`));
+    const dirtyError = dirtyChangesError(dirty, artifacts, cwd);
+    if (dirtyError) errors.push(dirtyError);
   }
   if (errors.length) return { errors: sortedDiagnostics(errors), warnings: sortedDiagnostics(warnings), apiRevision, exitCode: 2 };
 
