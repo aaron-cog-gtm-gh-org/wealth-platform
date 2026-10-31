@@ -128,6 +128,30 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function rejectedAttempts(runDir, errors) {
+  const manifest = path.join(runDir, 'rejected', 'rejected.json');
+  if (!fs.existsSync(manifest)) return [];
+  const entries = readJson(manifest).rejected;
+  if (!Array.isArray(entries)) {
+    errors.push(diagnostic('INVALID_REJECTED_MANIFEST', 'rejected/rejected.json', 'rejected must be an array'));
+    return [];
+  }
+  return entries.flatMap((item, index) => {
+    const zip = item?.zip;
+    if (typeof zip !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(zip) || zip.includes('..') ||
+        typeof item.reason !== 'string' || !fs.existsSync(path.join(runDir, 'rejected', zip)) ||
+        !fs.lstatSync(path.join(runDir, 'rejected', zip)).isFile()) {
+      errors.push(diagnostic('INVALID_REJECTED_ATTEMPT', `rejected/rejected.json:${index}`, 'entry requires a safe existing ZIP filename and reason'));
+      return [];
+    }
+    return [{
+      phase: item.phase ?? 'unknown', label: item.label ?? zip, reason: item.reason,
+      caseIds: Array.isArray(item.caseIds) ? item.caseIds : [], revision: item.revision ?? null,
+      archive: `rejected/${zip}`
+    }];
+  });
+}
+
 function renderHtml(report) {
   const embedded = escapeJsonForHtml(report);
   const runLabel = escapeHtml(report.runId);
@@ -155,8 +179,9 @@ video{display:block;max-width:320px;background:#0b1726;border-radius:5px;margin:
 <button role="tab" aria-selected="false" data-panel="retest">Fixed outcome (retest)</button>
 <button role="tab" aria-selected="false" data-panel="gaps">Discovered gaps</button>
 <button role="tab" aria-selected="false" data-panel="errors">Errors <span id="error-count"></span></button>
+<button role="tab" aria-selected="false" data-panel="audit">Audit appendix <span id="rejected-count"></span></button>
 </nav>
-<section class="panel active" id="baseline"></section><section class="panel" id="retest"></section><section class="panel" id="gaps"></section><section class="panel" id="errors"></section>
+<section class="panel active" id="baseline"></section><section class="panel" id="retest"></section><section class="panel" id="gaps"></section><section class="panel" id="errors"></section><section class="panel" id="audit"></section>
 </main>
 <script type="application/json" id="report-data">${embedded}</script>
 <script>
@@ -189,6 +214,7 @@ document.getElementById('baseline').append(makeTable(data.baselineRows||[]));
 document.getElementById('retest').append(makeTable(data.retestRows||[]));
 document.getElementById('gaps').append(makeTable(data.gapTests||[]));
 const errorPanel=document.getElementById('errors');for(const item of data.errors||[]){const block=h('div',item.code+' '+item.path+': '+item.message,'error');errorPanel.append(block)}for(const item of data.warnings||[]){const block=h('div',item.code+' '+item.path+': '+item.message,'warning');errorPanel.append(block)}if(!errorPanel.childNodes.length)errorPanel.append(h('div','No errors or warnings.','empty'));document.getElementById('error-count').textContent=String((data.errors||[]).length+(data.warnings||[]).length);
+const audit=document.getElementById('audit');audit.append(h('h2','Rejected attempts'),h('p','Excluded test-authoring or environment attempts remain available for review; they do not replace genuine product failures or enter the result counts.'));for(const item of data.rejectedAttempts||[]){const block=h('article');block.append(h('h3',item.phase+' / '+item.label),h('p',item.reason),h('p','Cases: '+(item.caseIds.join(', ')||'none specified')+' · Revision: '+(item.revision||'unknown')));const archive=link('Original rejected ZIP',item.archive);if(archive)block.append(archive);audit.append(block)}if(!data.rejectedAttempts?.length)audit.append(h('div','No rejected attempts.','empty'));document.getElementById('rejected-count').textContent=String(data.rejectedAttempts?.length||0);
 document.querySelectorAll('[role=tab]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[role=tab]').forEach(item=>item.setAttribute('aria-selected',String(item===button)));document.querySelectorAll('.panel').forEach(panel=>panel.classList.toggle('active',panel.id===button.dataset.panel))}));
 document.getElementById('filter').addEventListener('input',event=>{const query=event.target.value.toLowerCase();document.querySelectorAll('tbody tr').forEach(row=>row.hidden=!row.dataset.filter.includes(query))});
 </script></body></html>`;
@@ -218,6 +244,11 @@ function renderMarkdown(report) {
   }
   output.push('', '## Discovered gaps', '');
   for (const gap of report.gapTests) output.push(`- ${gap.id}: ${gap.title} (${gap.feature}; ${gap.phase}/${gap.label}; ${gap.status}; revision ${gap.revision}; ${gap.wikiRef ?? 'no wiki ref'})${gap.primaryRecording ? ` [recording](${gap.primaryRecording})` : ''}${gap.fixPr ? ` [fix PR](${gap.fixPr})` : ''}`);
+  output.push('', '## Audit appendix: rejected attempts', '', 'Excluded attempts do not enter result counts or replace genuine product failures.', '');
+  if (!report.rejectedAttempts.length) output.push('No rejected attempts.');
+  for (const item of report.rejectedAttempts) {
+    output.push(`- **${item.phase} / ${item.label}**: ${item.reason}`, `  - Cases: ${item.caseIds.join(', ') || 'none specified'}. Revision: ${item.revision ?? 'unknown'}. [Original rejected ZIP](${item.archive})`);
+  }
   return `${output.join('\n')}\n`;
 }
 
@@ -438,6 +469,7 @@ export function buildReport(runId, {
     retestRows: retestRows.sort((a, b) => compare(a.id, b.id) || compare(a.label, b.label)),
     cases: caseSummaries,
     gapTests: gapTests.sort((a, b) => compare(a.id, b.id)),
+    rejectedAttempts: rejectedAttempts(runDir, errors),
     errors: sortedDiagnostics(errors),
     warnings: sortedDiagnostics(warnings)
   };
