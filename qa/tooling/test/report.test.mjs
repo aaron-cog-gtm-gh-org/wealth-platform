@@ -62,6 +62,20 @@ test('failed baseline becomes fixed in a separate retest row linked by fixes.jso
   assert.deepEqual(fs.readFileSync(path.join(baselineDir, 'summary.json')), baselineBytes);
 });
 
+test('segment fixPr alone does not mark unrelated baseline failures fixed', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'original', [testOptions('failed')]);
+  addSegment(fixture.root, fixture.runId, 'retest', 'whole-area', [testOptions('passed')], {
+    fixPr: 'https://example.test/pull/1',
+    revision: 'retest-revision'
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.equal(result.report.cases[0].finalStatus, 'failing');
+  assert.equal(result.report.cases[0].retestStatus, 'passed');
+  assert.equal(result.report.cases[0].fixPr, 'https://example.test/pull/1');
+});
+
 test('failed case without retest remains failing', (t) => {
   const config = singleConfig();
   const fixture = setup(t, tinyWorkbook(config), config);
@@ -111,10 +125,22 @@ test('unlinked failing retest emits RETEST_REGRESSION warning', (t) => {
   addSegment(fixture.root, fixture.runId, 'retest', 'full-area', [testOptions('failed')]);
   const result = buildReport(fixture.runId, fixture.options);
   assert.ok(result.warnings.some((item) => item.code === 'RETEST_REGRESSION'));
-  assert.ok(result.warnings.some((item) => item.code === 'RETEST_WITHOUT_BASELINE_FAILURE'));
+  assert.ok(!result.warnings.some((item) => item.code === 'RETEST_WITHOUT_BASELINE_FAILURE'));
   const runDir = path.join(fixture.root, 'artifacts', fixture.runId);
   assert.ok(fs.readFileSync(path.join(runDir, 'index.html'), 'utf8').includes('RETEST_REGRESSION'));
   assert.ok(fs.readFileSync(path.join(runDir, 'report.md'), 'utf8').includes('RETEST_REGRESSION'));
+});
+
+test('RETEST_WITHOUT_BASELINE_FAILURE is limited to fixes.json-linked cases', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'original', [testOptions('passed')]);
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [testOptions('passed')], { revision: 'fix-revision' });
+  writeJson(path.join(fixture.root, 'artifacts', fixture.runId, 'fixes.json'), {
+    fixes: [{ signature: 'unexpected fix', caseIds: ['WM-TC-001'], prUrl: 'https://example.test/pull/1', fixRevision: 'fix-revision', retestLabel: 'fix-1' }]
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.warnings.some((item) => item.code === 'RETEST_WITHOUT_BASELINE_FAILURE'));
 });
 
 test('report JSON is byte-identical across deterministic generations', (t) => {

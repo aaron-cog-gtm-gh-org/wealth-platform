@@ -110,7 +110,8 @@ export async function main(argv = process.argv.slice(2)) {
       skipPreflight: Boolean(flags['skip-preflight']),
       cwd: repoRoot
     });
-    if (result.errors.length) return outputResult(result.errors, []);
+    if (result.errors.length) return outputResult(result.errors, result.warnings ?? []);
+    if (result.warnings?.length) printDiagnostics([], result.warnings);
     return result.exitCode;
   }
 

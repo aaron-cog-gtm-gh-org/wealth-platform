@@ -43,6 +43,49 @@ async function checkEndpoint(url, method) {
   }
 }
 
+async function checkApiHealth(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return { issue: `GET ${url} returned ${response.status}`, revision: null };
+    const body = await response.json().catch(() => null);
+    return { issue: null, revision: body?.revision };
+  } catch (error) {
+    return { issue: `GET endpoint unavailable: ${(error).message.split(/\r?\n/, 1)[0]}`, revision: null };
+  }
+}
+
+export function compareApiRevision(value, headRevision) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  const head = String(headRevision ?? '').trim();
+  const isSha = /^[a-f\d]{7,40}$/i;
+  if (!isSha.test(candidate)) {
+    return {
+      apiRevision: 'unknown',
+      warning: diagnostic('API_REVISION_UNKNOWN', 'api/health', 'API health response has no recognized revision SHA'),
+      error: null
+    };
+  }
+  if (isSha.test(head) && (candidate.startsWith(head) || head.startsWith(candidate))) {
+    return { apiRevision: candidate, warning: null, error: null };
+  }
+  return {
+    apiRevision: candidate,
+    warning: null,
+    error: diagnostic(
+      'API_REVISION_MISMATCH',
+      'api/health',
+      `API serving ${candidate.slice(0, 7)} but HEAD is ${head.slice(0, 7)}; restart \`npm run dev:full\``
+    )
+  };
+}
+
+export function committedChangesError(baseSha, files) {
+  const appChanges = files.filter((file) => !file.startsWith('qa/tests/'));
+  return appChanges.length
+    ? diagnostic('APP_CHANGED', '.', `committed changes outside qa/tests/** since ${baseSha}: ${appChanges.join(', ')}`)
+    : null;
+}
+
 function playwrightInfo() {
   const cli = require.resolve('@playwright/test/cli');
   let version = 'unknown';
@@ -66,29 +109,16 @@ function waitForProcess(command, args, options) {
 
 export async function runSegment({ runId, phase, label, baseSha = null, fixPr = null, args = [], skipPreflight = false, cwd = process.cwd(), env = process.env, artifacts = env.QA_ARTIFACTS_DIR ?? 'qa-artifacts' }) {
   const errors = [];
+  const warnings = [];
   if (!allowedId.test(runId ?? '')) errors.push(diagnostic('INVALID_RUN_ID', '.', 'run id must match ^[A-Za-z0-9][A-Za-z0-9._-]*$'));
   if (!allowedId.test(label ?? '')) errors.push(diagnostic('INVALID_LABEL', '.', 'label must match ^[A-Za-z0-9][A-Za-z0-9._-]*$'));
   if (!['baseline', 'retest'].includes(phase)) errors.push(diagnostic('INVALID_PHASE', '.', 'phase must be baseline or retest'));
-  if (errors.length) return { errors, exitCode: 2 };
+  if (errors.length) return { errors, warnings, exitCode: 2 };
 
   const segmentDir = path.resolve(cwd, artifacts, runId, phase, label);
   if (fs.existsSync(segmentDir)) {
     errors.push(diagnostic('SEGMENT_EXISTS', normalizeRelative(path.relative(cwd, segmentDir)), 'segment directory already exists'));
-    return { errors, exitCode: 2 };
-  }
-  if (!skipPreflight) {
-    const baseUrl = env.QA_BASE_URL ?? 'http://localhost:5173';
-    const apiUrl = env.QA_API_URL ?? 'http://localhost:3001';
-    const healthPath = env.QA_HEALTH_PATH ?? '/api/health';
-    const resetPath = env.QA_RESET_PATH ?? '/api/test/reset';
-    for (const issue of [
-      await checkEndpoint(new URL('/', baseUrl).toString(), 'GET'),
-      await checkEndpoint(new URL(healthPath, apiUrl).toString(), 'GET'),
-      await checkEndpoint(new URL(resetPath, apiUrl).toString(), 'POST')
-    ]) {
-      if (issue) errors.push(diagnostic('PREFLIGHT_FAILED', '.', issue));
-    }
-    if (errors.length) return { errors, exitCode: 2 };
+    return { errors, warnings, exitCode: 2 };
   }
 
   let revision;
@@ -98,7 +128,29 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
     revision = git('git', ['rev-parse', 'HEAD'], cwd).stdout;
     dirty = dirtyFiles(git('git', ['status', '--porcelain'], cwd).stdout);
   } catch (error) {
-    return { errors: [diagnostic('GIT_METADATA', '.', `unable to read git metadata: ${error.message}`)], exitCode: 2 };
+    return { errors: [diagnostic('GIT_METADATA', '.', `unable to read git metadata: ${error.message}`)], warnings, exitCode: 2 };
+  }
+  let apiRevision = 'unknown';
+  if (!skipPreflight) {
+    const baseUrl = env.QA_BASE_URL ?? 'http://localhost:5173';
+    const apiUrl = env.QA_API_URL ?? 'http://localhost:3001';
+    const healthPath = env.QA_HEALTH_PATH ?? '/api/health';
+    const resetPath = env.QA_RESET_PATH ?? '/api/test/reset';
+    const webIssue = await checkEndpoint(new URL('/', baseUrl).toString(), 'GET');
+    const health = await checkApiHealth(new URL(healthPath, apiUrl).toString());
+    const resetIssue = await checkEndpoint(new URL(resetPath, apiUrl).toString(), 'POST');
+    if (webIssue) errors.push(diagnostic('PREFLIGHT_FAILED', '.', webIssue));
+    if (health.issue) errors.push(diagnostic('PREFLIGHT_FAILED', '.', health.issue));
+    if (resetIssue) errors.push(diagnostic('PREFLIGHT_FAILED', '.', resetIssue));
+    if (!health.issue) {
+      const comparison = compareApiRevision(health.revision, revision);
+      apiRevision = comparison.apiRevision;
+      if (comparison.warning) warnings.push(comparison.warning);
+      if (comparison.error) errors.push(comparison.error);
+    }
+  } else {
+    const comparison = compareApiRevision(null, revision);
+    warnings.push(comparison.warning);
   }
   if (baseSha) {
     const ancestor = git('git', ['merge-base', '--is-ancestor', baseSha, 'HEAD'], cwd);
@@ -106,10 +158,12 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
     const diff = git('git', ['diff', '--name-only', baseSha, 'HEAD'], cwd);
     if (diff.status !== 0) errors.push(diagnostic('GIT_DIFF', '.', `unable to diff against ${baseSha}`));
     else testFilesDiff = diff.stdout ? diff.stdout.split(/\r?\n/).map(normalizeRelative).sort() : [];
+    const appChanged = committedChangesError(baseSha, testFilesDiff);
+    if (appChanged) errors.push(appChanged);
     const forbiddenDirty = dirty.filter((file) => !file.startsWith('qa/tests/'));
     if (forbiddenDirty.length) errors.push(diagnostic('DIRTY_FILES', '.', `only qa/tests/** may be dirty with --base-sha: ${forbiddenDirty.join(', ')}`));
   }
-  if (errors.length) return { errors: sortedDiagnostics(errors), exitCode: 2 };
+  if (errors.length) return { errors: sortedDiagnostics(errors), warnings: sortedDiagnostics(warnings), apiRevision, exitCode: 2 };
 
   const defaultSeed = ['server/db/seed.sql', 'server/db/seed.ts'].map((file) => path.join(cwd, file)).find((file) => fs.existsSync(file));
   const seedFile = env.QA_SEED_FILE ? path.resolve(cwd, env.QA_SEED_FILE) : defaultSeed;
@@ -127,6 +181,7 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
     label,
     fixPr,
     revision,
+    apiRevision,
     baseRevision: baseSha,
     dirty,
     testFilesDiff,
@@ -153,5 +208,5 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
   writeJson(path.join(segmentDir, 'run-meta.json'), meta);
   const normalized = normalizeSegment(segmentDir, { cwd });
   if (normalized.errors.length) printDiagnostics(normalized.errors);
-  return { segmentDir, meta, summary: normalized.summary, errors: normalized.errors, exitCode: normalized.errors.length ? 2 : result.code };
+  return { segmentDir, meta, summary: normalized.summary, errors: normalized.errors, warnings: sortedDiagnostics(warnings), exitCode: normalized.errors.length ? 2 : result.code };
 }

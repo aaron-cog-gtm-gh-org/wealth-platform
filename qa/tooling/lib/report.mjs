@@ -157,7 +157,8 @@ const h=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined
 const link=(label,url,cls)=>{if(!url)return null;if(!/^https?:\\/\\//i.test(url)&&(url.startsWith('/')||url.includes('..')))return null;const a=h('a',label,cls);a.href=url;if(/^https?:/i.test(url))a.target='_blank',a.rel='noopener noreferrer';return a};
 const safeUrl=url=>typeof url==='string'&&!url.startsWith('/')&&!url.includes('..')?url:null;
 const summary=data.summary||{};
-const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Revision',data.baselineRevisions?.join(', ')||'—'],['Run',data.runId]];
+const apiRevision=Array.isArray(data.apiRevision)?data.apiRevision.join(', '):data.apiRevision||'unknown';
+const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Revision',data.baselineRevisions?.join(', ')||'—'],['API revision',apiRevision],['Run',data.runId]];
 const chips=document.getElementById('chips');for(const [label,value] of chipData){const e=h('div');e.className='chip';e.append(document.createTextNode(String(value??0)+' '));const s=h('span',label);e.append(s);chips.append(e)}
 function makeTable(rows){
  if(!rows.length)return h('div','No results for this section.','empty');
@@ -191,6 +192,7 @@ function renderMarkdown(report) {
     '',
     `Generated: ${report.generatedAt ?? 'unknown'}`,
     `Baseline revision(s): ${(report.baselineRevisions ?? []).join(', ') || 'none'}`,
+    `API revision(s): ${Array.isArray(report.apiRevision) ? report.apiRevision.join(', ') : report.apiRevision ?? 'unknown'}`,
     `Base revision: ${report.baseRevision ?? 'none'}`,
     `Fix revision(s): ${(report.fixRevisions ?? []).join(', ') || 'none'}`,
     `Summary: ${report.summary.passed} passed, ${report.summary.fixed} fixed, ${report.summary.failing} failing, ${report.summary.flaky} flaky, ${report.summary.notRun} not-run`,
@@ -330,7 +332,7 @@ export function buildReport(runId, {
     const latestRetest = retests.at(-1) ?? null;
     const baselineStatus = statusOf(baseline);
     const retestStatus = statusOf(latestRetest?.row);
-    const linked = latestRetest ? Boolean(latestRetest.segment.meta.fixPr || isLinkedFix(item.id, latestRetest.segment, fixes)) : false;
+    const linked = latestRetest ? isLinkedFix(item.id, latestRetest.segment, fixes) : false;
     let finalStatus = 'not-run';
     if (['failed', 'timedOut'].includes(retestStatus)) finalStatus = 'failing';
     else if (retestStatus === 'flaky' || baselineStatus === 'flaky') finalStatus = 'flaky';
@@ -338,7 +340,7 @@ export function buildReport(runId, {
     else if (['failed', 'timedOut'].includes(baselineStatus) && retestStatus === 'passed' && linked) finalStatus = 'fixed';
     else if (retestStatus === 'passed' && ['failed', 'timedOut'].includes(baselineStatus)) finalStatus = 'failing';
     else if (!latestRetest && ['failed', 'timedOut'].includes(baselineStatus)) finalStatus = 'failing';
-    if (latestRetest && !['failed', 'timedOut'].includes(baselineStatus)) {
+    if (latestRetest && linkedFixesFor(item.id, fixes).some((fix) => fix.retestLabel === latestRetest.segment.meta.label) && !['failed', 'timedOut'].includes(baselineStatus)) {
       warnings.push(diagnostic('RETEST_WITHOUT_BASELINE_FAILURE', latestRetest.segment.relative, `${item.id} was retested without a baseline failure`));
     }
     const linkedFixes = linkedFixesFor(item.id, fixes);
@@ -382,6 +384,8 @@ export function buildReport(runId, {
   const finishedDates = segments.map((segment) => segment.meta.finishedAt).filter(Boolean).sort();
   const generated = generatedAt ?? finishedDates.at(-1) ?? null;
   const seeds = segments.map((segment) => segment.meta.seed).filter(Boolean);
+  const apiRevisions = [...new Set(segments.map((segment) => segment.meta.apiRevision ?? 'unknown'))].sort();
+  const apiRevision = apiRevisions.length === 0 ? 'unknown' : apiRevisions.length === 1 ? apiRevisions[0] : apiRevisions;
   const fixRevisions = [...new Set([
     ...fixes.map((fix) => fix.fixRevision),
     ...retestSegments.map((segment) => segment.meta.revision)
@@ -390,6 +394,7 @@ export function buildReport(runId, {
     schema: 1,
     runId,
     baselineRevisions,
+    apiRevision: apiRevision ?? 'unknown',
     baseRevision,
     fixRevisions,
     seed: seeds[0] ?? null,

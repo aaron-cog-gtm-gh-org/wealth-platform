@@ -16,16 +16,18 @@ description: Use when authoring or running Wealth Platform QA cases, Playwright 
 
 ## Run and publish
 
-1. Start Oracle Free with `npm run db:up && npm run db:wait && npm run db:setup`.
-2. Start the app with `ENABLE_TEST_RESET=1 npm run dev:full` and confirm `http://localhost:3001/api/health` returns 200.
+1. Start Docker `postgres:16-alpine` on `localhost:5432` with `npm run db:up && npm run db:wait && npm run db:setup`.
+2. Start the app with `ENABLE_TEST_RESET=1 npm run dev:full` and confirm `http://localhost:3001/api/health` returns its revision.
 3. Validate the area and run its segment:
 
    ```sh
    node qa/tooling/qa.mjs validate-cases
    node qa/tooling/qa.mjs validate-suite --area clients
-   node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase baseline --label clients
+   FROZEN_SHA=$(git rev-parse HEAD)
+   QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase baseline --label clients --base-sha "$FROZEN_SHA" -- qa/tests/clients.spec.ts
    node qa/tooling/qa.mjs export-videos --segment "qa-artifacts/$RUN_ID/baseline/clients" --out "qa-uploads/$RUN_ID/clients"
    ```
 
 4. Keep the generated `run-meta.json`, `results.json`, `summary.json`, `test-results/`, and `html/` together in the segment.
-5. Export attempt videos and after screenshots, then publish the segment using the evidence transport instructions in `qa/README.md`. Videos must be created by Playwright.
+5. For a fix retest, use `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts`.
+6. Export attempt videos and after screenshots, then publish the segment using the evidence transport instructions in `qa/README.md`. Videos must be created by Playwright.

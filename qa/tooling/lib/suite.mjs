@@ -3,7 +3,7 @@ import path from 'node:path';
 import { diagnostic, loadAreas, relativeDisplay, repoRoot, sortedDiagnostics, walkFiles } from './common.mjs';
 
 const prefixPattern = /^\[(WM-TC-\d{3}|WM-GAP-\d{3})\]\s+(.+)$/;
-const forbiddenPattern = /\.(skip|fixme|fail|only)\s*\(/g;
+const forbiddenPattern = /\.(skip|fixme|fail|only|configure)\s*\(/g;
 
 function specEntries(list, result = [], parentFile = '') {
   for (const suite of list?.suites ?? []) {
@@ -122,6 +122,9 @@ export async function validateSuite({
     }
     for (const match of source.matchAll(forbiddenPattern)) {
       addError('FORBIDDEN_TEST_API', `.${match[1]}() is forbidden`, relative);
+    }
+    if (/\btest\s*\.\s*setTimeout\s*\(/.test(source)) {
+      addError('FORBIDDEN_TEST_API', 'test.setTimeout() is forbidden', relative);
     }
   }
 

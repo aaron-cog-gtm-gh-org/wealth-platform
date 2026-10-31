@@ -4,7 +4,7 @@ The harness validates the case workbook and Playwright suite, runs a frozen test
 
 ## Child run
 
-Start the app and verify its health before running tests. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 50-case suite.
+Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 50-case suite.
 
 ```sh
 npm run db:up && npm run db:wait && npm run db:setup
@@ -12,18 +12,21 @@ ENABLE_TEST_RESET=1 npm run dev:full
 curl -fsS http://localhost:3001/api/health
 node qa/tooling/qa.mjs validate-cases
 node qa/tooling/qa.mjs validate-suite --area clients
-node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase baseline --label clients
+FROZEN_SHA=$(git rev-parse HEAD)
+QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase baseline --label clients --base-sha "$FROZEN_SHA" -- qa/tests/clients.spec.ts
 node qa/tooling/qa.mjs export-videos --segment "qa-artifacts/$RUN_ID/baseline/clients" --out "qa-uploads/$RUN_ID/clients"
 ```
 
 Repeat `validate-suite` and `run` for each area slug. Workbook `feature` values are title-case display labels; route, suite filter, and spec names use the lowercase `area` slug. Tests import helpers from `qa/tooling/fixtures.ts`, register exactly one `caseTest` per workbook case, use `openArea`, and assert visible roles or text. Gaps use `gapTest(id, { title, area, wikiRef }, body)` and belong in that area's spec.
+
+`--base-sha` records the frozen starting revision; committed changes outside `qa/tests/**` since that revision are rejected, while uncommitted area spec edits are allowed. The API health response includes its startup Git revision (or `APP_REVISION` override); a mismatch blocks the run, while an unknown revision warns and continues.
 
 Set `QA_RETRIES=1` when a deliberate retry is needed. `run` creates a fresh segment directory and refuses collisions; the Playwright config itself can reload an existing directory. Each test resets through `POST /api/test/reset`, captures `before.png` from `openArea` and attaches `after.png` automatically.
 
 After recording the baseline and making a fix, run a fresh retest segment:
 
 ```sh
-node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --fix-pr "$FIX_PR_URL"
+QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts
 ```
 
 Record each verified fix in `qa-artifacts/$RUN_ID/fixes.json` under a `fixes` array, with its `signature`, `caseIds`, `prUrl`, `fixRevision`, and `retestLabel`. `fixRevision` must equal the revision captured by that retest segment.
@@ -92,10 +95,11 @@ qa-artifacts/
 | `QA_CHROME` | Playwright Chromium | Optional browser executable |
 | `QA_SEED` | `null` | Seed identifier recorded in metadata |
 | `QA_SEED_FILE` | First existing `server/db/seed.sql`, `server/db/seed.ts` | Seed file recorded and hashed |
+| `APP_REVISION` | Git SHA captured at API startup | Optional API revision override |
 
-The app contract is `GET /api/health` → 200 and `POST /api/test/reset` → 2xx after reseeding. Reset is gated by `ENABLE_TEST_RESET=1`. The app must support `/?screen=workspace&area=<area-slug>`.
+The app contract is `GET /api/health` → `{ "status": "ok", "revision": "<SHA>" }` and `POST /api/test/reset` → 2xx after reseeding. Reset is gated by `ENABLE_TEST_RESET=1`. The app must support `/?screen=workspace&area=<area-slug>`.
 
-Parent setup requires `npm i -D @playwright/test@1.48.2`, `npx playwright install --with-deps chromium`, and adding `qa-artifacts/` to `.gitignore`. Suggested scripts are `"qa": "node qa/tooling/qa.mjs"` and `"qa:test": "node --test qa/tooling/test/*.test.mjs"`. The app integration uses Oracle Free via `npm run db:up && npm run db:wait && npm run db:setup`, then `ENABLE_TEST_RESET=1 npm run dev:full`.
+Parent setup requires `npm i -D @playwright/test@1.48.2`, `npx playwright install --with-deps chromium`, and adding `qa-artifacts/` to `.gitignore`. Suggested scripts are `"qa": "node qa/tooling/qa.mjs"` and `"qa:test": "node --test qa/tooling/test/*.test.mjs"`. The app uses Docker `postgres:16-alpine` on `localhost:5432`; start it with `npm run db:up && npm run db:wait && npm run db:setup`, then run `ENABLE_TEST_RESET=1 npm run dev:full`.
 
 ## Evidence transport (macOS and Linux)
 

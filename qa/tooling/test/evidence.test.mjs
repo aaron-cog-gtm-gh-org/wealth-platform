@@ -74,6 +74,7 @@ test('structured output replaces primary recording with the matching uploaded UR
   const report = {
     runId: 'r1',
     baselineRevisions: ['base-rev'],
+    apiRevision: 'api-rev',
     baseRevision: 'origin-main',
     fixRevisions: ['fix-rev'],
     seed: { id: 'seed' },
@@ -103,6 +104,7 @@ test('structured output replaces primary recording with the matching uploaded UR
   const projection = projectStructured(report, uploads);
   assert.equal(projection.cases[0].area, 'clients');
   assert.equal(projection.cases[0].feature, 'Clients');
+  assert.equal(projection.apiRevision, 'api-rev');
   assert.equal(projection.cases[0].initialRecording, uploads['WM-TC-001__baseline-original__retry1.webm']);
   assert.equal(projection.cases[0].retestRecording, uploads['WM-TC-001__retest-fixed__retry0.webm']);
   const written = writeStructured(root, report, uploads);

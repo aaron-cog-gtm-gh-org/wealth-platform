@@ -24,6 +24,7 @@ export function projectStructured(report, uploads = {}) {
   return {
     runId: report.runId,
     baselineRevision: report.baselineRevisions.length === 1 ? report.baselineRevisions[0] : report.baselineRevisions,
+    apiRevision: report.apiRevision ?? 'unknown',
     baseRevision: report.baseRevision,
     fixRevisions: report.fixRevisions,
     seed: report.seed,

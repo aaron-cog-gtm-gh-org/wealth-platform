@@ -75,6 +75,13 @@ test('static scan rejects test.skip', async (t) => {
   assert.ok(result.errors.some((item) => item.code === 'FORBIDDEN_TEST_API'));
 });
 
+test('static scan rejects configure and per-test timeout overrides', async (t) => {
+  const result = await check(t, complete, {
+    clients: "import { caseTest } from '../tooling/fixtures';\ntest.configure({ retries: 2 });\ntest.setTimeout(120000);\n"
+  });
+  assert.equal(result.errors.filter((item) => item.code === 'FORBIDDEN_TEST_API').length, 2);
+});
+
 test('suite accepts feature-owned gaps and rejects duplicate ids', async (t) => {
   const tests = [
     ...complete[0].tests,
