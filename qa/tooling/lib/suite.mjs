@@ -5,6 +5,20 @@ import { diagnostic, loadAreas, relativeDisplay, repoRoot, sortedDiagnostics, wa
 const prefixPattern = /^\[(WM-TC-\d{3}|WM-GAP-\d{3})\]\s+(.+)$/;
 const forbiddenPattern = /\.(skip|fixme|fail|only|configure)\s*\(/g;
 
+export function parsePlaywrightList(stdout, status) {
+  if (status === 0) return JSON.parse(stdout);
+  try {
+    const list = JSON.parse(stdout);
+    const noTests = status === 1
+      && list.suites?.length === 0
+      && list.errors?.some((item) => /^Error: No tests found$/.test(item.message?.trim() ?? ''));
+    if (noTests) return list;
+  } catch {
+    // Preserve the list failure below when Playwright did not return JSON.
+  }
+  throw new Error(`Playwright list exited with status ${status}`);
+}
+
 function specEntries(list, result = [], parentFile = '') {
   for (const suite of list?.suites ?? []) {
     const suiteFile = suite.file ?? parentFile;

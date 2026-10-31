@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { suiteSuccessMessage, validateSuite } from '../lib/suite.mjs';
+import { parsePlaywrightList, suiteSuccessMessage, validateSuite } from '../lib/suite.mjs';
 import { listFor, tempDir, tinyConfig, tinyWorkbook, writeSpec } from './helpers.mjs';
 
 const featureAnnotation = (area) => {
@@ -30,6 +30,15 @@ const complete = [
   { file: 'qa/tests/clients.spec.ts', tests: [tc('WM-TC-001', 'Clients visible', 'clients')] },
   { file: 'qa/tests/portfolio.spec.ts', tests: [tc('WM-TC-002', 'Portfolio visible', 'portfolio')] }
 ];
+
+test('empty Playwright list is treated as an empty suite, not a CLI failure', () => {
+  const output = { suites: [], errors: [{ message: 'Error: No tests found' }] };
+  assert.deepEqual(parsePlaywrightList(JSON.stringify(output), 1), output);
+  assert.throws(
+    () => parsePlaywrightList(JSON.stringify({ suites: [], errors: [{ message: 'Error: Invalid config' }] }), 1),
+    /Playwright list exited with status 1/
+  );
+});
 
 test('suite accepts exact case coverage', async (t) => {
   const result = await check(t, complete);

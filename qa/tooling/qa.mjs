@@ -10,7 +10,7 @@ import { exportVideos } from './lib/export-videos.mjs';
 import { normalizeSegment } from './lib/normalize.mjs';
 import { buildReport } from './lib/report.mjs';
 import { runSegment } from './lib/run.mjs';
-import { suiteSuccessMessage, validateSuite } from './lib/suite.mjs';
+import { parsePlaywrightList, suiteSuccessMessage, validateSuite } from './lib/suite.mjs';
 import { readUploads, writeStructured } from './lib/structured.mjs';
 import { bundleRun } from './lib/bundle.mjs';
 
@@ -53,8 +53,7 @@ function playwrightList(file) {
     cwd: repoRoot,
     encoding: 'utf8'
   });
-  if (result.status !== 0) throw new Error(`Playwright list exited with status ${result.status}`);
-  return JSON.parse(result.stdout);
+  return parsePlaywrightList(result.stdout, result.status);
 }
 
 export async function main(argv = process.argv.slice(2)) {
