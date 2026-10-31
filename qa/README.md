@@ -59,7 +59,7 @@ Attach the segment ZIP and every per-case video file from the export directory w
 
 ## Parent collection
 
-Read each child's attachments with `devin_session_interact` using `get_attachments`. Download the segment ZIP and videos with `download_attachment`, passing `{url}` for one attachment or `{urls}` for several, and save them locally. Use `unpack-segment` to validate and extract each accepted segment. Collect exactly one valid baseline segment per area under `qa-artifacts/$RUN_ID/baseline/<area>/`; keep all valid product failures in the baseline.
+Read each child's attachments with `devin_session_interact` using `get_attachments`. Download the segment ZIP and videos with `download_attachment`, passing `{url}` for one attachment or `{urls}` for several, and save them locally. Use `unpack-segment` to validate and extract each accepted segment. Collect exactly one valid baseline segment per area under `qa-artifacts/$RUN_ID/baseline/<label>/` (the path must match the ZIP's `run-meta.json` label, e.g. `<area>` or `<area>-r2`); keep all valid product failures in the baseline.
 
 If a run is confirmed invalid because of an environment or test-authoring problem, do not extract it. Preserve the original ZIP untouched as `qa-artifacts/$RUN_ID/rejected/<phase>-<label>.zip` and add an entry to `qa-artifacts/$RUN_ID/rejected/rejected.json` with the ZIP name, reason, affected case IDs, and revision. For example:
 
@@ -107,7 +107,7 @@ node qa/tooling/qa.mjs structured \
 ```text
 qa-artifacts/
 └── <run-id>/
-    ├── baseline/<area>/
+    ├── baseline/<label>/
     │   ├── run-meta.json
     │   ├── results.json
     │   ├── summary.json
