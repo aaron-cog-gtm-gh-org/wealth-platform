@@ -49,6 +49,7 @@ Run shell-verifiable checks before merging application changes:
 
 ```sh
 npm run typecheck
+npm run lint
 npm run build
 npm run test:db
 ```
