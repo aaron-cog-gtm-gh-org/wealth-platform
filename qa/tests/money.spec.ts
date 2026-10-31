@@ -263,7 +263,7 @@ caseTest('WM-TC-036', async ({ page }) => {
 
 caseTest('WM-TC-037', async ({ page }) => {
   await openArea(page, 'money');
-  await page.getByRole('tab', { name: 'Orders', exact: true }).click();
+  await page.getByRole('tab', { name: /^Orders(?:\s|$)/ }).click();
   await page.getByLabel('Account', { exact: true }).selectOption('A1001');
   await page.getByRole('radio', { name: 'Buy', exact: true }).check();
   await page.getByLabel('Instrument', { exact: true }).selectOption('RY');
@@ -291,7 +291,7 @@ caseTest('WM-TC-037', async ({ page }) => {
   const reference = await confirmTransfer(page, '$11,000.00');
   await expectBalances(page, '$14,000.00', '$21,000.00', false, '$14,000.00', '$0.00');
   await page.reload();
-  await page.getByRole('tab', { name: 'Orders', exact: true }).click();
+  await page.getByRole('tab', { name: /^Orders(?:\s|$)/ }).click();
   await expect(orders).toHaveCount(1);
   await expect(orders.getByRole('rowheader')).toHaveText(orderId);
   for (const value of [investment, 'Buy', '100', 'RY', 'Open']) {
