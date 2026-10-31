@@ -7,7 +7,7 @@
     "dev": "vite",
     "api": "tsx server/index.ts",
     "api:test": "tsx server/test-server.ts",
-    "dev:full": "concurrently -n api,web -c blue,green \"npm:api\" \"npm:dev\"",
+    "dev:full": "concurrently --kill-others-on-fail -n api,web -c blue,green \"npm:api\" \"npm:dev\"",
     "db:up": "tsx server/db/up.ts",
     "db:wait": "tsx server/db/wait.ts",
     "db:setup": "tsx server/db/setup.ts",
