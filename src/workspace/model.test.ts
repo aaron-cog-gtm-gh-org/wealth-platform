@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Bootstrap } from './api';
 import {
-  availableCash, heldQuantity, instruments, openSellQuantity, readArea,
+  availableCash, heldQuantity, instruments, openSellQuantity, portfolioInstrumentOptions, readArea,
   reservedCash, sortCurrencies, totalsByCurrency, workspaceHref,
 } from './model';
 
@@ -64,4 +64,11 @@ test('instrument choices are unique and stable', () => {
   const data = fixture();
   data.positions.push({ ...data.positions[0], id: 'P3', accountId: 'A1002' });
   assert.deepEqual(instruments(data).map(instrument => instrument.symbol), ['BMO', 'RY']);
+});
+
+test('portfolio instrument options list every instrument in the book, not just the filtered client', () => {
+  const data = fixture();
+  data.accounts.push({ id: 'A1003', clientId: 'C1002', name: 'USD Investment', currency: 'USD', cash: 5000 });
+  data.positions.push({ id: 'P3', accountId: 'A1003', symbol: 'MSFT', name: 'Microsoft', quantity: 40, price: 420 });
+  assert.deepEqual(portfolioInstrumentOptions(data), ['BMO', 'MSFT', 'RY']);
 });
