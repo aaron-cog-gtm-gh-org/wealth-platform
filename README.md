@@ -23,6 +23,8 @@ The original reference screens remain at `?screen=c360|portfolio|orders|alts|exc
 
 The QA workflow turns a manual handoff into reusable browser automation, feature-area child sessions, per-test evidence and Jira-linked remediation PRs.
 
+`main` is the clean spreadsheet-to-tests demo starting point: generated Playwright case specs are absent. Each run authors them from the workbook onto separate QA branches; neither those tests nor remediation fixes are merged into `main`. The recording harness and application unit/integration tests remain in place.
+
 - [Manual test workbook](qa/Wealth-Platform-Manual-QA.xlsx): 50 cases, formatted like a qTest export, not a certified qTest import.
 - [Machine-readable cases](qa/cases.json) and [requirements](qa/requirements.md): stable case IDs, synthetic fixtures and real sandbox Jira links.
 - [Parent–child playbook](qa/playbook.md): discovery through DeepWiki, parallel ownership, execution, triage and traceability.

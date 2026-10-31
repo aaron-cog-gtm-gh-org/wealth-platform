@@ -7,6 +7,8 @@ description: Use when authoring or running Wealth Platform QA cases, Playwright 
 
 ## Author
 
+Start from the manual workbook and current requirements. `main` intentionally has no generated area specs. Create fresh specs on the run's QA branches; integrate them only into the parent-provided run branch, leaving `main` clean. Historical specs and prior fix PRs are not authoring input.
+
 1. Read the case title, steps, expected results, and test data in `qa/cases.json`.
 2. Import `caseTest`, `gapTest`, `expect`, and `openArea` from `../tooling/fixtures`.
 3. Register one `caseTest('WM-TC-0NN', async ({ page }) => { ... })` per workbook case in `qa/tests/<area>.spec.ts`.
