@@ -80,8 +80,9 @@ export async function updateClient(
     const changes: string[] = [];
     if (riskProfile !== current.riskProfile) changes.push(`Risk profile ${current.riskProfile} → ${riskProfile}`);
     if (kycStatus !== current.kycStatus) changes.push(`KYC status ${current.kycStatus} → ${kycStatus}`);
+    if (changes.length === 0) return current;
     await client.query('UPDATE wf_clients SET risk_profile = $2, kyc_status = $3 WHERE client_id = $1', [id, riskProfile, kycStatus]);
-    await audit(client, 'client.updated', id, changes.join('; ') || 'Client details unchanged');
+    await audit(client, 'client.updated', id, changes.join('; '));
     return { ...current, riskProfile, kycStatus };
   });
 }
@@ -170,11 +171,10 @@ export async function createTransfer(input: {
     const [transfer] = await selected<WorkflowTransfer>(client,
       `WITH next AS (SELECT nextval('wf_transfer_seq') AS seq)
        INSERT INTO wf_transfers (transfer_id, seq, from_account_id, to_account_id, amount, status, reference)
-       SELECT 'T' || seq, seq, $1, $2, $3, 'Completed', $4 FROM next
+       SELECT 'T' || seq, seq, $1, $2, $3, 'Completed', COALESCE($4, 'TRF-' || seq) FROM next
        RETURNING transfer_id AS id, from_account_id AS "fromAccountId", to_account_id AS "toAccountId", amount, status, reference`,
       [input.fromAccountId, input.toAccountId, input.amount, input.reference]);
-    const reference = input.reference ?? transfer.id;
-    await audit(client, 'transfer.completed', transfer.id, `CAD ${formatCadAmount(Number(transfer.amount))} ${input.fromAccountId} → ${input.toAccountId} (ref ${reference})`);
+    await audit(client, 'transfer.completed', transfer.id, `CAD ${formatCadAmount(Number(transfer.amount))} ${input.fromAccountId} → ${input.toAccountId} (ref ${transfer.reference})`);
     return transfer;
   });
 }
@@ -219,11 +219,12 @@ export async function updateException(
     if (owner !== current.owner) changes.push(`Owner assigned: ${owner}`);
     if (status !== current.status) changes.push(`Status ${current.status} → ${status}`);
     if (note !== current.note) changes.push(`Note: ${note}`);
+    if (changes.length === 0) return current;
     const [updated] = await selected<WorkflowException>(client,
       `UPDATE wf_exceptions SET owner = $2, note = $3, status = $4 WHERE exception_id = $1
        RETURNING exception_id AS id, account_id AS "accountId", reason, status, owner, note`,
       [id, owner, note, status]);
-    await audit(client, 'exception.updated', id, changes.join('; ') || 'Exception details unchanged');
+    await audit(client, 'exception.updated', id, changes.join('; '));
     return updated;
   });
 }
