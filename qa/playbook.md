@@ -17,7 +17,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Confirm that `qa/tooling`, `playwright.config.ts` and `qa/cases.json` exist at that SHA. If the workbook is only attached, convert it in one child session first, and merge that data-only PR.
    - Re-resolve to the merged SHA and record `FROZEN_SHA`.
    - Prove that the app is unchanged with `git diff --stat $BASE_SHA $FROZEN_SHA -- . ':(exclude)qa' ':(exclude)playwright.config.ts' ':(exclude).agents'`, which must print nothing.
-   - Run `node qa/tooling/qa.mjs validate-cases` and `node --test qa/tooling/test/`. Both must pass. Do not require any tests to exist yet.
+   - Run `node qa/tooling/qa.mjs validate-cases` and `node --test qa/tooling/test/*.test.mjs`. Both must pass. Do not require any tests to exist yet.
 2. **Research Wiki-first, then Jira.**
    - Read the DeepWiki for `aaron-cog-gtm-gh-org/wealth-platform` (`devin_read_wiki_structure`, `devin_read_wiki_contents`, `devin_ask_wiki_question`) and list its documented user-facing behaviors per area.
    - Read KAN-12..KAN-18 through the Atlassian MCP.
