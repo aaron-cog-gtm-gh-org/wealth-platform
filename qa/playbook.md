@@ -17,7 +17,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Confirm that `qa/tooling`, `playwright.config.ts` and `qa/cases.json` exist at that SHA. If the workbook is only attached, convert it in one child session first, and merge that data-only PR.
    - Re-resolve to the merged SHA and record `FROZEN_SHA`.
    - Prove that the app is unchanged with `git diff --stat $BASE_SHA $FROZEN_SHA -- . ':(exclude)qa' ':(exclude)playwright.config.ts' ':(exclude).agents'`, which must print nothing.
-   - Run `node qa/tooling/qa.mjs validate-cases` and `node --test qa/tooling/test/*.test.mjs`. Both must pass. Do not require any tests to exist yet.
+   - Run `node qa/tooling/qa.mjs validate-cases` and `npm run qa:test`. Both must pass. Do not require any tests to exist yet.
 2. **Research Wiki-first, then Jira.**
    - Read the DeepWiki for `aaron-cog-gtm-gh-org/wealth-platform` (`devin_read_wiki_structure`, `devin_read_wiki_contents`, `devin_ask_wiki_question`) and list its documented user-facing behaviors per area.
    - Read KAN-12..KAN-18 through the Atlassian MCP.
@@ -29,14 +29,15 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Use the "QA child prompt" in Specifications, the QA child output schema, `notify_on_response=true` and no tags.
    - Pass each child its cases, its Jira story, and its gap list with IDs from its block, verbatim in the prompt. Children must not share or edit each other's spec files.
 4. **Collect and gate the baseline.**
-   - When each child settles, read its structured output and attachments (`devin_session_interact` with `get` and `get_attachments`).
+   - When each child settles, read its structured output and attachments with `devin_session_interact` (`get` and `get_attachments`); download segment ZIPs and videos with `download_attachment` using `{url}` or `{urls}`.
    - Review each test-only PR. Its diff may touch only `qa/tests/<area>.spec.ts`. Reject any app edit, `skip`/`fixme`/`fail`/`only`, retries, waits used as assertions, or assertions that do not check the case's expected results. Send such a child back with specific feedback.
-   - Fetch each child's evidence branch into `qa-artifacts/$RUN_ID/baseline/<area>/` (see `qa/README.md`, "Evidence transport").
-   - Do not re-run or replace a child's baseline segment.
+   - Collect exactly one valid baseline segment per area into `qa-artifacts/$RUN_ID/baseline/<area>/` with `unpack-segment`. A valid segment remains baseline evidence even when its tests show product failures.
+   - If an attempt is confirmed invalid because of an environment or test-authoring problem, preserve its ZIP unchanged as `qa-artifacts/$RUN_ID/rejected/<phase>-<label>.zip`, do not extract it, and add its ZIP name, reason, affected case IDs, and revision to `qa-artifacts/$RUN_ID/rejected/rejected.json`. Never classify a product failure as environmental or delete raw evidence.
+   - A child may re-run only after a confirmed environment/test-authoring failure, and must pack and attach that invalid attempt first. Never re-run to erase a product failure. Selector repairs go through the test-only PR and a new baseline label.
 5. **Merge the test-only PRs.**
    - Merge each approved test-only PR into `main` on its own, with `--no-ff` and no squashing, and never together with a fix. Main may go red. That is the honest baseline.
    - On the merged head (`TESTS_SHA`), run `node qa/tooling/qa.mjs validate-suite`. It must report `OK 50/50` plus the gap count. Fix any coverage error through the owning child, not by hand.
-   - Run `node qa/tooling/qa.mjs report --run-id $RUN_ID`. It must report no `MISSING_CASE`, `DUPLICATE_OWNERSHIP`, `MISSING_EVIDENCE`, `MANUAL_RESULT` or `REVISION_MISMATCH` errors. If one appears, have the owning child produce a new segment under a new label. Never edit results.
+   - Run `node qa/tooling/qa.mjs report --run-id $RUN_ID`. It must report no `MISSING_CASE`, `DUPLICATE_OWNERSHIP`, `MISSING_EVIDENCE`, `MANUAL_RESULT`, `REVISION_MISMATCH`, `API_REVISION_UNVERIFIED`, or `SEED_MISMATCH` errors. If one appears, have the owning child produce a new segment under a new label. Never edit results.
 6. **Triage failures by signature.**
    - Group the baseline failures (`failed` or `timedOut`) by signature: `<feature>|<normalized first error line>|<failing locator or URL>`. Use the children's `findings` as input, but confirm each one against the trace or video.
    - Deduplicate against existing PRs: run `gh pr list -R aaron-cog-gtm-gh-org/wealth-platform --state all --search "<case id> OR <key error text>"` and read the candidates.
@@ -44,13 +45,13 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Never classify a failure as expected without evidence.
 7. **Spawn remediation children**, one per new signature, using the "Remediation child prompt", up to the parallel limit. For each covered signature, spawn a child to retest that existing PR head; it does not open a new PR. Fix PRs stay **open and unmerged**, each with its own focused diff.
 8. **Collect the retests.**
-   - Fetch each retest evidence branch into `qa-artifacts/$RUN_ID/retest/<label>/`.
+   - Download each retest segment ZIP and videos from the child attachments. Extract accepted retests with `unpack-segment` under `qa-artifacts/$RUN_ID/retest/<label>/`; preserve confirmed invalid attempts under `rejected/` without extraction and record them in `rejected.json`.
    - Write `qa-artifacts/$RUN_ID/fixes.json` from the children's outputs: `{fixes:[{signature, caseIds, prUrl, fixRevision, retestLabel, existingPr}]}`.
    - Run `report`. It must show no `FIX_UNLINKED` errors. Investigate every `RETEST_REGRESSION` warning and every case that is still `failing`, and say why in the final report. Never mark a red case as fixed.
 9. **Package the evidence.**
-   - Run `node qa/tooling/qa.mjs bundle --run-id $RUN_ID`. It produces `qa-artifacts/$RUN_ID-evidence.zip`.
+   - Run `node qa/tooling/qa.mjs bundle --run-id $RUN_ID`. It produces `qa-artifacts/$RUN_ID-evidence.zip`, including preserved `rejected/**` archives and `rejected.json`.
    - Unzip the bundle to a fresh directory, open `<runId>/index.html` over `file://` in the browser, and spot-check the baseline and fixed-outcome tabs. At least one video per tab must play.
-   - Attach the zip, `index.html` and `report.md` with `message_user`.
+   - Attach the ZIP, `index.html` and `report.md` with `message_user`. Include an **Audit appendix** in the final report listing each rejected ZIP, its reason, affected case IDs, and revision.
 10. **Publish the structured output.**
     - Export the videos to upload, or reuse the child attachment URLs, and write `uploads.json` mapping each file name to its URL.
     - Run `node qa/tooling/qa.mjs structured --run-id $RUN_ID --uploads uploads.json`.
@@ -92,12 +93,10 @@ Do not change app code, qa/cases.json or qa/tooling.
 Never skip a test, add retries or weaken an assertion to make it pass. A red test is a finding: report it and do not fix the app.
 1. Run `node qa/tooling/qa.mjs validate-suite --area <area>`. It must print OK.
 2. Run `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id <RUN_ID> --phase baseline --label <area> --base-sha <sha> -- qa/tests/<area>.spec.ts`.
-   Run it exactly once. A non-zero exit from test failures is expected data. If the run broke for an
-   environment reason, re-run it under a new label (<area>-r2) and say why.
-3. Publish the segment as described in the "Evidence transport" section of qa/README.md.
-4. Run `export-videos` and attach every exported file with message_user.
-5. Open a test-only PR to main titled "QA <RUN_ID>: <area> UI tests". Its body lists the per-test statuses.
-6. Report the structured output.
+   A non-zero exit from test failures is expected product evidence; never re-run to get rid of a product failure.
+3. Run `pack-segment` and `export-videos` for the segment. Attach its ZIP and every exported per-case video with `message_user`. If the run is confirmed invalid for an environment or test-authoring reason, pack and attach that original ZIP first, then re-run under a new label (`<area>-r2`), pack and attach the new segment and videos, and report the reason, affected case IDs, and revision. Keep both ZIPs; do not replace or delete the original.
+4. Open a test-only PR to main titled "QA <RUN_ID>: <area> UI tests". Its body lists the per-test statuses.
+5. Report the structured output.
 ```
 
 ### Remediation child prompt (no tags)
@@ -108,19 +107,22 @@ Mode <new|existing>:
 - new: create a branch devin/qa-fix-<RUN_ID>-<slug> from TESTS_SHA <sha>.
 - existing: check out the head of PR #<n>. Do not open a new PR, and only retest unless the PR is clearly incomplete.
 Follow .agents/skills/wealth-qa/SKILL.md to start the app.
-1. Reproduce the failure first: `npx playwright test qa/tests/<area>.spec.ts -g "<ID>"`.
-2. Make the smallest app fix that makes the existing test pass. Do not modify anything under qa/.
-3. Commit and push, then run:
-   `node qa/tooling/qa.mjs run --run-id <RUN_ID> --phase retest --label fix-<slug> --base-sha $(git rev-parse HEAD) --fix-pr <pr url> -- qa/tests/<area>.spec.ts`
-4. Publish the segment as described in the "Evidence transport" section of qa/README.md.
-5. Run `export-videos` and attach every exported file.
-6. Open the PR (or update the existing one) titled "Fix <IDs>: <summary>". Link the Jira story and the failing cases. Leave it OPEN and do not merge it.
-7. Report the structured output, including any other test in that spec that now fails.
+1. Reproduce with `npx playwright test qa/tests/<area>.spec.ts -g "<ID>"`.
+2. Add a focused server/unit regression test next to the code being fixed (for example, `server/**/*.test.ts` or the existing unit-test location). It must fail before the fix. Never edit `qa/**` and never change the original QA assertions.
+3. Make the smallest app fix.
+4. Run `npm run lint`, `npm run typecheck`, and the relevant unit tests.
+5. Commit and push.
+6. Open a PR, or in existing mode use the existing PR. Title it "Fix <IDs>: <summary>", link the Jira story and failing cases, leave it OPEN, and do not merge it.
+7. Restart `npm run dev:full` so `/api/health` serves HEAD.
+8. Retest with the exact command:
+   `QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id <RUN_ID> --phase retest --label fix-<slug> --base-sha $(git rev-parse HEAD) --fix-pr <that PR URL> -- qa/tests/<area>.spec.ts`.
+9. Run `pack-segment` and `export-videos` for the retest; attach the segment ZIP and every exported per-case video.
+10. Report the structured output, including any other test in that spec that now fails.
 ```
 
 ### Structured output schemas
-- QA child: `{area, branch, prUrl, headSha, frozenSha, validateSuite, evidenceBranch, segment, tests:[{id,title,status,attempts,videoAttachment}], findings:[{signature,caseIds,summary,errorExcerpt}], gapTests:[{id,title,wikiRef,status}]}`.
-- Remediation child: `{signature, caseIds, prUrl, existingPr, fixSha, retestLabel, evidenceBranch, retest:[{id,status,videoAttachment}]}`.
+- QA child: `{area, branch, prUrl, headSha, frozenSha, validateSuite, segmentZip (attachment URL), rejectedAttempts:[{phase,label,segmentZip,reason,caseIds,revision}], segment, tests:[{id,title,status,attempts,videoAttachment}], findings:[{signature,caseIds,summary,errorExcerpt}], gapTests:[{id,title,wikiRef,status}]}`.
+- Remediation child: `{signature, caseIds, prUrl, existingPr, fixSha, retestLabel, segmentZip (attachment URL), rejectedAttempts:[{phase,label,segmentZip,reason,caseIds,revision}], retest:[{id,status,videoAttachment}]}`.
 - Parent: the output of `qa.mjs structured` (`runId`, revisions, seed, summary, `cases[]`, `gaps[]`, `errors[]`).
 
 ## Advice and Pointers
@@ -131,6 +133,7 @@ Follow .agents/skills/wealth-qa/SKILL.md to start the app.
 
 ## Forbidden Actions
 - Do not merge fix PRs, squash test and fix changes together, or push to `main` other than the test-only merges.
-- Do not edit, delete or re-run-over a baseline segment, a `results.json`, or `qa/cases.json` during a run.
+- Do not edit or delete raw evidence or re-run to erase a product failure. Preserve confirmed invalid-run ZIPs without extracting them; see the rejected-evidence procedure above.
+- Do not edit a `results.json` or `qa/cases.json` during a run.
 - Do not mark a case as passed or fixed without a Playwright recording at the recorded revision.
 - Do not add tags to child sessions, and do not write to Jira unless the user asks.

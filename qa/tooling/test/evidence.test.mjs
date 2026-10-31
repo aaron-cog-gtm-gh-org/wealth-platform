@@ -77,7 +77,12 @@ test('structured output replaces primary recording with the matching uploaded UR
     apiRevision: 'api-rev',
     baseRevision: 'origin-main',
     fixRevisions: ['fix-rev'],
-    seed: { id: 'seed' },
+    seed: {
+      id: 'seed',
+      files: [{ file: 'server/db/schema.sql', sha256: 'file-hash' }],
+      sha256: 'combined-seed',
+      reset: { files: ['server/db/workflow-seed.sql'], sha256: 'reset-seed' }
+    },
     summary: { total: 1, passed: 0, fixed: 1, failing: 0, flaky: 0, notRun: 0, gapTests: 0 },
     errors: [],
     cases: [{
@@ -105,6 +110,9 @@ test('structured output replaces primary recording with the matching uploaded UR
   assert.equal(projection.cases[0].area, 'clients');
   assert.equal(projection.cases[0].feature, 'Clients');
   assert.equal(projection.apiRevision, 'api-rev');
+  assert.equal(projection.seed.sha256, 'combined-seed');
+  assert.equal(projection.seed.reset.sha256, 'reset-seed');
+  assert.equal(Object.hasOwn(projection.seed, 'file'), false);
   assert.equal(projection.cases[0].initialRecording, uploads['WM-TC-001__baseline-original__retry1.webm']);
   assert.equal(projection.cases[0].retestRecording, uploads['WM-TC-001__retest-fixed__retry0.webm']);
   const written = writeStructured(root, report, uploads);

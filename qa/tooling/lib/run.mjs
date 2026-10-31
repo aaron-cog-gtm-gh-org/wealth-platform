@@ -61,8 +61,12 @@ export function compareApiRevision(value, headRevision) {
   if (!isSha.test(candidate)) {
     return {
       apiRevision: 'unknown',
-      warning: diagnostic('API_REVISION_UNKNOWN', 'api/health', 'API health response has no recognized revision SHA'),
-      error: null
+      warning: null,
+      error: diagnostic(
+        'API_REVISION_UNKNOWN',
+        'api/health',
+        'API health response has no recognized revision SHA; restart `npm run dev:full` from a git checkout or set `APP_REVISION`'
+      )
     };
   }
   if (isSha.test(head) && (candidate.startsWith(head) || head.startsWith(candidate))) {
@@ -164,8 +168,7 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
       if (comparison.error) errors.push(comparison.error);
     }
   } else {
-    const comparison = compareApiRevision(null, revision);
-    warnings.push(comparison.warning);
+    apiRevision = 'unknown';
   }
   if (baseSha) {
     const ancestor = git('git', ['merge-base', '--is-ancestor', baseSha, 'HEAD'], cwd);
@@ -180,13 +183,10 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
   }
   if (errors.length) return { errors: sortedDiagnostics(errors), warnings: sortedDiagnostics(warnings), apiRevision, exitCode: 2 };
 
-  const defaultSeed = ['server/db/seed.sql', 'server/db/seed.ts'].map((file) => path.join(cwd, file)).find((file) => fs.existsSync(file));
-  const seedFile = env.QA_SEED_FILE ? path.resolve(cwd, env.QA_SEED_FILE) : defaultSeed;
-  const seed = {
-    id: env.QA_SEED ?? null,
-    file: seedFile ? normalizeRelative(path.relative(cwd, seedFile)) : null,
-    sha256: seedFile ? crypto.createHash('sha256').update(fs.readFileSync(seedFile)).digest('hex') : null
-  };
+  const { seed, errors: seedErrors } = collectSeedMetadata({ cwd, env });
+  if (seedErrors.length) {
+    return { errors: sortedDiagnostics(seedErrors), warnings: sortedDiagnostics(warnings), apiRevision, exitCode: 2 };
+  }
   const pw = playwrightInfo();
   const processEnv = { ...env, QA_SEGMENT_DIR: normalizeRelative(path.relative(cwd, segmentDir)) };
   const meta = {
@@ -224,4 +224,56 @@ export async function runSegment({ runId, phase, label, baseSha = null, fixPr = 
   const normalized = normalizeSegment(segmentDir, { cwd });
   if (normalized.errors.length) printDiagnostics(normalized.errors);
   return { segmentDir, meta, summary: normalized.summary, errors: normalized.errors, warnings: sortedDiagnostics(warnings), exitCode: normalized.errors.length ? 2 : result.code };
+}
+
+const defaultSeedFiles = ['server/db/schema.sql', 'server/db/seed.sql', 'server/db/workflow-seed.sql'];
+const defaultResetFiles = ['server/db/workflow-seed.sql'];
+
+function digestSeedFiles(files) {
+  const content = files.map(({ file, sha256 }) => `${file}\0${sha256}\n`).join('');
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+export function collectSeedMetadata({ cwd = process.cwd(), env = process.env } = {}) {
+  const errors = [];
+  const readFiles = (setting, defaults) => {
+    const requested = setting === undefined ? defaults : String(setting).split(',');
+    return requested.flatMap((value) => {
+      const file = value.trim();
+      const absolute = path.resolve(cwd, file);
+      const relative = path.relative(cwd, absolute);
+      const repoRelative = file && !path.isAbsolute(file) && relative !== '..'
+        && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+      const isFile = repoRelative && (() => {
+        try {
+          return fs.statSync(absolute).isFile();
+        } catch {
+          return false;
+        }
+      })();
+      if (!isFile) {
+        errors.push(diagnostic('SEED_FILE_MISSING', file || '.', `seed file is missing or not repo-relative: ${file || '(empty path)'}`));
+        return [];
+      }
+      const repoPath = normalizeRelative(relative);
+      return [{
+        file: repoPath,
+        sha256: crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex')
+      }];
+    });
+  };
+  const files = readFiles(env.QA_SEED_FILES, defaultSeedFiles);
+  const resetFiles = readFiles(env.QA_RESET_FILES, defaultResetFiles);
+  return {
+    seed: {
+      id: env.QA_SEED ?? null,
+      files,
+      sha256: digestSeedFiles(files),
+      reset: {
+        files: resetFiles.map(({ file }) => file),
+        sha256: digestSeedFiles(resetFiles)
+      }
+    },
+    errors
+  };
 }

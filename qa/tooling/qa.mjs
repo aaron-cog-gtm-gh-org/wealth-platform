@@ -9,6 +9,7 @@ import { exportVideos } from './lib/export-videos.mjs';
 import { normalizeSegment } from './lib/normalize.mjs';
 import { buildReport } from './lib/report.mjs';
 import { runSegment } from './lib/run.mjs';
+import { packSegment, unpackSegment } from './lib/segments.mjs';
 import { parsePlaywrightList, suiteSuccessMessage, validateSuite } from './lib/suite.mjs';
 import { readUploads, writeStructured } from './lib/structured.mjs';
 import { bundleRun } from './lib/bundle.mjs';
@@ -27,6 +28,8 @@ Commands:
                                                         Collect segment evidence into reports
   structured --run-id ID [--uploads FILE]               Write and print structured-output.json
   export-videos --segment DIR --out DIR                  Export attempt recordings for attachment upload
+  pack-segment --segment DIR --out FILE.zip              Package a segment for attachment transport
+  unpack-segment --zip FILE --into DIR                   Safely extract a segment ZIP
   bundle --run-id ID [--artifacts DIR] [--out FILE] [--allow-errors]
                                                         Create a deterministic evidence ZIP
   --help                                                Show this help
@@ -156,6 +159,28 @@ export async function main(argv = process.argv.slice(2)) {
     }
     const result = exportVideos(path.resolve(flags.segment), path.resolve(flags.out));
     if (!result.errors.length) process.stdout.write(`Exported ${result.manifest.length} video attempts\n`);
+    return outputResult(result.errors, []);
+  }
+
+  if (command === 'pack-segment') {
+    if (!flags.segment || !flags.out) {
+      return outputResult([diagnostic('MISSING_ARGUMENT', '.', 'pack-segment requires --segment and --out')], []);
+    }
+    const result = await packSegment(path.resolve(flags.segment), path.resolve(flags.out));
+    if (!result.errors.length) {
+      process.stdout.write(`Packed ${result.entryCount} entries (${result.size} bytes) to ${relativeDisplay(result.zipPath, repoRoot)}\n`);
+    }
+    return outputResult(result.errors, []);
+  }
+
+  if (command === 'unpack-segment') {
+    if (!flags.zip || !flags.into) {
+      return outputResult([diagnostic('MISSING_ARGUMENT', '.', 'unpack-segment requires --zip and --into')], []);
+    }
+    const result = unpackSegment(path.resolve(flags.zip), path.resolve(flags.into));
+    if (!result.errors.length) {
+      process.stdout.write(`Unpacked ${result.entryCount} entries to ${relativeDisplay(result.targetDir, repoRoot)}\n`);
+    }
     return outputResult(result.errors, []);
   }
 

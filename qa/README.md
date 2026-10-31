@@ -2,6 +2,17 @@
 
 The harness validates the case workbook and Playwright suite, runs a frozen test segment, then collects child evidence into a report and portable ZIP. It does not infer passing results: a missing result is `not-run`, and missing recordings are collector errors.
 
+## Setup
+
+`@playwright/test` 1.60.0 and the QA scripts are pinned in the repository. On a fresh checkout, run:
+
+```sh
+npm ci
+npx playwright install --with-deps chromium
+```
+
+The `npm run qa`, `npm run qa:test`, `npm run typecheck:qa`, and `npm run lint` scripts already exist.
+
 ## Child run
 
 Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 50-case suite.
@@ -19,9 +30,9 @@ node qa/tooling/qa.mjs export-videos --segment "qa-artifacts/$RUN_ID/baseline/cl
 
 Repeat `validate-suite` and `run` for each area slug. Workbook `feature` values are title-case display labels; route, suite filter, and spec names use the lowercase `area` slug. Tests import helpers from `qa/tooling/fixtures.ts`, register exactly one `caseTest` per workbook case, use `openArea`, and assert visible roles or text. Gaps use `gapTest(id, { title, area, wikiRef }, body)` and belong in that area's spec.
 
-`--base-sha` records the frozen starting revision; committed changes outside `qa/tests/**` since that revision are rejected, while uncommitted area spec edits are allowed. The API health response includes its startup Git revision (or `APP_REVISION` override); a mismatch blocks the run, while an unknown revision warns and continues.
+`--base-sha` records the frozen starting revision; committed changes outside `qa/tests/**` since that revision are rejected, while uncommitted area spec edits are allowed. The API health response includes its startup Git revision (or `APP_REVISION` override). A mismatch blocks the run with `API_REVISION_MISMATCH`; a missing, non-SHA, or unknown revision blocks it with `API_REVISION_UNKNOWN`. `--skip-preflight` records `apiRevision: "unknown"`; reports flag that evidence with `API_REVISION_UNVERIFIED`.
 
-Set `QA_RETRIES=1` when a deliberate retry is needed. `run` creates a fresh segment directory and refuses collisions; the Playwright config itself can reload an existing directory. Each test resets through `POST /api/test/reset`, captures `before.png` from `openArea` and attaches `after.png` automatically.
+Baseline and retest examples use `QA_RETRIES=0`. `run` creates a fresh segment directory and refuses collisions; the Playwright config itself can reload an existing directory. Do not use Playwright retries or new runs to suppress product failures. Each test resets through `POST /api/test/reset`, captures `before.png` from `openArea` and attaches `after.png` automatically.
 
 After recording the baseline and making a fix, run a fresh retest segment:
 
@@ -31,21 +42,51 @@ QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --labe
 
 Record each verified fix in `qa-artifacts/$RUN_ID/fixes.json` under a `fixes` array, with its `signature`, `caseIds`, `prUrl`, `fixRevision`, and `retestLabel`. `fixRevision` must equal the revision captured by that retest segment.
 
-### Child evidence uploads
+### Child evidence attachments
 
-Export every retry's video and available after screenshot to unique flat filenames before uploading them as Devin attachments:
+Package each segment and export every retry's video plus available after screenshot to unique flat filenames:
 
 ```sh
+node qa/tooling/qa.mjs pack-segment \
+  --segment "qa-artifacts/$RUN_ID/baseline/clients" \
+  --out "qa-uploads/$RUN_ID/clients-baseline.zip"
 node qa/tooling/qa.mjs export-videos \
   --segment "qa-artifacts/$RUN_ID/baseline/clients" \
   --out "qa-uploads/$RUN_ID/clients"
 ```
 
-The command writes `manifest.json` with the relative source path and attempt status, and refuses to replace an existing export. After uploading, save a JSON object mapping each exported video filename to its URL, then pass it to `structured`; recording fields use the matching upload URL when present and otherwise retain their relative evidence path.
+Attach the segment ZIP and every per-case video file from the export directory with `message_user`. The export command writes `manifest.json` with each relative source path and attempt status, and refuses to replace an existing export. After upload, save a JSON object mapping each exported video filename to its URL, then pass it to `structured`; recording fields use the matching upload URL when present and otherwise retain their relative evidence path. Include the segment ZIP attachment URL as `segmentZip` in child structured output.
 
 ## Parent collection
 
-Fetch every child segment, place the segment directories in the layout below, then collect the report and bundle:
+Read each child's attachments with `devin_session_interact` using `get_attachments`. Download the segment ZIP and videos with `download_attachment`, passing `{url}` for one attachment or `{urls}` for several, and save them locally. Use `unpack-segment` to validate and extract each accepted segment. Collect exactly one valid baseline segment per area under `qa-artifacts/$RUN_ID/baseline/<area>/`; keep all valid product failures in the baseline.
+
+If a run is confirmed invalid because of an environment or test-authoring problem, do not extract it. Preserve the original ZIP untouched as `qa-artifacts/$RUN_ID/rejected/<phase>-<label>.zip` and add an entry to `qa-artifacts/$RUN_ID/rejected/rejected.json` with the ZIP name, reason, affected case IDs, and revision. For example:
+
+```json
+{
+  "rejected": [
+    {
+      "zip": "baseline-clients-r1.zip",
+      "reason": "The browser process could not start because the runtime dependency was missing.",
+      "caseIds": ["WM-TC-001"],
+      "revision": "0123456789abcdef"
+    }
+  ]
+}
+```
+
+Never classify a product failure as environmental or delete raw evidence. Include an **Audit appendix** in the final report listing these rejected ZIPs and reasons. `bundle` includes everything under `rejected/`. Selector repairs go through the test-only PR workflow and a new baseline label.
+
+```sh
+node qa/tooling/qa.mjs unpack-segment \
+  --zip "qa-downloads/$RUN_ID/clients-baseline.zip" \
+  --into "qa-artifacts/$RUN_ID/baseline/clients"
+```
+
+Invalid retest attempts follow the same preservation rule; accepted retests are extracted under `qa-artifacts/$RUN_ID/retest/<label>/`. `unpack-segment` rejects unsafe ZIP paths and requires the embedded run ID, phase, and label to match the target path.
+
+After collecting accepted segments, generate the report and bundle:
 
 ```sh
 node qa/tooling/qa.mjs report --run-id "$RUN_ID"
@@ -61,18 +102,21 @@ node qa/tooling/qa.mjs structured \
   --uploads "qa-uploads/$RUN_ID/uploads.json"
 ```
 
-`bundle` includes reports and every segment's metadata, results, Playwright evidence, and HTML report; collector errors block the bundle unless `--allow-errors` is supplied.
+`bundle` includes reports, every accepted segment's metadata/results/Playwright evidence/HTML report, and `rejected/**`; collector errors (including `API_REVISION_UNVERIFIED` and baseline `SEED_MISMATCH`) block it unless `--allow-errors` is supplied.
 
 ```text
 qa-artifacts/
 └── <run-id>/
-    ├── baseline/<label>/
+    ├── baseline/<area>/
     │   ├── run-meta.json
     │   ├── results.json
     │   ├── summary.json
     │   ├── test-results/
     │   └── html/
     ├── retest/<label>/...
+    ├── rejected/
+    │   ├── rejected.json
+    │   └── <phase>-<label>.zip
     ├── fixes.json
     ├── report.json
     ├── report.md
@@ -94,27 +138,30 @@ qa-artifacts/
 | `QA_SLOW_MO` | `0` | Browser launch delay in milliseconds |
 | `QA_CHROME` | Playwright Chromium | Optional browser executable |
 | `QA_SEED` | `null` | Seed identifier recorded in metadata |
-| `QA_SEED_FILE` | First existing `server/db/seed.sql`, `server/db/seed.ts` | Seed file recorded and hashed |
+| `QA_SEED_FILES` | `server/db/schema.sql,server/db/seed.sql,server/db/workflow-seed.sql` | Ordered, comma-separated repo-relative files included in the combined seed digest |
+| `QA_RESET_FILES` | `server/db/workflow-seed.sql` | Ordered, comma-separated repo-relative files included in the reset digest |
 | `APP_REVISION` | Git SHA captured at API startup | Optional API revision override |
 
-The app contract is `GET /api/health` → `{ "status": "ok", "revision": "<SHA>" }` and `POST /api/test/reset` → 2xx after reseeding. Reset is gated by `ENABLE_TEST_RESET=1`. The app must support `/?screen=workspace&area=<area-slug>`.
+The app contract is `GET /api/health` → `{ "status": "ok", "revision": "<SHA>" }` and `POST /api/test/reset` → 2xx after reseeding. Reset is gated by `ENABLE_TEST_RESET=1`. The app must support `/?screen=workspace&area=<area-slug>`. `npm run db:setup` loads `schema.sql`, `seed.sql`, and `workflow-seed.sql`; each test reset reloads only `workflow-seed.sql`. Metadata records per-file hashes and a combined digest over ordered `<file>\0<sha256>\n` lines, plus the reset digest. Missing files block the run with `SEED_FILE_MISSING`.
 
-Parent setup requires `npm i -D @playwright/test@1.48.2`, `npx playwright install --with-deps chromium`, and adding `qa-artifacts/` to `.gitignore`. Suggested scripts are `"qa": "node qa/tooling/qa.mjs"` and `"qa:test": "node --test qa/tooling/test/*.test.mjs"`. The app uses Docker `postgres:16-alpine` on `localhost:5432`; start it with `npm run db:up && npm run db:wait && npm run db:setup`, then run `ENABLE_TEST_RESET=1 npm run dev:full`.
+The app uses Docker `postgres:16-alpine` on `localhost:5432`; start it with `npm run db:up && npm run db:wait && npm run db:setup`, then run `ENABLE_TEST_RESET=1 npm run dev:full`.
 
-## Evidence transport (macOS and Linux)
+## Evidence transport
 
-Children publish only their segment directory to an orphan evidence branch:
-
-```sh
-SEG=qa-artifacts/$RUN_ID/$PHASE/$LABEL; ORIGIN=$(git remote get-url origin)
-( cd "$SEG" && git init -q && git checkout -q -b "qa-evidence/$RUN_ID/$PHASE-$LABEL" && git add -A && git -c user.name="$(git -C "$OLDPWD" config user.name)" -c user.email="$(git -C "$OLDPWD" config user.email)" commit -qm "QA evidence $RUN_ID $PHASE/$LABEL" && git push -q "$ORIGIN" HEAD && rm -rf .git )
-```
-
-The parent fetches and extracts each evidence ref:
+Children attach segment ZIPs and videos through the session. To create a transport ZIP:
 
 ```sh
-git fetch origin "refs/heads/qa-evidence/$RUN_ID/*:refs/remotes/origin/qa-evidence/$RUN_ID/*"
-mkdir -p "qa-artifacts/$RUN_ID/<phase>/<label>" && git archive <ref> | tar -x -C "qa-artifacts/$RUN_ID/<phase>/<label>"
+node qa/tooling/qa.mjs pack-segment \
+  --segment "qa-artifacts/$RUN_ID/$PHASE/$LABEL" \
+  --out "qa-uploads/$RUN_ID/$LABEL-$PHASE.zip"
 ```
 
-The upload helper names each recording with its case ID, phase, label, and retry so attachment URLs can be mapped back by `structured --uploads`.
+The parent reads the child's attachment URLs with `devin_session_interact` `get_attachments`, downloads them using `download_attachment` (`{url}` or `{urls}`), and safely unpacks each accepted segment:
+
+```sh
+node qa/tooling/qa.mjs unpack-segment \
+  --zip "qa-downloads/$RUN_ID/$LABEL-$PHASE.zip" \
+  --into "qa-artifacts/$RUN_ID/$PHASE/$LABEL"
+```
+
+Never publish evidence on Git branches. Keep confirmed invalid-run ZIPs untouched under `rejected/` without extracting them; record them in `rejected.json` and the final Audit appendix.

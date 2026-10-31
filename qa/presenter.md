@@ -5,6 +5,7 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 ## Before the demo (≈5 min)
 - Open the parent session. Its structured output lists every case with a status, a recording, and a fix PR where there is one.
 - Unzip `<runId>-evidence.zip` and open `<runId>/index.html` locally. It works offline over `file://`.
+- Keep the child segment ZIP and its per-case video attachments available alongside the report.
 - Have these open in tabs:
   - one QA child session
   - one remediation child session
@@ -23,8 +24,8 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
    - the tests are untouched
    - the PR is still open, not merged
    Then open the **Fixed outcome (retest)** tab and play the same case going green at the fix SHA. The original red baseline row is still there.
-7. **Traceability (1 min).** Click a row's Jira link and fix PR link. Then show the revisions, seed hash and run ID in the report header.
-8. **Wrap (1 min).** Read the summary counts and name any case that is still failing, with its reason.
+7. **Traceability (1 min).** Click a row's Jira link and fix PR link. Then show the revisions, combined seed and reset digests, and run ID in the report header.
+8. **Wrap (1 min).** Read the summary counts, name any case that is still failing with its reason, and show the Audit appendix for any confirmed invalid-run ZIPs.
 
 ## Answers to likely questions
 - **Why per-test videos and not one long recording?** Each row has its own evidence, so a reviewer can jump straight to the case they care about. Retried attempts keep separate recordings.
