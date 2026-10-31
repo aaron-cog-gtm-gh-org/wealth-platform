@@ -5,7 +5,7 @@ export async function getSettlementExceptions(queueName: string): Promise<Settle
   const [queue] = await query<SettlementExceptionsDto['queue']>(
     `SELECT queue_name AS "name", opened_today AS "openedToday", cleared_today AS "clearedToday",
             median_resolve_minutes AS "medianResolveMinutes", auto_assign_time AS "autoAssignTime", buy_in_day AS "buyInDay"
-       FROM ops_queues WHERE queue_name = :queueName`, { queueName });
+       FROM ops_queues WHERE queue_name = $1`, [queueName]);
   if (!queue) return null;
   const [causes, exceptions] = await Promise.all([
     query<SettlementExceptionsDto['causes'][number]>(
@@ -14,8 +14,8 @@ export async function getSettlementExceptions(queueName: string): Promise<Settle
     query<SettlementExceptionsDto['exceptions'][number]>(
       `SELECT exception_id AS "id", age_days AS "ageDays", settlement_value AS "value", instrument_name AS "instrument", side AS "side",
               account_no AS "accountNo", counterparty AS "counterparty", cause_name AS "cause", owner_name AS "owner"
-         FROM settlement_exceptions WHERE queue_name = :queueName
-        ORDER BY age_days DESC, settlement_value DESC, exception_id`, { queueName }),
+         FROM settlement_exceptions WHERE queue_name = $1
+        ORDER BY age_days DESC, settlement_value DESC, exception_id`, [queueName]),
   ]);
   return { queue, causes, exceptions };
 }

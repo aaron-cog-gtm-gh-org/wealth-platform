@@ -51,7 +51,24 @@ Run shell-verifiable checks before merging application changes:
 npm run typecheck
 npm run lint
 npm run build
+npm run test:unit
+npm run test:backend
 npm run test:db
 ```
 
 The database check uses its own disposable PostgreSQL environment. Browser QA requires the running app and follows the [QA playbook](qa/playbook.md); passing an API check is not a substitute for a recorded browser test.
+
+## Data (PostgreSQL)
+
+All domain data is served by the API in `server/`, backed by PostgreSQL.
+
+`npm run db:down` stops the local database container. `npm run db:reset` reloads the schema and all
+seed data. `npm run api:test` enables the loopback-only reset endpoint for local QA and should not
+be used as a production command.
+
+The workflow API is mounted at `/api/workflows`: `GET /bootstrap`, `PATCH /clients/:id`,
+`POST /orders`, `POST /orders/:id/cancel`, `POST /transfers`, `PUT /allocations`,
+`POST /rebalance/preview`, and `PATCH /exceptions/:id`.
+
+See [docs/postgres-setup.md](docs/postgres-setup.md) for database configuration, Docker and local
+PostgreSQL setup, database isolation, and backend tests.

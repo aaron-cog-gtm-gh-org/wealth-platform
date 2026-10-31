@@ -1,20 +1,19 @@
 import type { AddressInfo } from 'node:net';
 import { GenericContainer, Wait } from 'testcontainers';
+import type { WorkflowBootstrap } from '../workflows/types';
 
 /**
- * End-to-end check against a throwaway Oracle: starts Oracle Database Free with Testcontainers,
+ * End-to-end check against a throwaway PostgreSQL container with Testcontainers,
  * loads schema + seed, boots the API on a random port and asserts on the seeded data.
  */
-const container = await new GenericContainer('gvenzl/oracle-free:23-slim-faststart')
-  .withEnvironment({ ORACLE_PASSWORD: 'oracle', APP_USER: 'wealth', APP_USER_PASSWORD: 'wealth' })
-  .withExposedPorts(1521)
-  .withWaitStrategy(Wait.forLogMessage('DATABASE IS READY TO USE!'))
-  .withStartupTimeout(300_000)
+const container = await new GenericContainer('postgres:16-alpine')
+  .withEnvironment({ POSTGRES_USER: 'wealth', POSTGRES_PASSWORD: 'wealth', POSTGRES_DB: 'wealth' })
+  .withExposedPorts(5432)
+  .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
+  .withStartupTimeout(120_000)
   .start();
 
-process.env.ORACLE_USER = 'wealth';
-process.env.ORACLE_PASSWORD = 'wealth';
-process.env.ORACLE_CONNECT_STRING = `${container.getHost()}:${container.getMappedPort(1521)}/FREEPDB1`;
+process.env.DATABASE_URL = `postgres://wealth:wealth@${container.getHost()}:${container.getMappedPort(5432)}/wealth`;
 
 const { setupDatabase } = await import('./setup');
 const { closePool } = await import('./pool');
@@ -40,7 +39,15 @@ try {
   const rebalance = await get('/households/HH-WHITFIELD/rebalance');
   check('proposal', rebalance.proposal.id, 'RB-2026-0412');
   check('proposal trades', rebalance.trades.length, 7);
-  console.log('Oracle container check passed');
+  const workflowResponse = await fetch(`${base}/workflows/bootstrap`);
+  const workflows = await workflowResponse.json() as WorkflowBootstrap;
+  check('workflow clients', workflows.clients.length, 2);
+  check('workflow accounts', workflows.accounts.length, 3);
+  check('workflow orders', workflows.orders.length, 0);
+  check('workflow transfers', workflows.transfers.length, 0);
+  check('workflow audit', workflows.audit.length, 0);
+  check('workflow holdings price is numeric', typeof workflows.positions[0].price, 'number');
+  console.log('PostgreSQL container check passed');
 } finally {
   server.close();
   await closePool();
