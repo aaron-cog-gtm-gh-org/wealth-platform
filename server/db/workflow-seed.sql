@@ -1,0 +1,17 @@
+TRUNCATE wf_audit, wf_allocations, wf_exceptions, wf_transfers, wf_orders, wf_positions, wf_accounts, wf_clients CASCADE;
+ALTER SEQUENCE wf_order_seq RESTART WITH 1001;
+ALTER SEQUENCE wf_transfer_seq RESTART WITH 1001;
+ALTER SEQUENCE wf_audit_seq RESTART WITH 1001;
+INSERT INTO wf_clients (client_id, name, risk_profile, kyc_status) VALUES ('C1001', 'Eleanor Whitfield', 'Moderate', 'Current');
+INSERT INTO wf_clients (client_id, name, risk_profile, kyc_status) VALUES ('C1002', 'James Chen', 'Conservative', 'Review due');
+INSERT INTO wf_accounts (account_id, client_id, name, currency, cash) VALUES ('A1001', 'C1001', 'Whitfield Investment', 'CAD', 25000.00);
+INSERT INTO wf_accounts (account_id, client_id, name, currency, cash) VALUES ('A1002', 'C1001', 'Whitfield Savings', 'CAD', 10000.00);
+INSERT INTO wf_accounts (account_id, client_id, name, currency, cash) VALUES ('A1003', 'C1002', 'Chen USD Investment', 'USD', 15000.00);
+INSERT INTO wf_positions (position_id, account_id, symbol, name, quantity, price) VALUES ('P1001', 'A1001', 'RY', 'Royal Bank of Canada', 100, 140.0000);
+INSERT INTO wf_positions (position_id, account_id, symbol, name, quantity, price) VALUES ('P1002', 'A1002', 'BMO', 'Bank of Montreal', 80, 125.0000);
+INSERT INTO wf_positions (position_id, account_id, symbol, name, quantity, price) VALUES ('P1003', 'A1003', 'MSFT', 'Microsoft Corporation', 40, 420.0000);
+INSERT INTO wf_exceptions (exception_id, account_id, reason, status, owner, note) VALUES ('EX1001', 'A1001', 'Missing settlement instructions', 'Open', NULL, NULL);
+INSERT INTO wf_exceptions (exception_id, account_id, reason, status, owner, note) VALUES ('EX1002', 'A1003', 'Cash reconciliation', 'Open', NULL, NULL);
+INSERT INTO wf_allocations (asset_class, display_order, current_weight, target_weight) VALUES ('Equity', 1, 60.00, 60.00);
+INSERT INTO wf_allocations (asset_class, display_order, current_weight, target_weight) VALUES ('Fixed income', 2, 30.00, 30.00);
+INSERT INTO wf_allocations (asset_class, display_order, current_weight, target_weight) VALUES ('Cash', 3, 10.00, 10.00);

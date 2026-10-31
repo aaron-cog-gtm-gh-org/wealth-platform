@@ -11,6 +11,7 @@ npm run build      # typecheck + production build
 ```
 
 Screens are addressed with query parameters: `?screen=c360|portfolio|orders|alts|exceptions|home|activity|money` and `&state=Populated|Loading|Empty|Error`.
+The workflow workspace uses `?screen=workspace&area=clients|portfolio|orders|money|rebalance|settlements`.
 
 ## Layout
 
@@ -22,16 +23,23 @@ Screens are addressed with query parameters: `?screen=c360|portfolio|orders|alts
 
 `npm run visual-diff` screenshots every screen × data state plus scripted interaction flows in both the app and the mockup and pixel-diffs them into `visual-diff-output/`. It expects the dev server on `:5173` and the mockup folder served over HTTP (e.g. `python -m http.server 8090 -d design/mockups`). Override with `APP_URL`, `MOCK_URL`, `CHROME`, `WIDTH`, `HEIGHT`.
 
-## Data (Oracle)
+## Data (PostgreSQL)
 
-All domain data lives in Oracle and is served by the API in `server/` (`node-oracledb`, thin mode).
-For local testing, run a throwaway Oracle Database Free container:
+All domain data is served by the API in `server/`, backed by PostgreSQL.
 
 ```sh
-npm run db:up && npm run db:wait   # disposable Oracle in Docker
-npm run db:setup                   # schema + seed (server/db/schema.sql, server/db/seed.sql)
-npm run dev:full                   # API :3001 + app :5173
+npm run db:up && npm run db:wait
+npm run db:setup
+npm run dev:full
 ```
 
-See [docs/oracle-setup.md](docs/oracle-setup.md) for configuration, the tmpfs (RAM-only) variant and
-the Testcontainers check (`npm run test:db`).
+`npm run db:down` stops the local database container. `npm run db:reset` reloads the schema and all
+seed data. `npm run api:test` enables the loopback-only reset endpoint for local QA and should not
+be used as a production command.
+
+The workflow API is mounted at `/api/workflows`: `GET /bootstrap`, `PATCH /clients/:id`,
+`POST /orders`, `POST /orders/:id/cancel`, `POST /transfers`, `PUT /allocations`,
+`POST /rebalance/preview`, and `PATCH /exceptions/:id`.
+
+See [docs/postgres-setup.md](docs/postgres-setup.md) for database configuration, Docker and local
+PostgreSQL setup, database isolation, and backend tests.
