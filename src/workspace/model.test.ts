@@ -3,7 +3,7 @@ import test from 'node:test';
 import type { Bootstrap } from './api';
 import {
   availableCash, heldQuantity, instruments, openSellQuantity, readArea,
-  reservedCash, sortCurrencies, totalsByCurrency, workspaceHref, orderTicketError,
+  reservedCash, sortCurrencies, totalsByCurrency, workspaceHref, orderTicketError, ticketAvailability,
 } from './model';
 
 function fixture(): Bootstrap {
@@ -66,17 +66,44 @@ test('instrument choices are unique and stable', () => {
   assert.deepEqual(instruments(data).map(instrument => instrument.symbol), ['BMO', 'RY']);
 });
 
-test('order ticket errors expire when workspace data is reloaded', () => {
+test('sell ticket errors expire only when relevant share availability changes', () => {
   const data = fixture();
   const rejection = '30 shares available to sell.';
-  assert.equal(orderTicketError(rejection, data, data), rejection);
-  assert.equal(orderTicketError('Choose an account.', data, data), 'Choose an account.');
-  assert.equal(orderTicketError(null, data, data), null);
+  const snapshot = ticketAvailability(data, 'A1001', 'RY', 'Sell');
+  assert.equal(snapshot.value, 30);
+  const reloaded = fixture();
+  reloaded.positions[1].quantity = 1;
+  reloaded.orders.push({ ...reloaded.orders[3], id: 'other-symbol', symbol: 'BMO' });
+  reloaded.orders.push({ ...reloaded.orders[3], id: 'other-account', accountId: 'A1002' });
+  const unchanged = ticketAvailability(reloaded, 'A1001', 'RY', 'Sell');
+  assert.equal(orderTicketError(rejection, snapshot, unchanged), rejection);
+  assert.equal(orderTicketError(null, snapshot, unchanged), null);
   const cancelled = fixture();
   cancelled.orders[3].status = 'Cancelled';
-  assert.equal(orderTicketError(rejection, data, cancelled), null);
-  assert.equal(orderTicketError('Choose an account.', data, cancelled), null);
-  assert.equal(orderTicketError(rejection, data, fixture()), null);
-  assert.equal(orderTicketError(null, data, fixture()), null);
-  assert.equal(orderTicketError(rejection, cancelled, cancelled), rejection);
+  const released = ticketAvailability(cancelled, 'A1001', 'RY', 'Sell');
+  assert.equal(released.value, 100);
+  assert.equal(orderTicketError(rejection, snapshot, released), null);
+  reloaded.positions[0].quantity = 101;
+  assert.equal(orderTicketError(rejection, snapshot, ticketAvailability(reloaded, 'A1001', 'RY', 'Sell')), null);
+});
+
+test('buy ticket errors expire only when account cash availability changes', () => {
+  const data = fixture();
+  const snapshot = ticketAvailability(data, 'A1001', 'RY', 'Buy');
+  assert.equal(snapshot.value, 23600);
+  const reloaded = fixture();
+  reloaded.accounts[1].cash = 0;
+  reloaded.orders[2].status = 'Cancelled';
+  reloaded.orders[3].status = 'Cancelled';
+  reloaded.positions[0].quantity = 1;
+  const rejection = 'Insufficient available cash.';
+  assert.equal(orderTicketError(rejection, snapshot, ticketAvailability(reloaded, 'A1001', 'RY', 'Buy')), rejection);
+  reloaded.orders[0].status = 'Cancelled';
+  assert.equal(orderTicketError(rejection, snapshot, ticketAvailability(reloaded, 'A1001', 'RY', 'Buy')), null);
+  reloaded.orders[0].status = 'Open';
+  reloaded.accounts[0].cash += 1;
+  assert.equal(orderTicketError(rejection, snapshot, ticketAvailability(reloaded, 'A1001', 'RY', 'Buy')), null);
+  assert.equal(ticketAvailability(data, '', '', 'Buy').value, null);
+  assert.equal(ticketAvailability(data, 'A1001', '', 'Sell').value, null);
+  assert.equal(orderTicketError(null, { value: null }, snapshot), null);
 });
