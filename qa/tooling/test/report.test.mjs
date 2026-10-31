@@ -38,6 +38,8 @@ test('report collects a passing baseline case', (t) => {
   assert.equal(result.report.cases[0].finalStatus, 'passed');
   assert.equal(result.report.summary.passed, 1);
   assert.equal(result.report.cases[0].area, 'clients');
+  assert.deepEqual(result.report.rejectedAttempts, []);
+  assert.match(fs.readFileSync(path.join(fixture.root, 'artifacts', fixture.runId, 'report.md'), 'utf8'), /No rejected attempts\./);
   assert.equal(result.report.cases[0].feature, 'Clients');
   assert.equal(result.report.baselineRows[0].primaryRecording, 'baseline/clients/test-results/wm-tc-001-retry0/video.webm');
   const structured = projectStructured(result.report);
@@ -72,6 +74,43 @@ test('structured evidence traces each case and gap to its app and API revision',
   assert.equal(structured.cases[0].finalStatus, 'fixed');
   assert.equal(structured.gaps[0].revision, 'abcdef0123456789');
   assert.equal(structured.gaps[0].apiRevision, 'abcdef0123456789');
+});
+
+test('report includes rejected-attempt audit links without counting them as results', (t) => {
+  const fixture = setup(t, tinyWorkbook(singleConfig()), singleConfig());
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')]);
+  const runDir = path.join(fixture.root, 'artifacts', fixture.runId);
+  const rejectedDir = path.join(runDir, 'rejected');
+  fs.mkdirSync(rejectedDir);
+  fs.writeFileSync(path.join(rejectedDir, 'baseline-clients.zip'), 'preserved invalid attempt');
+  writeJson(path.join(rejectedDir, 'rejected.json'), { rejected: [{
+    zip: 'baseline-clients.zip', phase: 'baseline', label: 'clients-original',
+    reason: 'Test-authoring selector issue <not a product failure>', caseIds: ['WM-TC-001'], revision: 'original-revision'
+  }] });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.report.summary.total, 1);
+  assert.equal(result.report.summary.passed, 1);
+  assert.equal(result.report.baselineRows.length, 1);
+  assert.equal(result.report.rejectedAttempts.length, 1);
+  assert.equal(result.report.rejectedAttempts[0].archive, 'rejected/baseline-clients.zip');
+  assert.match(fs.readFileSync(path.join(runDir, 'report.md'), 'utf8'), /Audit appendix: rejected attempts/);
+  assert.match(fs.readFileSync(path.join(runDir, 'report.md'), 'utf8'), /\[Original rejected ZIP\]\(rejected\/baseline-clients.zip\)/);
+  const html = fs.readFileSync(path.join(runDir, 'index.html'), 'utf8');
+  assert.match(html, /data-panel="audit"/);
+  assert.match(html, /Original rejected ZIP/);
+  assert.ok(!html.includes('<not a product failure>'));
+});
+
+test('report rejects unsafe rejected-attempt archive links', (t) => {
+  const fixture = setup(t, tinyWorkbook(singleConfig()), singleConfig());
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')]);
+  const rejectedDir = path.join(fixture.root, 'artifacts', fixture.runId, 'rejected');
+  fs.mkdirSync(rejectedDir);
+  writeJson(path.join(rejectedDir, 'rejected.json'), { rejected: [{ zip: '../../other.zip', reason: 'invalid' }] });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.errors.some(item => item.code === 'INVALID_REJECTED_ATTEMPT'));
+  assert.deepEqual(result.report.rejectedAttempts, []);
 });
 
 test('report rejects an unknown API revision', (t) => {

@@ -83,7 +83,7 @@ If a run is confirmed invalid because of an environment or test-authoring proble
 }
 ```
 
-Never classify a product failure as environmental or delete raw evidence. Include an **Audit appendix** in the final report listing these rejected ZIPs and reasons. `bundle` includes everything under `rejected/`. Selector repairs go through the test-only PR workflow and a new baseline label.
+Never classify a product failure as environmental or delete raw evidence. `report` renders an **Audit appendix** in Markdown and an offline HTML tab from this manifest, listing each rejected ZIP, reason, case IDs, and revision without adding them to result counts. ZIP filenames must be safe, existing files directly under `rejected/`. `bundle` includes everything under `rejected/`. Selector repairs go through the test-only PR workflow and a new baseline label.
 
 ```sh
 node qa/tooling/qa.mjs unpack-segment \
