@@ -3,7 +3,7 @@ import parser from '@typescript-eslint/parser';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**', '.venv/**', 'visual-diff-output/**',
+  { ignores: ['dist/**', 'node_modules/**', '.venv/**', 'design/**', 'visual-diff-output/**',
     'qa/artifacts/**', 'qa/evidence/**', 'test-results/**', 'playwright-report/**'] },
   js.configs.recommended,
   {
