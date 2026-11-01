@@ -166,3 +166,8 @@ export const openArea = async (
 };
 
 export { expect };
+
+export async function journeyStep(page: Page, title: string, action: () => Promise<void>) {
+  await test.step(title, action);
+  await page.waitForTimeout(1500);
+}

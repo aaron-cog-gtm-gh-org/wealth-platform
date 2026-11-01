@@ -12,9 +12,10 @@ Start from the manual workbook and current requirements. `main` intentionally ha
 1. Read the case title, steps, expected results, and test data in `qa/cases.json`.
 2. Import `caseTest`, `gapTest`, `expect`, and `openArea` from `../tooling/fixtures`.
 3. Register one `caseTest('WM-TC-0NN', async ({ page }) => { ... })` per workbook case in `qa/tests/<area>.spec.ts`.
-4. Call `openArea(page, '<area-slug>')`; execute each manual step with at least two meaningful visible UI actions per scenario (selection/filter, navigation, entry or submit as appropriate), and assert user-visible roles and text against the case's expected results. For short read-only cases, include the relevant selection and the detail being checked. Do not add unrelated clicks just to fill time.
-5. Put wiki-derived `gapTest` coverage in the spec for its canonical area slug, with a wiki reference.
-6. Treat failures as findings: keep assertions strict and never skip, weaken, or loosen a failing test to get a green run.
+4. Call `openArea(page, '<starting-area-from-preconditions>')`; execute each manual step with at least two meaningful visible UI actions per scenario (selection/filter, navigation, entry or submit as appropriate), and assert user-visible roles and text against the case's expected results. For short read-only cases, include the relevant selection and the detail being checked. Do not add unrelated clicks just to fill time.
+5. For the opening journeys `WM-TC-051..053`, start in Clients even though the owner may be Orders or Move Money. Import `journeyStep` and wrap every workbook step in `await journeyStep(page, 'Describe the business action', async () => { /* UI actions and assertions */ })`. It holds the asserted state for 1.5 seconds without replacing assertions. Show 10+ meaningful clicks across the complete journey; click each field before typing or choosing an option so the pointer moves visibly. Keep the whole journey in one recording. Area ownership includes `additionalIds` in `qa/tooling/areas.json`, not only the original contiguous range.
+6. Put wiki-derived `gapTest` coverage in the spec for its canonical area slug, with a wiki reference.
+7. Treat failures as findings: keep assertions strict and never skip, weaken, or loosen a failing test to get a green run.
 
 ## Run and publish
 

@@ -17,6 +17,8 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 JIRA_BASE = "https://cognition-team-x9dqnayp.atlassian.net/browse/"
+ROOT = Path(__file__).resolve().parent.parent
+AREAS_CONFIG = json.loads((ROOT / "qa/tooling/areas.json").read_text())
 REQUIREMENTS = (
     ("KAN-12", "Clients", "Wealth UAT: Manage client suitability and KYC profiles", 1, 8),
     ("KAN-13", "Portfolio", "Wealth UAT: Inspect account holdings and currency-safe valuations", 9, 18),
@@ -76,6 +78,10 @@ HEADERS = {
 }
 EXECUTION_GUIDE = (
     (
+        "Opening advisor journeys",
+        "53 manual cases: the original WM-TC-001..050 are unchanged, plus WM-TC-051 client review (Clients), WM-TC-052 buy/cancel (Orders), WM-TC-053 amend/confirm transfer (Move Money). Author these from the spreadsheet like every other case. Their baseline recordings lead the composite video in that order. Each starts in Clients and follows 10+ meaningful clicks across screens. Use journeyStep with assertions and 1.5-second reading holds; visibly click fields before typing/selecting. Preserve one uninterrupted recording per journey. Wiki-derived gaps remain separate.",
+    ),
+    (
         "Purpose",
         "Manual UAT cases for the synthetic Wealth Platform connected workspace demo. All clients, accounts, balances and exceptions are fictional sandbox data; no real RBC customer data is used.",
     ),
@@ -129,7 +135,6 @@ EXECUTION_GUIDE = (
     ),
 )
 
-ROOT = Path(__file__).resolve().parent.parent
 XML_NS = {
     "main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
     "office_rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
@@ -147,7 +152,11 @@ def _requirements_by_case_id() -> dict[str, tuple[str, str, str, int, int]]:
     return {
         f"WM-TC-{case_number:03d}": requirement
         for requirement in REQUIREMENTS
-        for case_number in range(requirement[3], requirement[4] + 1)
+        for case_number in (
+            list(range(requirement[3], requirement[4] + 1))
+            + next(area.get("additionalIds", []) for area in AREAS_CONFIG["areas"]
+                   if area["jiraKey"] == requirement[0])
+        )
     }
 
 
@@ -160,10 +169,11 @@ def validate_cases(data: Any) -> list[str]:
     if not isinstance(cases, list):
         return ["cases must be an array."]
 
-    if len(cases) != 50:
-        errors.append(f"Expected exactly 50 cases; found {len(cases)}.")
+    total = AREAS_CONFIG["totalCases"]
+    if len(cases) != total:
+        errors.append(f"Expected exactly {total} cases; found {len(cases)}.")
 
-    expected_ids = [f"WM-TC-{number:03d}" for number in range(1, 51)]
+    expected_ids = sorted(_requirements_by_case_id())
     actual_ids: list[Any] = []
     seen_ids: set[str] = set()
     seen_titles: set[str] = set()
@@ -192,7 +202,7 @@ def validate_cases(data: Any) -> list[str]:
             seen_ids.add(case_id)
             requirement = by_case_id.get(case_id)
             if requirement is None:
-                errors.append(f"{label} id '{case_id}' is outside WM-TC-001..WM-TC-050.")
+                errors.append(f"{label} id '{case_id}' is not assigned in qa/tooling/areas.json.")
             else:
                 expected_key, expected_feature = requirement[0], requirement[1]
                 if case.get("jiraKey") != expected_key:
@@ -249,10 +259,10 @@ def validate_cases(data: Any) -> list[str]:
 
     if actual_ids != expected_ids:
         errors.append(
-            "Case ids must be exactly WM-TC-001..WM-TC-050 in order, with no gaps."
+            "Case ids must match qa/tooling/areas.json in ascending order, with no gaps."
         )
     for key, _feature, _summary, first, last in REQUIREMENTS:
-        expected_count = last - first + 1
+        expected_count = next(area["count"] for area in AREAS_CONFIG["areas"] if area["jiraKey"] == key)
         actual_count = counts[key]
         if actual_count != expected_count:
             errors.append(
@@ -496,7 +506,7 @@ def _verify_xml(path: Path, data: dict[str, Any]) -> tuple[list[str], dict[str, 
     counts: dict[str, dict[str, int]] = {}
     expected_steps = sum(len(case["steps"]) for case in data["cases"])
     expected_hyperlinks = {
-        "Test Cases": 100,
+        "Test Cases": len(data["cases"]) * 2,
         "Test Steps": expected_steps,
         "Requirements Traceability": 12,
         "Execution Guide": 0,

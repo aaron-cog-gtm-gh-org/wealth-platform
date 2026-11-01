@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { caseIdFromTitle, diagnostic, loadAreas, normalizeRelative, readJson, sortedDiagnostics, writeJson } from './common.mjs';
+import { areaCaseNumbers, caseIdFromTitle, diagnostic, loadAreas, normalizeRelative, readJson, sortedDiagnostics, writeJson } from './common.mjs';
 import { normalizeSegment } from './normalize.mjs';
 
 function segmentPrefix(runDir, segmentDir) {
@@ -90,7 +90,7 @@ function expectedCases(config, workbook) {
   if (workbook?.cases?.length) return workbook.cases;
   const generated = [];
   for (const area of config.areas) {
-    for (let number = area.first; number <= area.last; number += 1) {
+    for (const number of areaCaseNumbers(area)) {
       generated.push({
         id: `WM-TC-${String(number).padStart(3, '0')}`,
         feature: area.feature,

@@ -1,4 +1,4 @@
-import { diagnostic, loadAreas, relativeDisplay, sortedDiagnostics } from './common.mjs';
+import { areaCaseNumbers, diagnostic, loadAreas, relativeDisplay, sortedDiagnostics } from './common.mjs';
 
 export function validateCases(workbook, { config = loadAreas(), file = 'qa/cases.json', cwd = process.cwd() } = {}) {
   const errors = [];
@@ -50,8 +50,8 @@ export function validateCases(workbook, { config = loadAreas(), file = 'qa/cases
       }
       if (typeof id === 'string' && caseRegex.test(id)) {
         const number = Number(id.slice('WM-TC-'.length));
-        if (number < area.first || number > area.last) {
-          addError('ID_OUT_OF_RANGE', `${id} is outside ${area.feature} range ${area.first}-${area.last}`, itemPath);
+        if (!areaCaseNumbers(area).includes(number)) {
+          addError('ID_OUT_OF_RANGE', `${id} is not assigned to ${area.feature}`, itemPath);
         }
       }
     }
@@ -90,7 +90,7 @@ export function validateCases(workbook, { config = loadAreas(), file = 'qa/cases
       addError('AREA_COUNT', `${area.feature} expected ${area.count} cases, found ${items.length}`);
     }
     const numbers = new Set(items.map((item) => Number(String(item.id).slice('WM-TC-'.length))));
-    for (let number = area.first; number <= area.last; number += 1) {
+    for (const number of areaCaseNumbers(area)) {
       if (!numbers.has(number)) addError('MISSING_AREA_ID', `missing WM-TC-${String(number).padStart(3, '0')} in ${area.feature}`);
     }
   }

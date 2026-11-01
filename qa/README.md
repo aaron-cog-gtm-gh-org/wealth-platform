@@ -4,6 +4,18 @@ The harness validates the case workbook and Playwright suite, runs a frozen test
 
 The demo starts from the spreadsheet: `main` has no generated Playwright case specs. Children author them during each demo and keep them on a run-specific QA branch. The harness, workbook, and application unit/integration tests remain available. Before authoring, `validate-suite` should report missing cases; that is not a reason to restore historical specs or mark coverage complete.
 
+## Opening advisor journeys
+
+The workbook now has **53 manual cases**: the original `WM-TC-001..050` are unchanged, with three longer advisor journeys appended:
+
+| Video order | Case | Owner | Journey |
+| --- | --- | --- | --- |
+| 1 | WM-TC-051 | Clients | Find a KYC review, save the profile, inspect the portfolio and verify persistence |
+| 2 | WM-TC-052 | Orders | Review holdings, buy 10 RY, cancel the order and verify released cash |
+| 3 | WM-TC-053 | Move Money | Review a transfer, amend the amount, confirm and reconcile both balances |
+
+`openingCases` in `qa/tooling/areas.json` controls video order, not execution order. Each original area also owns its `additionalIds`; there are still six children. Author the new cases from their full manual steps, not prebuilt specs. All three begin in Clients and contain 10+ meaningful clicks. Import `journeyStep(page, title, action)` from the fixtures around each step: perform the browser actions and assertions inside `action`, then the helper holds the verified screen for 1.5 seconds. Click fields before typing/selecting so the cursor is visible. These reading holds are presentation, never assertions. The composer moves all baseline attempts of these journeys first, preserving failures/retries, followed by the rest of the baseline, gaps and retests. Gap coverage remains separate from the 53 manual cases.
+
 ## Setup
 
 `@playwright/test` 1.60.0 and the QA scripts are pinned in the repository. On a fresh checkout, run:
@@ -19,7 +31,7 @@ The `npm run qa`, `npm run qa:test`, `npm run typecheck:qa`, and `npm run lint` 
 
 ## Child run
 
-Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 50-case suite.
+Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 53-case suite.
 
 ```sh
 npm run db:up && npm run db:wait && npm run db:setup

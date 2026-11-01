@@ -20,6 +20,24 @@ test('the demo sequence retains every baseline, gap and retest recording attempt
   assert.throws(() => demoSequence({ baselineRows: [{ title: 'Missing', recordings: [{ video: null }] }], retestRows: [], gapTests: [] }), /individual recording/);
 });
 
+test('opening journeys lead the video without dropping retries or changing source results', () => {
+  const row = (id, phase = 'baseline') => ({ id, title: id, phase, recordings: [
+    { video: `${phase}-${id}.webm`, status: 'passed' }
+  ] });
+  const report = { baselineRows: [row('WM-TC-001'), row('WM-TC-053'), row('WM-TC-052'), row('WM-TC-051')],
+    gapTests: [row('WM-GAP-001')], retestRows: [row('WM-TC-051', 'retest')] };
+  report.baselineRows[3].recordings.unshift({ video: 'first-failure.webm', status: 'failed' });
+  const before = JSON.stringify(report);
+  const sequence = demoSequence(report);
+  assert.deepEqual(sequence.map((clip) => clip.id), [
+    'WM-TC-051', 'WM-TC-051', 'WM-TC-052', 'WM-TC-053', 'WM-TC-001', 'WM-GAP-001', 'WM-TC-051'
+  ]);
+  assert.equal(sequence[0].status, 'failed');
+  assert.equal(sequence[0].video, 'first-failure.webm');
+  assert.equal(sequence.at(-1).phase, 'retest');
+  assert.equal(JSON.stringify(report), before);
+});
+
 test('composed MP4 includes a title card before each attempt, without replacing the source WebMs', (t) => {
   if (spawnSync('ffmpeg', ['-version']).error || spawnSync('ffprobe', ['-version']).error) return t.skip('FFmpeg unavailable');
   const config = {

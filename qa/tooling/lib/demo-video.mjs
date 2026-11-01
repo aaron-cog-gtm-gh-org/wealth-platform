@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { loadAreas } from './common.mjs';
 
 const run = (binary, args) => {
   const result = spawnSync(binary, args, { encoding: 'utf8', timeout: 120_000, maxBuffer: 2_000_000 });
@@ -20,8 +21,11 @@ const safeRecording = (runDir, name) => {
   return full;
 };
 
-export function demoSequence(report) {
-  const rows = [...report.baselineRows, ...report.gapTests, ...report.retestRows];
+export function demoSequence(report, config = loadAreas()) {
+  const opening = new Map((config.openingCases ?? []).map((id, index) => [id, index]));
+  const rank = (row) => opening.get(row.id) ?? opening.size;
+  const baseline = [...report.baselineRows].sort((left, right) => rank(left) - rank(right));
+  const rows = [...baseline, ...report.gapTests, ...report.retestRows];
   const sequence = rows.flatMap((row) => (row.recordings ?? []).map((attempt, index) => ({
     id: row.id,
     title: row.title.replace(/^\[?WM-(?:TC|GAP)-\d+\]?\s*/, ''),
