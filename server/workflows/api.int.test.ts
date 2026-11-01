@@ -115,6 +115,42 @@ test('a sell above the held position quantity is rejected', async () => {
   assert.equal((await request('/workflows/bootstrap', 'GET')).body.audit.length, 0);
 });
 
+test('sells reserve all open quantities and cancellation releases shares', async () => {
+  const sell = (quantity: number) => request('/workflows/orders', 'POST', { accountId: 'A1001', symbol: 'RY', side: 'Sell', quantity });
+  const first = await sell(70);
+  assert.equal(first.response.status, 201);
+  const rejected = await sell(31);
+  assert.equal(rejected.response.status, 409);
+  assert.match(rejected.body.error, /\b30\b/);
+  assert.match(rejected.body.error, /available/i);
+  let bootstrap = (await request('/workflows/bootstrap', 'GET')).body;
+  assert.equal(bootstrap.orders.length, 1);
+  assert.equal(bootstrap.audit.length, 1);
+  const second = await sell(20);
+  assert.equal(second.response.status, 201);
+  const aboveRemaining = await sell(11);
+  assert.equal(aboveRemaining.response.status, 409);
+  assert.match(aboveRemaining.body.error, /\b10\b.*available/i);
+  assert.equal((await sell(10)).response.status, 201);
+  const exhausted = await sell(1);
+  assert.equal(exhausted.response.status, 409);
+  assert.match(exhausted.body.error, /\b0\b.*available/i);
+  bootstrap = (await request('/workflows/bootstrap', 'GET')).body;
+  for (const order of bootstrap.orders) {
+    assert.equal((await request(`/workflows/orders/${order.id}/cancel`, 'POST', {})).response.status, 200);
+  }
+  assert.equal((await sell(100)).response.status, 201);
+});
+
+test('parallel sells serialize available share validation', async () => {
+  const results = await Promise.all([
+    request('/workflows/orders', 'POST', { accountId: 'A1001', symbol: 'RY', side: 'Sell', quantity: 70 }),
+    request('/workflows/orders', 'POST', { accountId: 'A1001', symbol: 'RY', side: 'Sell', quantity: 70 }),
+  ]);
+  assert.deepEqual(results.map(item => item.response.status).sort(), [201, 409]);
+  assert.match(results.find(item => item.response.status === 409)!.body.error, /\b30\b.*available/i);
+});
+
 test('orders can be cancelled only once', async () => {
   await request('/workflows/orders', 'POST', { accountId: 'A1001', symbol: 'RY', side: 'Buy', quantity: 10 });
   let audit = (await request('/workflows/bootstrap', 'GET')).body.audit;

@@ -1,10 +1,10 @@
-import { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { api } from '../api';
 import type { Order, Side } from '../api';
 import { useWorkspace } from '../context';
 import { money, qty } from '../format';
-import { availableCash, heldQuantity, indicativePrice, openSellQuantity } from '../model';
+import { availableCash, heldQuantity, indicativePrice, openSellQuantity, orderTicketError, ticketAvailability } from '../model';
 import { EmptyRow, Notices, Panel, SortHeader, StatusPill, useAction, useSort } from '../ui';
 
 const SIDES: Side[] = ['Buy', 'Sell'];
@@ -32,6 +32,10 @@ function OrderTicket() {
   const [side, setSide] = useState<Side>('Buy');
   const [quantity, setQuantity] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const availability = ticketAvailability(data, accountId, symbol, side);
+  const latestAvailability = useRef(availability);
+  latestAvailability.current = availability;
+  const [errorAvailability, setErrorAvailability] = useState(availability);
   const action = useAction(reload);
   const ids = { account: useId(), symbol: useId(), symbolHint: useId(), qty: useId(), qtyHint: useId() };
 
@@ -53,7 +57,14 @@ function OrderTicket() {
     if (!validQty) return setFieldError(quantityError(quantity));
     setFieldError(null);
     const ok = await action.run(
-      () => api.placeOrder({ accountId, symbol, side, quantity: n }),
+      async () => {
+        try {
+          return await api.placeOrder({ accountId, symbol, side, quantity: n });
+        } catch (error) {
+          setErrorAvailability(latestAvailability.current);
+          throw error;
+        }
+      },
       o => `${side} order${o?.id ? ' ' + o.id : ''} for ${qty(n)} ${symbol} placed in ${lk.accountLabel(accountId)}. Status: ${o?.status ?? 'Open'}.`,
     );
     if (ok) setQuantity('');
@@ -108,7 +119,7 @@ function OrderTicket() {
         <p className="ws-hint">Price comes from the account’s position price. Open buys reserve cash and open sells reserve shares until cancelled. Availability is confirmed by the order service when you place the order.</p>
 
         {fieldError && <div role="alert" className="ws-notice ws-notice--error">{fieldError}</div>}
-        <Notices error={action.error} success={action.success} />
+        <Notices error={orderTicketError(action.error, errorAvailability, availability)} success={action.success} />
         <div className="ws-actions">
           <button type="submit" className="ws-btn ws-btn--primary" disabled={action.busy}>{action.busy ? 'Placing order…' : 'Place order'}</button>
         </div>

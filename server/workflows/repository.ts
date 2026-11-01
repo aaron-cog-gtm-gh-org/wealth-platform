@@ -114,8 +114,15 @@ export async function createOrder(input: { accountId: string; symbol: string; si
          FROM wf_accounts a WHERE a.account_id = $1`,
         [input.accountId, input.quantity, position.price]);
       if (cashCheck.insufficient) conflict(`Insufficient available cash in account ${input.accountId}.`);
-    } else if (input.quantity > position.quantity) {
-      conflict(`Sell quantity ${input.quantity} exceeds the ${position.quantity} ${input.symbol} shares held in ${input.accountId}.`);
+    } else {
+      const [reservation] = await selected<{ quantity: number }>(client,
+        `SELECT COALESCE(SUM(quantity), 0) AS quantity FROM wf_orders
+         WHERE account_id = $1 AND symbol = $2 AND side = 'Sell' AND status = 'Open'`,
+        [input.accountId, input.symbol]);
+      const available = position.quantity - reservation.quantity;
+      if (input.quantity > available) {
+        conflict(`Sell quantity ${input.quantity} exceeds the ${position.quantity} ${input.symbol} shares held in ${input.accountId}. ${available} shares available to sell.`);
+      }
     }
 
     const [order] = await selected<WorkflowOrder>(client,

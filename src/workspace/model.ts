@@ -36,6 +36,16 @@ export const workspaceHref = (area: Area, extra: Record<string, string> = {}) =>
 
 export const isOpen = (o: Order) => o.status === 'Open';
 
+export function ticketAvailability(data: Bootstrap, accountId: string, symbol: string, side: Order['side']) {
+  const account = data.accounts.find(a => a.id === accountId);
+  return { value: !account ? null : side === 'Buy' ? availableCash(data, account)
+    : symbol ? heldQuantity(data, accountId, symbol) - openSellQuantity(data, accountId, symbol) : null };
+}
+
+export function orderTicketError(error: string | null, errorAvailability: ReturnType<typeof ticketAvailability>, currentAvailability: ReturnType<typeof ticketAvailability>) {
+  return errorAvailability.value === currentAvailability.value ? error : null;
+}
+
 /** Cash held back for open buy orders on an account (quantity × price). */
 export function reservedCash(data: Bootstrap, accountId: string) {
   return data.orders
