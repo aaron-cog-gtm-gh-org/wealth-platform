@@ -21,6 +21,7 @@ Run the 50-case Wealth Platform UI workbook (plus Wiki-derived gap tests) as rea
    - Re-resolve to the merged SHA and record `FROZEN_SHA`.
    - Prove that the app is unchanged with `git diff --stat $BASE_SHA $FROZEN_SHA -- . ':(exclude)qa' ':(exclude)playwright.config.ts' ':(exclude).agents'`, which must print nothing.
    - Run `node qa/tooling/qa.mjs validate-cases` and `npm run qa:test`. Both must pass. Do not require any tests to exist yet.
+   - Verify `ffmpeg` and `ffprobe` for parent video compilation. Children using system Chrome via `QA_CHROME` must still install Playwright's recording encoder with `npx playwright install ffmpeg`.
    - Confirm that `qa/tests` contains no `*.spec.ts` files at `FROZEN_SHA`. If it already contains generated cases, stop and report that the selected ref is not a clean authoring baseline. Do not replay or recover historical specs.
    - Create and push `RUN_BRANCH=devin/qa-run-<RUN_ID>` from `FROZEN_SHA`. This is the integration branch for this run's newly authored tests; it is never merged into `main`.
 2. **Research Wiki-first, then Jira.**

@@ -13,6 +13,8 @@ npm ci
 npx playwright install --with-deps chromium
 ```
 
+If using an existing system Chrome through `QA_CHROME`, run `npx playwright install ffmpeg` even when you do not install Playwright's Chromium. That recording encoder is separate from the system `ffmpeg` and `ffprobe` commands used by `demo-video`.
+
 The `npm run qa`, `npm run qa:test`, `npm run typecheck:qa`, and `npm run lint` scripts already exist.
 
 ## Child run
