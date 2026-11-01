@@ -41,6 +41,14 @@ class WorkbookTests(unittest.TestCase):
                 mutate(data["cases"])
                 self.assertTrue(WORKBOOK.validate_cases(data))
 
+    def test_opening_journeys_are_appended_and_keep_their_area_ownership(self):
+        self.assertEqual(len(self.data["cases"]), 53)
+        self.assertEqual([case["id"] for case in self.data["cases"][-3:]],
+                         ["WM-TC-051", "WM-TC-052", "WM-TC-053"])
+        self.assertTrue(all(len(case["steps"]) >= 10 for case in self.data["cases"][-3:]))
+        self.data["cases"][-3]["feature"] = "Orders"
+        self.assertTrue(WORKBOOK.validate_cases(self.data))
+
     def test_generated_workbook_round_trip(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "cases.xlsx"

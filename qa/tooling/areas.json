@@ -1,13 +1,14 @@
 {
   "jiraBaseUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/",
-  "totalCases": 50,
+  "totalCases": 53,
+  "openingCases": ["WM-TC-051", "WM-TC-052", "WM-TC-053"],
   "casePattern": "^WM-TC-\\d{3}$",
   "gap": { "pattern": "^WM-GAP-\\d{3}$", "jiraKey": "KAN-18" },
   "areas": [
-    { "area": "clients", "feature": "Clients", "count": 8, "first": 1, "last": 8, "jiraKey": "KAN-12", "spec": "qa/tests/clients.spec.ts" },
+    { "area": "clients", "feature": "Clients", "count": 9, "first": 1, "last": 8, "additionalIds": [51], "jiraKey": "KAN-12", "spec": "qa/tests/clients.spec.ts" },
     { "area": "portfolio", "feature": "Portfolio", "count": 10, "first": 9, "last": 18, "jiraKey": "KAN-13", "spec": "qa/tests/portfolio.spec.ts" },
-    { "area": "orders", "feature": "Orders", "count": 12, "first": 19, "last": 30, "jiraKey": "KAN-14", "spec": "qa/tests/orders.spec.ts" },
-    { "area": "money", "feature": "Move Money", "count": 8, "first": 31, "last": 38, "jiraKey": "KAN-15", "spec": "qa/tests/money.spec.ts" },
+    { "area": "orders", "feature": "Orders", "count": 13, "first": 19, "last": 30, "additionalIds": [52], "jiraKey": "KAN-14", "spec": "qa/tests/orders.spec.ts" },
+    { "area": "money", "feature": "Move Money", "count": 9, "first": 31, "last": 38, "additionalIds": [53], "jiraKey": "KAN-15", "spec": "qa/tests/money.spec.ts" },
     { "area": "rebalance", "feature": "Rebalance", "count": 6, "first": 39, "last": 44, "jiraKey": "KAN-16", "spec": "qa/tests/rebalance.spec.ts" },
     { "area": "settlements", "feature": "Settlements", "count": 6, "first": 45, "last": 50, "jiraKey": "KAN-17", "spec": "qa/tests/settlements.spec.ts" }
   ]
