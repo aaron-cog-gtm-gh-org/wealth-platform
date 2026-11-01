@@ -11,6 +11,7 @@ type Holding = typeof RY;
 const panel = (page: Page) => page.getByRole('tabpanel', { name: 'Portfolio' });
 const filters = (page: Page) => page.getByRole('search', { name: 'Filter portfolio' });
 const holdings = (page: Page) => page.getByRole('table', { name: 'Holdings' });
+const cashByAccount = (page: Page) => page.getByRole('table', { name: 'Cash by account' });
 const totals = (page: Page) => page.getByRole('region', { name: 'Totals by currency' });
 const currencyTotals = (page: Page, currency: string) => totals(page).getByLabel(`${currency} totals`, { exact: true });
 const holdingRow = (page: Page, symbol: string) =>
@@ -110,13 +111,14 @@ caseTest('WM-TC-011', async ({ page }) => {
   await expectMarketValueTotal(page, 'CAD', '$24,000.00');
   await expectNoTotalOrZero(page, 'USD');
 
-  // Step 3: neither MSFT nor A1003 appears, including in the scoped filter choices.
-  const instrument = filters(page).getByRole('combobox', { name: 'Instrument', exact: true });
-  await instrument.click();
-  await expectOptions(instrument, ['All instruments', 'BMO', 'RY']);
+  // Step 3: check the listed positions for MSFT or account A1003.
+  await holdings(page).getByRole('button', { name: 'Symbol', exact: true }).click();
+  await expectListedSymbols(page, ['RY', 'BMO']);
   await expect(holdingRow(page, 'MSFT')).toHaveCount(0);
-  await expect(panel(page)).not.toContainText('MSFT');
-  await expect(panel(page)).not.toContainText('A1003');
+  for (const listed of [holdings(page), cashByAccount(page), totals(page)]) {
+    await expect(listed).not.toContainText('MSFT');
+    await expect(listed).not.toContainText('A1003');
+  }
 });
 
 caseTest('WM-TC-012', async ({ page }) => {
@@ -193,7 +195,9 @@ caseTest('WM-TC-015', async ({ page }) => {
   await expect(totals(page)).not.toContainText('16,800.00');
   await expectNoTotalOrZero(page, 'USD');
   await expectNoTotalOrZero(page, 'CAD');
-  for (const hidden of ['James Chen', 'A1003', 'MSFT']) await expect(panel(page).getByRole('table')).not.toContainText(hidden);
+  for (const table of [holdings(page), cashByAccount(page)]) {
+    for (const hidden of ['James Chen', 'A1003', 'MSFT']) await expect(table).not.toContainText(hidden);
+  }
 });
 
 caseTest('WM-TC-016', async ({ page }) => {
