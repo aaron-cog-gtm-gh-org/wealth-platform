@@ -26,7 +26,7 @@ export default defineConfig({
     screenshot: 'on',
     trace: 'on',
     launchOptions: {
-      slowMo: Number(process.env.QA_SLOW_MO ?? 0),
+      slowMo: Number(process.env.QA_SLOW_MO ?? 400),
       ...(process.env.QA_CHROME ? { executablePath: process.env.QA_CHROME } : {})
     }
   },

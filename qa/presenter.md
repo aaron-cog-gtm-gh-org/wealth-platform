@@ -4,6 +4,7 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 
 ## Before the demo (≈5 min)
 - Open the parent session. Its structured output lists every case with a status, a recording, and a fix PR where there is one.
+- Play the parent's `full-run.mp4` attachment: each test starts with its title card, shows browser actions with a visible cursor, then moves to the next card. The individual recordings remain linked to results.
 - Unzip `<runId>-evidence.zip` and open `<runId>/index.html` locally. It works offline over `file://`.
 - Keep the child segment ZIP and its per-case video attachments available alongside the report.
 - Have these open in tabs:
@@ -14,10 +15,10 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
   - the repo DeepWiki
 
 ## Flow (10–12 min)
-1. **Inputs (1 min).** Show `qa/Wealth-Platform-Manual-QA.xlsx`: 50 cases across six areas, each linked to a real Jira story. Its canonical source is `qa/cases.json`. Point out that `validate-cases` checks the counts, ID ranges and Jira links before any test is written.
+1. **Inputs (1 min).** Show `qa/Wealth-Platform-Manual-QA.xlsx`: 53 cases across six areas (the original 50 plus three opening advisor journeys), each linked to a real Jira story. Its canonical source is `qa/cases.json`. Point out that `validate-cases` checks the counts, ID ranges and Jira links before any test is written.
 2. **Parent plan (1 min).** Show how the parent froze the baseline SHA, read the Wiki first, then Jira, and fanned out one child per area. Each child runs on its own VM with its own PostgreSQL database, which is reset before every test.
 3. **QA child (2 min).** Open a child session and show `qa/tests/<area>.spec.ts`: `[WM-TC-0NN]` titles, the steps from the workbook, and real UI assertions. Show its single baseline run at the frozen SHA, and point out that it was not allowed to skip or soften a test.
-4. **Baseline evidence (2 min).** In `index.html`, open the **Baseline (original)** tab and filter to one area. Play a passing video, then a failing video, and open that failure's trace.
+4. **Baseline evidence (2 min).** In `index.html`, open the **Baseline (original)** tab and filter to one area. Start `full-run.mp4` with WM-TC-051 (client review), WM-TC-052 (buy and cancel), and WM-TC-053 (amend and confirm transfer). Each has 10+ visible clicks and reading pauses. Then play a failing video in the report, and open that failure's trace.
 5. **Wiki gaps (1 min).** Open the **Discovered gaps** tab. These are `WM-GAP-*` tests for behaviors the Wiki documents but the workbook missed, traced to KAN-18.
 6. **Remediation (2 min).** Open a remediation child and its fix PR. Show three things:
    - the diff is small and app-only
@@ -28,7 +29,7 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 8. **Wrap (1 min).** Read the summary counts, name any case that is still failing with its reason, and show the Audit appendix for any confirmed invalid-run ZIPs.
 
 ## Answers to likely questions
-- **Why per-test videos and not one long recording?** Each row has its own evidence, so a reviewer can jump straight to the case they care about. Retried attempts keep separate recordings.
+- **Why both per-test videos and one long recording?** The parent video tells the sequential demo story, while each report row has its own original Playwright evidence for review. Retried attempts keep separate recordings.
 - **How do you know a result wasn't faked?** The collector rejects any result that has no Playwright recording, duplicate case ownership, missing cases, and segments with mismatched revisions.
 - **Why are tests and fixes not merged into main?** Fix PRs are left for human review. Generated tests live on the run's QA branch, so `main` stays a clean spreadsheet-to-tests starting point for the next demo.
 
@@ -42,7 +43,7 @@ Follow qa/playbook.md in spreadsheet-first authoring mode.
 Generate a new run ID wm-qa-live-<UTC timestamp>; preserve all prior runs.
 Use qa/Wealth-Platform-Manual-QA.xlsx and qa/cases.json, and read DeepWiki then Jira KAN-12..KAN-18.
 Confirm main has no generated Playwright specs. Author new tests from the spreadsheet, not from historical test source or evidence.
-Launch six isolated area children; create and execute browser tests for all 50 original cases and separately identified Wiki gaps, recording each attempt.
+Launch six isolated area children; create and execute browser tests for all 53 manual cases (including the three opening advisor journeys) and separately identified Wiki gaps, recording each attempt.
 Integrate test-only PRs into a new run-specific QA branch, never main.
 After baseline execution, deduplicate findings against existing PRs and retest their exact heads using this run's newly authored tests.
 Keep every remediation PR open and unmerged; do not push changes to main.

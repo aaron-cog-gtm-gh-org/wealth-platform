@@ -8,10 +8,20 @@ import { tempDir, workbookFor } from './helpers.mjs';
 
 const config = loadAreas();
 
-test('valid 50-case workbook passes', () => {
+test('valid workbook including additional journey cases passes', () => {
   const result = validateCases(workbookFor(config), { config, cwd: repoRoot });
   assert.deepEqual(result.errors, []);
-  assert.equal(caseSuccessMessage(config), 'OK 50 cases (Clients 8, Portfolio 10, Orders 12, Move Money 8, Rebalance 6, Settlements 6)');
+  assert.equal(caseSuccessMessage(config), 'OK 53 cases (Clients 9, Portfolio 10, Orders 13, Move Money 9, Rebalance 6, Settlements 6)');
+});
+
+test('additional journey IDs are required and cannot move to another feature', () => {
+  const workbook = workbookFor(config);
+  workbook.cases = workbook.cases.filter((item) => item.id !== 'WM-TC-051');
+  assert.ok(validateCases(workbook, { config }).errors.some((item) =>
+    item.code === 'MISSING_AREA_ID' && item.message.includes('WM-TC-051')));
+  const moved = workbookFor(config);
+  moved.cases.find((item) => item.id === 'WM-TC-051').feature = 'Orders';
+  assert.ok(validateCases(moved, { config }).errors.some((item) => item.code === 'ID_OUT_OF_RANGE'));
 });
 
 test('wrong area count is an error', () => {

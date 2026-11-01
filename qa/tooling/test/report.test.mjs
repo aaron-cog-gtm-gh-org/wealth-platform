@@ -42,6 +42,10 @@ test('report collects a passing baseline case', (t) => {
   assert.match(fs.readFileSync(path.join(fixture.root, 'artifacts', fixture.runId, 'report.md'), 'utf8'), /No rejected attempts\./);
   assert.equal(result.report.cases[0].feature, 'Clients');
   assert.equal(result.report.baselineRows[0].primaryRecording, 'baseline/clients/test-results/wm-tc-001-retry0/video.webm');
+  const html = fs.readFileSync(path.join(fixture.root, 'artifacts', fixture.runId, 'index.html'), 'utf8');
+  const media = JSON.parse(html.match(/<script type="application\/json" id="video-data">(.*?)<\/script>/s)[1]);
+  assert.equal(media[result.report.baselineRows[0].primaryRecording], 'data:video/webm;base64,d2VibQ==');
+  assert.match(html, /video\.src=videos\[primary\]/);
   const structured = projectStructured(result.report);
   assert.equal(structured.cases[0].initialRevision, 'baseline-clients-revision');
   assert.equal(structured.cases[0].initialApiRevision, 'baseline-clients-revision');

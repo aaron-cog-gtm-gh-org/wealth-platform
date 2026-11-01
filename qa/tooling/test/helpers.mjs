@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { loadAreas, writeJson } from '../lib/common.mjs';
+import { areaCaseNumbers, loadAreas, writeJson } from '../lib/common.mjs';
 
 export function tempDir(t, prefix = 'qa-tooling-') {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -12,7 +12,7 @@ export function tempDir(t, prefix = 'qa-tooling-') {
 export function workbookFor(config = loadAreas()) {
   const cases = [];
   for (const area of config.areas) {
-    for (let number = area.first; number <= area.last; number += 1) {
+    for (const number of areaCaseNumbers(area)) {
       cases.push({
         id: `WM-TC-${String(number).padStart(3, '0')}`,
         feature: area.feature,

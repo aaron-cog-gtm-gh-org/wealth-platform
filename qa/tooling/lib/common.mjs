@@ -9,6 +9,11 @@ export function loadAreas(file = areasPath) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+export function areaCaseNumbers(area) {
+  return [...Array.from({ length: area.last - area.first + 1 }, (_, index) => area.first + index),
+    ...(area.additionalIds ?? [])];
+}
+
 export function relativeDisplay(file, cwd = process.cwd()) {
   if (!file) return '.';
   const resolved = path.resolve(file);
