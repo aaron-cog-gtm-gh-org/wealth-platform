@@ -1443,6 +1443,222 @@
           "expected": "The same entries are shown."
         }
       ]
+    },
+    {
+      "id": "WM-TC-051",
+      "feature": "Clients",
+      "title": "Complete a client review from KYC search to saved profile and portfolio",
+      "jiraKey": "KAN-12",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12",
+      "priority": "High",
+      "preconditions": "Restore the deterministic synthetic seed with the controlled harness before this case. Start at /?screen=workspace&area=clients. Perform this as one uninterrupted advisor journey; assert every expected result and use journeyStep for a 1.5-second reading hold after each meaningful step.",
+      "testData": "C1002 James Chen; A1003 Chen USD Investment; MSFT 40 shares; risk Conservative to Moderate; KYC Review due to Current.",
+      "steps": [
+        {
+          "action": "Click Search clients and enter C1002.",
+          "expected": "Only James Chen (C1002) remains in the client book."
+        },
+        {
+          "action": "Click Filter by KYC status and choose Review due.",
+          "expected": "James Chen remains visible with Conservative risk and Review due KYC."
+        },
+        {
+          "action": "Click James Chen in the client book.",
+          "expected": "The detail panel identifies C1002 and shows only A1003, USD 15,000.00 cash."
+        },
+        {
+          "action": "Click Edit profile.",
+          "expected": "The editable profile form shows Conservative risk and Review due KYC."
+        },
+        {
+          "action": "Click the Risk profile field and choose Moderate.",
+          "expected": "The draft risk is Moderate; the saved profile still shows Conservative."
+        },
+        {
+          "action": "Click the KYC status field and choose Current.",
+          "expected": "The draft KYC is Current; the saved profile still shows Review due."
+        },
+        {
+          "action": "Click Save profile.",
+          "expected": "A success notice confirms James Chen, Moderate risk and Current KYC. The detail panel shows the saved values, even if the Review due filter now hides the client row."
+        },
+        {
+          "action": "Click View portfolio.",
+          "expected": "Portfolio opens scoped to James Chen, not another client."
+        },
+        {
+          "action": "Click Account and choose A1003 Chen USD Investment.",
+          "expected": "Only A1003 holdings are shown; MSFT quantity is 40 and market value is USD 16,800.00."
+        },
+        {
+          "action": "Click Instrument and choose MSFT.",
+          "expected": "Only the MSFT holding in A1003 is shown, with quantity 40 and USD currency."
+        },
+        {
+          "action": "Click the Clients workspace tab.",
+          "expected": "The client book reopens."
+        },
+        {
+          "action": "Click James Chen in the client book.",
+          "expected": "The detail panel shows Moderate risk, Current KYC and the same A1003 account."
+        },
+        {
+          "action": "Click Refresh data.",
+          "expected": "Moderate risk and Current KYC remain saved; Eleanor Whitfield remains Moderate and Current."
+        },
+        {
+          "action": "Click Edit profile to inspect the saved fields, then click Cancel.",
+          "expected": "The form defaults to Moderate and Current; cancelling makes no additional change. The client detail and USD 15,000.00 cash remain unchanged."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-052",
+      "feature": "Orders",
+      "title": "Review a holding, place a buy order and verify cancellation releases cash",
+      "jiraKey": "KAN-14",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14",
+      "priority": "High",
+      "preconditions": "Restore the deterministic synthetic seed with the controlled harness before this case. Start at /?screen=workspace&area=clients. Perform this as one uninterrupted advisor journey; assert every expected result and use journeyStep for a 1.5-second reading hold after each meaningful step.",
+      "testData": "C1001 Eleanor Whitfield; A1001 Whitfield Investment; RY 100 shares at CAD 140.00; buy 10 shares for CAD 1,400.00; cash CAD 25,000.00.",
+      "steps": [
+        {
+          "action": "Click Search clients and enter C1001.",
+          "expected": "Only Eleanor Whitfield appears."
+        },
+        {
+          "action": "Click Eleanor Whitfield, then click View portfolio.",
+          "expected": "Portfolio is scoped to C1001 and shows only her CAD accounts."
+        },
+        {
+          "action": "Click Account and choose A1001.",
+          "expected": "RY quantity is 100; cash is CAD 25,000.00 and no cash is reserved."
+        },
+        {
+          "action": "Click the Orders workspace tab.",
+          "expected": "The new-order ticket and empty order blotter appear."
+        },
+        {
+          "action": "Click Account and choose A1001 Whitfield Investment.",
+          "expected": "The ticket is scoped to the CAD account and available cash is CAD 25,000.00."
+        },
+        {
+          "action": "Click Instrument and choose RY.",
+          "expected": "The indicative price is CAD 140.00 and held quantity is 100 RY."
+        },
+        {
+          "action": "Click Buy, then click Quantity and enter 10.",
+          "expected": "Buy is selected and estimated value is CAD 1,400.00; no order exists yet."
+        },
+        {
+          "action": "Click Place order.",
+          "expected": "Exactly one Open buy for 10 RY appears. Available cash becomes CAD 23,600.00; held quantity remains 100."
+        },
+        {
+          "action": "Click Order status and choose Open.",
+          "expected": "The new Open order remains visible."
+        },
+        {
+          "action": "Click Search orders and enter RY.",
+          "expected": "The same order is visible with account A1001, quantity 10 and value CAD 1,400.00."
+        },
+        {
+          "action": "Click Cancel order on that row.",
+          "expected": "The order becomes Cancelled and disappears from the Open filter."
+        },
+        {
+          "action": "Click Order status and choose Cancelled.",
+          "expected": "The cancelled order is visible with the same ID and quantity. No second order was created."
+        },
+        {
+          "action": "Click the Portfolio workspace tab.",
+          "expected": "Portfolio opens for a fresh account review."
+        },
+        {
+          "action": "Click Client and choose C1001; click Account and choose A1001.",
+          "expected": "RY quantity remains 100; cash and available cash are CAD 25,000.00 and reserved cash is zero."
+        },
+        {
+          "action": "Click Refresh data.",
+          "expected": "The released cash and unchanged 100-share holding persist after a server refresh."
+        }
+      ]
+    },
+    {
+      "id": "WM-TC-053",
+      "feature": "Move Money",
+      "title": "Review, amend and confirm a cash transfer then reconcile client balances",
+      "jiraKey": "KAN-15",
+      "jiraUrl": "https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15",
+      "priority": "High",
+      "preconditions": "Restore the deterministic synthetic seed with the controlled harness before this case. Start at /?screen=workspace&area=clients. Perform this as one uninterrupted advisor journey; assert every expected result and use journeyStep for a 1.5-second reading hold after each meaningful step.",
+      "testData": "C1001 Eleanor Whitfield; from A1001 CAD 25,000.00 to A1002 CAD 10,000.00; initial amount 1,000.00 amended to 1,250.00; reference Quarterly cash allocation.",
+      "steps": [
+        {
+          "action": "Click Search clients and enter C1001, then click Eleanor Whitfield.",
+          "expected": "The detail panel shows A1001 cash CAD 25,000.00 and A1002 cash CAD 10,000.00."
+        },
+        {
+          "action": "Click View portfolio.",
+          "expected": "Portfolio opens scoped to Eleanor Whitfield."
+        },
+        {
+          "action": "Click Account and choose A1001.",
+          "expected": "The investment account shows CAD 25,000.00 cash and 100 RY shares."
+        },
+        {
+          "action": "Click the Move Money workspace tab.",
+          "expected": "An empty new-transfer form and empty transfer history appear."
+        },
+        {
+          "action": "Click From account and choose A1001.",
+          "expected": "Only eligible same-client CAD destination accounts can be selected."
+        },
+        {
+          "action": "Click To account and choose A1002.",
+          "expected": "Whitfield Savings is selected; A1001 and Chen's USD account are not eligible destinations."
+        },
+        {
+          "action": "Click Amount (CAD) and enter 1000.00.",
+          "expected": "The draft amount is 1000.00; no transfer exists and no money has moved."
+        },
+        {
+          "action": "Click Reference and enter Quarterly cash allocation.",
+          "expected": "The reference is visible in the draft."
+        },
+        {
+          "action": "Click Review transfer.",
+          "expected": "The review identifies Eleanor, A1001 to A1002, CAD 1,000.00 and the reference; no transfer is committed."
+        },
+        {
+          "action": "Click Edit transfer.",
+          "expected": "The original account, amount and reference values remain available for editing."
+        },
+        {
+          "action": "Click Amount (CAD) and replace it with 1250.00.",
+          "expected": "The revised draft is CAD 1,250.00 and no transfer exists."
+        },
+        {
+          "action": "Click Review transfer again.",
+          "expected": "The review shows CAD 1,250.00 with the same source, destination and reference."
+        },
+        {
+          "action": "Click Confirm transfer.",
+          "expected": "Exactly one Completed transfer for CAD 1,250.00 appears, not a separate CAD 1,000.00 transfer."
+        },
+        {
+          "action": "Click Search transfers and enter Quarterly cash allocation.",
+          "expected": "Exactly that completed transfer is shown with A1001 as source and A1002 as destination."
+        },
+        {
+          "action": "Click the Clients workspace tab, then click Eleanor Whitfield.",
+          "expected": "A1001 cash is CAD 23,750.00 and A1002 cash is CAD 11,250.00; combined cash remains CAD 35,000.00."
+        },
+        {
+          "action": "Click Refresh data.",
+          "expected": "Both balances persist and combined cash is conserved; no duplicate transfer is created."
+        }
+      ]
     }
   ]
 }

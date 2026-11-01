@@ -13,6 +13,7 @@ import { packSegment, unpackSegment } from './lib/segments.mjs';
 import { parsePlaywrightList, suiteSuccessMessage, validateSuite } from './lib/suite.mjs';
 import { readUploads, writeStructured } from './lib/structured.mjs';
 import { bundleRun } from './lib/bundle.mjs';
+import { buildDemoVideo } from './lib/demo-video.mjs';
 
 const require = createRequire(import.meta.url);
 const HELP = `Usage: node qa/tooling/qa.mjs <command> [options]
@@ -28,6 +29,7 @@ Commands:
                                                         Collect segment evidence into reports
   structured --run-id ID [--uploads FILE]               Write and print structured-output.json
   export-videos --segment DIR --out DIR                  Export attempt recordings for attachment upload
+  demo-video --run-id ID [--artifacts DIR]               Compose all attempts with title cards into full-run.mp4
   pack-segment --segment DIR --out FILE.zip              Package a segment for attachment transport
   unpack-segment --zip FILE --into DIR                   Safely extract a segment ZIP
   bundle --run-id ID [--artifacts DIR] [--out FILE] [--allow-errors]
@@ -160,6 +162,14 @@ export async function main(argv = process.argv.slice(2)) {
     const result = exportVideos(path.resolve(flags.segment), path.resolve(flags.out));
     if (!result.errors.length) process.stdout.write(`Exported ${result.manifest.length} video attempts\n`);
     return outputResult(result.errors, []);
+  }
+
+  if (command === 'demo-video') {
+    if (!flags['run-id']) return outputResult([diagnostic('MISSING_ARGUMENT', '.', 'demo-video requires --run-id')], []);
+    const runDir = path.resolve(repoRoot, flags.artifacts ?? 'qa-artifacts', flags['run-id']);
+    const result = buildDemoVideo(runDir);
+    process.stdout.write(`Wrote ${relativeDisplay(result.output, repoRoot)} (${result.clips} attempts, ${result.duration}s)\n`);
+    return 0;
   }
 
   if (command === 'pack-segment') {

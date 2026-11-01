@@ -11,7 +11,7 @@ export async function bundleRun(runId, { artifacts = 'qa-artifacts', out, allowE
   if (built.errors.length && !allowErrors) return { ...built, zipPath: null, entryCount: 0, size: 0 };
 
   const files = [];
-  for (const name of ['index.html', 'report.json', 'report.md', 'fixes.json']) {
+  for (const name of ['index.html', 'report.json', 'report.md', 'fixes.json', 'full-run.mp4', 'demo-manifest.json']) {
     const fullPath = path.join(runDir, name);
     if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) files.push(fullPath);
   }
