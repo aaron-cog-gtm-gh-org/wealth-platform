@@ -4,6 +4,7 @@ import type { ChangeEvent } from 'react';
 import { AMBER as amber, GREEN as green, MUTE as mute, RED as red, dayMonth, dayMonthYear, fmt, money, pct as pc, pill, signedMoney as sgn, signedPts, yearsBetween } from '../format';
 import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
+import { postTradeDrift } from './drift';
 import { AS_OF, totalSource } from './shell';
 
 export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
@@ -77,7 +78,8 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
     const checkSummary = fails ? `${fails} failed · ${warns} warnings` : `All passed · ${warns} warnings`; const checkSummaryColor = fails ? red : green;
     const sells = T.reduce((s, t, i) => s + (active[i] && t[0] === 'SELL' ? t[4] : 0), 0), buys = T.reduce((s, t, i) => s + (active[i] && t[0] === 'BUY' ? t[4] : 0), 0);
     const impact = [['Sells', money(sells)], ['Buys', money(buys)], ['Net cash', sgn(sells - buys), sells - buys >= 0 ? green : red], ['Turnover', (Math.max(sells, buys) / D.total * 100).toFixed(2) + '% of AUA'], ['Est. trading costs', '$' + T.reduce((s, t, i) => s + (active[i] ? t[5] : 0), 0).toFixed(2)], ['Realized gains (taxable)', '$' + fmt(T.reduce((s, t, i) => s + (active[i] ? t[6] : 0), 0)), amber], ['Tracking error vs model', `${R.rebalance.proposal.trackingErrorBeforePct.toFixed(1)}% → ${R.rebalance.proposal.trackingErrorAfterPct.toFixed(1)}%`]].map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
-    const driftAfter = R.rebalance.drift.map(x => [x.assetClass, signedPts(x.beforePts), signedPts(x.afterPts)]).map(([cls, b, a]) => ({ cls, before: b + ' pts', after: a + ' pts', beforeColor: mute, afterColor: green }));
+    const classOf = (instrument: string) => D.holdings.find(h => h.n === instrument)?.cls;
+    const driftAfter = postTradeDrift(R.rebalance.drift, R.rebalance.trades, active, classOf, D.total).map(x => [x.assetClass, signedPts(x.beforePts), signedPts(x.afterPts)]).map(([cls, b, a]) => ({ cls, before: b + ' pts', after: a + ' pts', beforeColor: mute, afterColor: green }));
     const canApprove = !fails && !st.approved;
     const approveBg = st.approved ? '#e3f5ec' : canApprove ? '#005daa' : '#e5e8ec'; const approveFg = st.approved ? '#00703f' : canApprove ? '#fff' : 'rgba(25,25,25,.45)'; const approveCursor = canApprove ? 'pointer' : 'default';
     const approveLabel = st.approved ? `${nAct} orders sent to routing · 14:48 ET` : fails ? 'Resolve 1 failed check to approve' : `Approve and route ${nAct} orders`;
