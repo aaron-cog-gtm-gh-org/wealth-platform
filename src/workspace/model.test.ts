@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Bootstrap } from './api';
 import {
-  availableCash, heldQuantity, instruments, openSellQuantity, readArea,
+  availableCash, heldQuantity, instruments, openSellQuantity, readArea, withSearchParam,
   reservedCash, sortCurrencies, totalsByCurrency, workspaceHref,
 } from './model';
 
@@ -58,6 +58,13 @@ test('workspace route parsing is explicit and defaults unknown areas safely', ()
   assert.equal(readArea('?screen=workspace&area=unknown'), 'clients');
   assert.equal(workspaceHref('portfolio', { client: 'C1002' }),
     '/?screen=workspace&area=portfolio&client=C1002');
+});
+
+test('selection params are written into the current workspace URL', () => {
+  assert.equal(withSearchParam('?screen=workspace&area=clients', 'client', 'C1002'),
+    '?screen=workspace&area=clients&client=C1002');
+  assert.equal(withSearchParam('?screen=workspace&area=clients&client=C1001', 'client', 'C1002'),
+    '?screen=workspace&area=clients&client=C1002');
 });
 
 test('instrument choices are unique and stable', () => {

@@ -4,7 +4,7 @@ import { api, KYC_STATUSES, RISK_PROFILES } from '../api';
 import type { Client, KycStatus, RiskProfile } from '../api';
 import { useWorkspace } from '../context';
 import { money } from '../format';
-import { availableCash } from '../model';
+import { availableCash, withSearchParam } from '../model';
 import { EmptyRow, Notices, Panel, SortHeader, StatusPill, useAction, useSort } from '../ui';
 
 export function ClientsArea() {
@@ -32,6 +32,10 @@ export function ClientsArea() {
 
   const selected = data.clients.find(c => c.id === selectedId) ?? null;
   const openExceptions = (clientId: string) => data.exceptions.filter(e => e.status !== 'Resolved' && data.accounts.some(a => a.id === e.accountId && a.clientId === clientId)).length;
+  const select = (id: string) => {
+    setSelectedId(id);
+    window.history.replaceState(window.history.state, '', withSearchParam(window.location.search, 'client', id));
+  };
 
   return (
     <div className="ws-split">
@@ -74,7 +78,7 @@ export function ClientsArea() {
               {sort.sorted.map(c => (
                 <tr key={c.id} className={c.id === selectedId ? 'is-selected' : undefined}>
                   <th scope="row">
-                    <button type="button" className="ws-linkbtn" onClick={() => setSelectedId(c.id)} aria-pressed={c.id === selectedId}>{c.name}</button>
+                    <button type="button" className="ws-linkbtn" onClick={() => select(c.id)} aria-pressed={c.id === selectedId}>{c.name}</button>
                   </th>
                   <td className="ws-mono">{c.id}</td>
                   <td>{c.riskProfile}</td>
