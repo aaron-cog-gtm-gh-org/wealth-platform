@@ -13,7 +13,7 @@
     "db:setup": "tsx server/db/setup.ts",
     "db:down": "tsx server/db/down.ts",
     "db:reset": "npm run db:setup",
-    "test:unit": "node --import tsx --test src/workspace/model.test.ts",
+    "test:unit": "node --import tsx --test src/workspace/model.test.ts src/model/drift.test.ts",
     "test:server:unit": "node --import tsx --test --test-concurrency=1 server/workflows/validation.test.ts server/db/sql-script.test.ts",
     "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts",
     "test:backend": "npm run test:server:unit && npm run test:int",
