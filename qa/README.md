@@ -100,10 +100,11 @@ After collecting accepted segments, generate the report and bundle:
 ```sh
 node qa/tooling/qa.mjs report --run-id "$RUN_ID"
 node qa/tooling/qa.mjs structured --run-id "$RUN_ID" --uploads "qa-uploads/$RUN_ID/uploads.json"
+node qa/tooling/qa.mjs demo-video --run-id "$RUN_ID"
 node qa/tooling/qa.mjs bundle --run-id "$RUN_ID"
 ```
 
-`report` writes `report.json`, `report.md`, and self-contained `index.html`; retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection. Each case includes its initial and retest application/API revisions; gap rows include their own revisions. A case without a retest has null retest status, revision and recording fields:
+`report` writes `report.json`, `report.md`, and a standalone `index.html` with embedded WebM bytes (including retry attempts); it plays in Devin preview without nearby segment folders. `demo-video` needs `ffmpeg` and `ffprobe` and produces `full-run.mp4` plus `demo-manifest.json` from all accepted Playwright attempts, with a title card before each one. Attach `full-run.mp4` to the parent session; preserve and attach individual Playwright recordings through the child sessions. `bundle` includes the compilation and the original recordings. Retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection. Each case includes its initial and retest application/API revisions; gap rows include their own revisions. A case without a retest has null retest status, revision and recording fields:
 
 Fix links come from explicit `fixes.json` case IDs, not merely from sharing an area retest. Gap rows retain baseline/retest phases and labels. `summary.gapTests` counts unique gap IDs; `summary.gapAttempts` counts the preserved phase rows.
 
@@ -132,6 +133,8 @@ qa-artifacts/
     ├── report.json
     ├── report.md
     ├── index.html
+    ├── full-run.mp4
+    ├── demo-manifest.json
     └── structured-output.json
 ```
 
@@ -146,7 +149,7 @@ qa-artifacts/
 | `QA_ARTIFACTS_DIR` | `qa-artifacts` | Parent directory for run segments |
 | `QA_SEGMENT_DIR` | `qa-artifacts/_adhoc` | Playwright output segment (set by `run`) |
 | `QA_RETRIES` | `0` | Playwright retries |
-| `QA_SLOW_MO` | `0` | Browser launch delay in milliseconds |
+| `QA_SLOW_MO` | `400` | Browser action delay in milliseconds; cursor and initial/final presentation time are provided by the fixture |
 | `QA_CHROME` | Playwright Chromium | Optional browser executable |
 | `QA_SEED` | `null` | Seed identifier recorded in metadata |
 | `QA_SEED_FILES` | `server/db/schema.sql,server/db/seed.sql,server/db/workflow-seed.sql` | Ordered, comma-separated repo-relative files included in the combined seed digest |

@@ -4,6 +4,7 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 
 ## Before the demo (≈5 min)
 - Open the parent session. Its structured output lists every case with a status, a recording, and a fix PR where there is one.
+- Play the parent's `full-run.mp4` attachment: each test starts with its title card, shows browser actions with a visible cursor, then moves to the next card. The individual recordings remain linked to results.
 - Unzip `<runId>-evidence.zip` and open `<runId>/index.html` locally. It works offline over `file://`.
 - Keep the child segment ZIP and its per-case video attachments available alongside the report.
 - Have these open in tabs:
@@ -28,7 +29,7 @@ This is a talk track for showing a completed run of the playbook in `qa/playbook
 8. **Wrap (1 min).** Read the summary counts, name any case that is still failing with its reason, and show the Audit appendix for any confirmed invalid-run ZIPs.
 
 ## Answers to likely questions
-- **Why per-test videos and not one long recording?** Each row has its own evidence, so a reviewer can jump straight to the case they care about. Retried attempts keep separate recordings.
+- **Why both per-test videos and one long recording?** The parent video tells the sequential demo story, while each report row has its own original Playwright evidence for review. Retried attempts keep separate recordings.
 - **How do you know a result wasn't faked?** The collector rejects any result that has no Playwright recording, duplicate case ownership, missing cases, and segments with mismatched revisions.
 - **Why are tests and fixes not merged into main?** Fix PRs are left for human review. Generated tests live on the run's QA branch, so `main` stays a clean spreadsheet-to-tests starting point for the next demo.
 

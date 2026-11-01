@@ -77,9 +77,41 @@ export const gapTest = (id: string, options: GapOptions, body: TestBody) => {
   );
 };
 
-type QaFixtures = { qaReset: void; qaAfterScreenshot: void };
+type QaFixtures = { demoCursor: void; qaReset: void; qaAfterScreenshot: void };
+
+function installDemoCursor() {
+  const host = document.createElement('div');
+  host.setAttribute('aria-hidden', 'true');
+  host.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647';
+  const shadow = host.attachShadow({ mode: 'closed' });
+  shadow.innerHTML = `<style>
+    .pointer{position:absolute;left:0;top:0;width:22px;height:22px;opacity:0;transform:translate(-30px,-30px);
+      transition:transform .16s ease-out,opacity .1s;filter:drop-shadow(0 1px 2px #002147)}
+    .pointer:before{content:'';display:block;width:14px;height:14px;border:2px solid #003168;
+      border-radius:50%;background:#ffd200;box-shadow:0 0 0 2px white}
+    .pointer.down:after{content:'';position:absolute;left:-7px;top:-7px;width:28px;height:28px;
+      border:3px solid #ffd200;border-radius:50%;box-shadow:0 0 0 1px #003168}
+  </style><div class="pointer"></div>`;
+  const pointer = shadow.querySelector<HTMLElement>('.pointer')!;
+  let release: number | undefined;
+  const mount = () => { if (!host.isConnected) document.documentElement.append(host); };
+  window.addEventListener('mousemove', (event) => {
+    mount();
+    pointer.style.opacity = '1';
+    pointer.style.transform = `translate(${event.clientX - 7}px,${event.clientY - 7}px)`;
+  }, true);
+  window.addEventListener('mousedown', () => {
+    pointer.classList.add('down');
+    window.clearTimeout(release);
+    release = window.setTimeout(() => pointer.classList.remove('down'), 450);
+  }, true);
+}
 
 export const test = base.extend<QaFixtures>({
+  demoCursor: [async ({ context }, use) => {
+    await context.addInitScript(installDemoCursor);
+    await use();
+  }, { auto: true }],
   qaReset: [
     async ({ request }, use) => {
       const apiUrl = process.env.QA_API_URL ?? 'http://localhost:3001';
@@ -98,6 +130,7 @@ export const test = base.extend<QaFixtures>({
     async ({ page }, use, testInfo) => {
       await use();
       if (!page.isClosed()) {
+        await page.waitForTimeout(800);
         await testInfo.attach('after.png', {
           body: await page.screenshot({ fullPage: true }),
           contentType: 'image/png'
@@ -129,6 +162,7 @@ export const openArea = async (
     body: await page.screenshot({ fullPage: true }),
     contentType: 'image/png'
   });
+  await page.waitForTimeout(500);
 };
 
 export { expect };

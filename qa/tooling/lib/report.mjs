@@ -152,8 +152,25 @@ function rejectedAttempts(runDir, errors) {
   });
 }
 
-function renderHtml(report) {
+function embeddedVideos(runDir, report) {
+  const paths = new Set(
+    [...report.baselineRows, ...report.retestRows, ...report.gapTests]
+      .flatMap((row) => row.recordings ?? [])
+      .map((attempt) => attempt.video)
+      .filter(Boolean)
+  );
+  const videos = {};
+  for (const name of [...paths].sort()) {
+    const fullPath = path.resolve(runDir, name);
+    if (!fullPath.startsWith(`${runDir}${path.sep}`) || !fs.existsSync(fullPath)) continue;
+    videos[name] = `data:video/webm;base64,${fs.readFileSync(fullPath).toString('base64')}`;
+  }
+  return videos;
+}
+
+function renderHtml(report, videos) {
   const embedded = escapeJsonForHtml(report);
+  const media = escapeJsonForHtml(videos);
   const runLabel = escapeHtml(report.runId);
   const generatedLabel = escapeHtml(report.generatedAt ?? 'unknown');
   return `<!doctype html>
@@ -184,8 +201,10 @@ video{display:block;max-width:320px;background:#0b1726;border-radius:5px;margin:
 <section class="panel active" id="baseline"></section><section class="panel" id="retest"></section><section class="panel" id="gaps"></section><section class="panel" id="errors"></section><section class="panel" id="audit"></section>
 </main>
 <script type="application/json" id="report-data">${embedded}</script>
+<script type="application/json" id="video-data">${media}</script>
 <script>
 const data=JSON.parse(document.getElementById('report-data').textContent);
+const videos=JSON.parse(document.getElementById('video-data').textContent);
 const h=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=text;if(cls)e.className=cls;return e};
 const link=(label,url,cls)=>{if(!url)return null;if(!/^https?:\\/\\//i.test(url)&&(url.startsWith('/')||url.includes('..')))return null;const a=h('a',label,cls);a.href=url;if(/^https?:/i.test(url))a.target='_blank',a.rel='noopener noreferrer';return a};
 const safeUrl=url=>typeof url==='string'&&!url.startsWith('/')&&!url.includes('..')?url:null;
@@ -203,8 +222,8 @@ function makeTable(rows){
  const jiraCell=h('td');const jira=link(row.jiraKey,row.jiraUrl,'jira');if(jira)jiraCell.append(jira);line.append(jiraCell);
  const testCell=h('td',row.testPath||'—');testCell.append(h('div',row.phase+' · '+row.label),h('div','App: '+(row.revision||'unknown')),h('div','API: '+(row.apiRevision||'unknown')));line.append(testCell);const statusCell=h('td');statusCell.append(h('span',row.status,'pill '+String(row.status).replace(/[^a-z]/gi,'')));line.append(statusCell);
  const media=h('td');const recordings=row.recordings||[];const primary=recordings.at(-1)?.video||row.primaryRecording;
- if(primary){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=safeUrl(primary)||'';media.append(video)}
- const recordLinks=h('div');recordLinks.className='links';recordings.slice(0,-1).forEach((item,index)=>{const a=link('retry '+item.retry,safeUrl(item.video));if(a)recordLinks.append(a)});if(recordLinks.childNodes.length)media.append(recordLinks);line.append(media);
+ if(primary){const video=document.createElement('video');video.controls=true;video.preload='metadata';video.width=320;video.src=videos[primary]||'';video.setAttribute('aria-label','Recording of '+row.id+' '+row.title);media.append(video);if(!videos[primary])media.append(h('span','Recording missing from report; inspect evidence bundle.','error'))}
+ recordings.slice(0,-1).forEach((item)=>{const details=h('details');details.append(h('summary','Attempt '+(item.retry+1)+' · '+item.status));if(videos[item.video]){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=videos[item.video];details.append(video)}else details.append(h('span','Recording missing from report.','error'));media.append(details)});line.append(media);
  const shots=h('td');for(const file of row.screenshots||[]){const url=safeUrl(file);if(url){const a=link('',url);const img=document.createElement('img');img.src=url;img.alt='Screenshot';img.className='thumb';a.append(img);shots.append(a)}}line.append(shots);
  const traceCell=h('td');const trace=link('trace',safeUrl(row.trace));if(trace)traceCell.append(trace);line.append(traceCell);
  const fixCell=h('td');for(const fix of (row.fixPrs||[])){const a=link(fix,fix);if(a)fixCell.append(a)}if(row.fixPr&&!row.fixPrs?.length){const a=link(row.fixPr,row.fixPr);if(a)fixCell.append(a)}line.append(fixCell);body.append(line)}
@@ -476,7 +495,7 @@ export function buildReport(runId, {
   fs.mkdirSync(runDir, { recursive: true });
   writeJson(path.join(runDir, 'report.json'), report);
   fs.writeFileSync(path.join(runDir, 'report.md'), renderMarkdown(report));
-  fs.writeFileSync(path.join(runDir, 'index.html'), renderHtml(report));
+  fs.writeFileSync(path.join(runDir, 'index.html'), renderHtml(report, embeddedVideos(runDir, report)));
   return { report, errors: report.errors, warnings: report.warnings };
 }
 
