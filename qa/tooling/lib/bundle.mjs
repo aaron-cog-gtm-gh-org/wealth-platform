@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { normalizeRelative, walkFiles } from './common.mjs';
 import { buildReport } from './report.mjs';
-import { createZip } from './zip.mjs';
+import { writeZipFile } from './zip.mjs';
 
 export async function bundleRun(runId, { artifacts = 'qa-artifacts', out, allowErrors = false, casesFile, generatedAt, root = process.cwd() } = {}) {
   const artifactsDir = path.resolve(root, artifacts);
@@ -31,11 +31,10 @@ export async function bundleRun(runId, { artifacts = 'qa-artifacts', out, allowE
   const uniqueFiles = [...new Set(files)].sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
   const entries = uniqueFiles.map((file) => ({
     name: `${runId}/${normalizeRelative(path.relative(runDir, file))}`,
-    data: fs.readFileSync(file)
+    file
   }));
-  const bytes = createZip(entries);
   const output = path.resolve(root, out ?? path.join(artifacts, `${runId}-evidence.zip`));
   fs.mkdirSync(path.dirname(output), { recursive: true });
-  fs.writeFileSync(output, bytes);
-  return { ...built, zipPath: output, entryCount: entries.length, size: bytes.length };
+  const size = writeZipFile(entries, output);
+  return { ...built, zipPath: output, entryCount: entries.length, size };
 }
