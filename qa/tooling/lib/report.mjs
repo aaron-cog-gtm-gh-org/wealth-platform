@@ -185,7 +185,7 @@ h1{font-size:clamp(22px,3vw,34px);margin:0 0 7px}.sub{opacity:.85;font-size:14px
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow:auto}.tabs button{border:0;background:transparent;padding:12px 16px;color:#314761;font:inherit;font-weight:650;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}.tabs button[aria-selected=true]{color:var(--navy);border-color:var(--yellow)}
 .panel{display:none}.panel.active{display:block}.table-wrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:8px;margin-top:12px}table{border-collapse:collapse;width:100%;min-width:1040px}th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid #e7edf3;font-size:13px}th{background:#edf2f7;color:#32465d;position:sticky;top:0}td:first-child{font-weight:700;color:var(--navy);white-space:nowrap}
 .pill{display:inline-block;border-radius:999px;padding:4px 9px;font-weight:700;text-transform:capitalize;background:#e7edf5;color:#314761}.pill.passed,.pill.fixed{background:#d9f2e5;color:#145d36}.pill.failing,.pill.failed,.pill.timedOut{background:#ffe1dd;color:#9a2418}.pill.flaky{background:#fff1c2;color:#705600}.pill.not-run,.pill.skipped{background:#e7edf5}
-video{display:block;max-width:320px;background:#0b1726;border-radius:5px;margin:4px 0}.links{display:flex;gap:8px;flex-wrap:wrap;margin:5px 0}.links a,.jira{color:#0055a6}.thumb{width:80px;height:55px;object-fit:cover;border:1px solid var(--line);border-radius:4px}.error{border-left:4px solid #bd2d23;background:#fff0ed;padding:10px 13px;margin:8px 0}.warning{border-left:4px solid #b88a00;background:#fff8d8;padding:10px 13px;margin:8px 0}.empty{padding:28px;color:#64758a;text-align:center}
+video{display:block;max-width:320px;background:#0b1726;border-radius:5px;margin:4px 0}.links{display:flex;gap:8px;flex-wrap:wrap;margin:5px 0}.links a,.jira{color:#0055a6}.error{border-left:4px solid #bd2d23;background:#fff0ed;padding:10px 13px;margin:8px 0}.warning{border-left:4px solid #b88a00;background:#fff8d8;padding:10px 13px;margin:8px 0}.empty{padding:28px;color:#64758a;text-align:center}
 </style></head><body>
 <header><h1>Wealth Platform QA Evidence</h1><div class="sub">Run ${runLabel} · generated ${generatedLabel}</div></header>
 <main class="wrap">
@@ -207,15 +207,13 @@ const data=JSON.parse(document.getElementById('report-data').textContent);
 const videos=JSON.parse(document.getElementById('video-data').textContent);
 const h=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=text;if(cls)e.className=cls;return e};
 const link=(label,url,cls)=>{if(!url)return null;if(!/^https?:\\/\\//i.test(url)&&(url.startsWith('/')||url.includes('..')))return null;const a=h('a',label,cls);a.href=url;if(/^https?:/i.test(url))a.target='_blank',a.rel='noopener noreferrer';return a};
-const safeUrl=url=>typeof url==='string'&&!url.startsWith('/')&&!url.includes('..')?url:null;
 const summary=data.summary||{};
-const apiRevision=Array.isArray(data.apiRevision)?data.apiRevision.join(', '):data.apiRevision||'unknown';
-const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Revision',data.baselineRevisions?.join(', ')||'—'],['API revision',apiRevision],['Seed digest',data.seed?.sha256||'unknown'],['Reset digest',data.seed?.reset?.sha256||'unknown'],['Run',data.runId]];
+const chipData=[['Passed',summary.passed],['Fixed',summary.fixed],['Failing',summary.failing],['Not run',summary.notRun],['Flaky',summary.flaky],['Run',data.runId]];
 const chips=document.getElementById('chips');for(const [label,value] of chipData){const e=h('div');e.className='chip';e.append(document.createTextNode(String(value??0)+' '));const s=h('span',label);e.append(s);chips.append(e)}
 function makeTable(rows){
  if(!rows.length)return h('div','No results for this section.','empty');
  const wrap=h('div');wrap.className='table-wrap';const table=h('table');const head=h('thead');const tr=h('tr');
- for(const name of ['ID','Title','Area','Feature','Jira','Test path','Status','Recordings','Screenshots','Trace','Fix PR'])tr.append(h('th',name));
+ for(const name of ['ID','Title','Area','Feature','Jira','Test path','Status','Recordings','Fix PR'])tr.append(h('th',name));
  head.append(tr);table.append(head);const body=h('tbody');
  for(const row of rows){const line=h('tr');line.dataset.filter=[row.id,row.title,row.area,row.feature].join(' ').toLowerCase();
  line.append(h('td',row.id),h('td',row.title),h('td',row.area),h('td',row.feature));
@@ -224,8 +222,6 @@ function makeTable(rows){
  const media=h('td');const recordings=row.recordings||[];const primary=recordings.at(-1)?.video||row.primaryRecording;
  if(primary){const video=document.createElement('video');video.controls=true;video.preload='metadata';video.width=320;video.src=videos[primary]||'';video.setAttribute('aria-label','Recording of '+row.id+' '+row.title);media.append(video);if(!videos[primary])media.append(h('span','Recording missing from report; inspect evidence bundle.','error'))}
  recordings.slice(0,-1).forEach((item)=>{const details=h('details');details.append(h('summary','Attempt '+(item.retry+1)+' · '+item.status));if(videos[item.video]){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=videos[item.video];details.append(video)}else details.append(h('span','Recording missing from report.','error'));media.append(details)});line.append(media);
- const shots=h('td');for(const file of row.screenshots||[]){const url=safeUrl(file);if(url){const a=link('',url);const img=document.createElement('img');img.src=url;img.alt='Screenshot';img.className='thumb';a.append(img);shots.append(a)}}line.append(shots);
- const traceCell=h('td');const trace=link('trace',safeUrl(row.trace));if(trace)traceCell.append(trace);line.append(traceCell);
  const fixCell=h('td');for(const fix of (row.fixPrs||[])){const a=link(fix,fix);if(a)fixCell.append(a)}if(row.fixPr&&!row.fixPrs?.length){const a=link(row.fixPr,row.fixPr);if(a)fixCell.append(a)}line.append(fixCell);body.append(line)}
  table.append(body);wrap.append(table);return wrap;
 }

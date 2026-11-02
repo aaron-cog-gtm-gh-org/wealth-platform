@@ -162,7 +162,7 @@ test('retest seed digests may differ from the baseline seed digest', (t) => {
   assert.equal(result.report.seed.sha256, 'baseline-digest');
 });
 
-test('report markdown and HTML show the combined and reset seed digests', (t) => {
+test('report markdown shows the seed digests and the HTML omits technical chips and columns', (t) => {
   const config = singleConfig();
   const fixture = setup(t, tinyWorkbook(config), config);
   addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')], {
@@ -179,9 +179,9 @@ test('report markdown and HTML show the combined and reset seed digests', (t) =>
   const html = fs.readFileSync(path.join(runDir, 'index.html'), 'utf8');
   assert.match(markdown, /Seed digest: combined-seed-digest/);
   assert.match(markdown, /Reset digest: reset-seed-digest/);
-  assert.ok(html.includes('Seed digest'));
-  assert.ok(html.includes('combined-seed-digest'));
-  assert.ok(html.includes('reset-seed-digest'));
+  for (const label of ['Seed digest', 'Reset digest', "'API revision'", "'Screenshots'", "'Trace'"]) {
+    assert.ok(!html.includes(label), `HTML should not render ${label}`);
+  }
 });
 
 test('failed baseline becomes fixed in a separate retest row linked by fixes.json', (t) => {
