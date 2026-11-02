@@ -1,6 +1,9 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createZip, crc32, isZip } from '../lib/zip.mjs';
+import { createZip, crc32, isZip, writeZipFile } from '../lib/zip.mjs';
 
 function parseZip(buffer) {
   let endOffset = -1;
@@ -50,4 +53,23 @@ test('ZIP writer produces deterministic STORE archives with valid CRCs and names
     { name: 'run/video.webm', data: 'video-bytes' }
   ]);
   assert.throws(() => createZip([{ name: '../escape.txt', data: 'unsafe' }]), /ZIP_ENTRY_PATH/);
+});
+
+test('streamed ZIP file matches the in-memory archive byte for byte', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zip-stream-'));
+  const files = [
+    { name: 'run/video.webm', data: Buffer.alloc(3 * 1024 * 1024 + 7, 0x5a) },
+    { name: 'run/report.md', data: Buffer.from('report') }
+  ];
+  const entries = files.map((entry, index) => {
+    const file = path.join(dir, `f${index}`);
+    fs.writeFileSync(file, entry.data);
+    return { name: entry.name, file };
+  });
+  const output = path.join(dir, 'out.zip');
+  const size = writeZipFile(entries, output);
+  const expected = createZip(files);
+  assert.equal(size, expected.length);
+  assert.deepEqual(fs.readFileSync(output), expected);
+  fs.rmSync(dir, { recursive: true, force: true });
 });
