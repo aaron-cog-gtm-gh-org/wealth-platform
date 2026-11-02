@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { buildReport } from '../lib/report.mjs';
+import { projectStructured } from '../lib/structured.mjs';
 import { writeJson } from '../lib/common.mjs';
 import { addSegment, reportFixture, reportTest, tinyConfig, tinyWorkbook } from './helpers.mjs';
 
@@ -37,8 +38,83 @@ test('report collects a passing baseline case', (t) => {
   assert.equal(result.report.cases[0].finalStatus, 'passed');
   assert.equal(result.report.summary.passed, 1);
   assert.equal(result.report.cases[0].area, 'clients');
+  assert.deepEqual(result.report.rejectedAttempts, []);
+  assert.match(fs.readFileSync(path.join(fixture.root, 'artifacts', fixture.runId, 'report.md'), 'utf8'), /No rejected attempts\./);
   assert.equal(result.report.cases[0].feature, 'Clients');
   assert.equal(result.report.baselineRows[0].primaryRecording, 'baseline/clients/test-results/wm-tc-001-retry0/video.webm');
+  const html = fs.readFileSync(path.join(fixture.root, 'artifacts', fixture.runId, 'index.html'), 'utf8');
+  const media = JSON.parse(html.match(/<script type="application\/json" id="video-data">(.*?)<\/script>/s)[1]);
+  assert.equal(media[result.report.baselineRows[0].primaryRecording], 'data:video/webm;base64,d2VibQ==');
+  assert.match(html, /video\.src=videos\[primary\]/);
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].initialRevision, 'baseline-clients-revision');
+  assert.equal(structured.cases[0].initialApiRevision, 'baseline-clients-revision');
+  assert.equal(structured.cases[0].retestRevision, null);
+  assert.equal(structured.cases[0].retestApiRevision, null);
+  assert.equal(structured.cases[0].retestStatus, null);
+});
+
+test('structured evidence traces each case and gap to its app and API revision', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [
+    testOptions('failed'), reportTest('WM-GAP-001', 'passed')
+  ], { revision: 'abcdef0123456789', apiRevision: 'abcdef0123456789' });
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [testOptions('passed')], {
+    revision: '1234567890abcdef', apiRevision: '1234567890abcdef',
+    fixPr: 'https://example.test/pull/1'
+  });
+  writeJson(path.join(fixture.root, 'artifacts', fixture.runId, 'fixes.json'), {
+    fixes: [{ signature: 'validation failure', caseIds: ['WM-TC-001'], prUrl: 'https://example.test/pull/1', fixRevision: '1234567890abcdef', retestLabel: 'fix-1' }]
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].initialRevision, 'abcdef0123456789');
+  assert.equal(structured.cases[0].initialApiRevision, 'abcdef0123456789');
+  assert.equal(structured.cases[0].retestRevision, '1234567890abcdef');
+  assert.equal(structured.cases[0].retestApiRevision, '1234567890abcdef');
+  assert.equal(structured.cases[0].initialStatus, 'failed');
+  assert.equal(structured.cases[0].finalStatus, 'fixed');
+  assert.equal(structured.gaps[0].revision, 'abcdef0123456789');
+  assert.equal(structured.gaps[0].apiRevision, 'abcdef0123456789');
+});
+
+test('report includes rejected-attempt audit links without counting them as results', (t) => {
+  const fixture = setup(t, tinyWorkbook(singleConfig()), singleConfig());
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')]);
+  const runDir = path.join(fixture.root, 'artifacts', fixture.runId);
+  const rejectedDir = path.join(runDir, 'rejected');
+  fs.mkdirSync(rejectedDir);
+  fs.writeFileSync(path.join(rejectedDir, 'baseline-clients.zip'), 'preserved invalid attempt');
+  writeJson(path.join(rejectedDir, 'rejected.json'), { rejected: [{
+    zip: 'baseline-clients.zip', phase: 'baseline', label: 'clients-original',
+    reason: 'Test-authoring selector issue <not a product failure>', caseIds: ['WM-TC-001'], revision: 'original-revision'
+  }] });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.report.summary.total, 1);
+  assert.equal(result.report.summary.passed, 1);
+  assert.equal(result.report.baselineRows.length, 1);
+  assert.equal(result.report.rejectedAttempts.length, 1);
+  assert.equal(result.report.rejectedAttempts[0].archive, 'rejected/baseline-clients.zip');
+  assert.match(fs.readFileSync(path.join(runDir, 'report.md'), 'utf8'), /Audit appendix: rejected attempts/);
+  assert.match(fs.readFileSync(path.join(runDir, 'report.md'), 'utf8'), /\[Original rejected ZIP\]\(rejected\/baseline-clients.zip\)/);
+  const html = fs.readFileSync(path.join(runDir, 'index.html'), 'utf8');
+  assert.match(html, /data-panel="audit"/);
+  assert.match(html, /Original rejected ZIP/);
+  assert.ok(!html.includes('<not a product failure>'));
+});
+
+test('report rejects unsafe rejected-attempt archive links', (t) => {
+  const fixture = setup(t, tinyWorkbook(singleConfig()), singleConfig());
+  addSegment(fixture.root, fixture.runId, 'baseline', 'clients', [testOptions('passed')]);
+  const rejectedDir = path.join(fixture.root, 'artifacts', fixture.runId, 'rejected');
+  fs.mkdirSync(rejectedDir);
+  writeJson(path.join(rejectedDir, 'rejected.json'), { rejected: [{ zip: '../../other.zip', reason: 'invalid' }] });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.ok(result.errors.some(item => item.code === 'INVALID_REJECTED_ATTEMPT'));
+  assert.deepEqual(result.report.rejectedAttempts, []);
 });
 
 test('report rejects an unknown API revision', (t) => {
@@ -140,7 +216,32 @@ test('segment fixPr alone does not mark unrelated baseline failures fixed', (t) 
   const result = buildReport(fixture.runId, fixture.options);
   assert.equal(result.report.cases[0].finalStatus, 'failing');
   assert.equal(result.report.cases[0].retestStatus, 'passed');
-  assert.equal(result.report.cases[0].fixPr, 'https://example.test/pull/1');
+  assert.equal(result.report.cases[0].fixPr, null);
+  assert.deepEqual(result.report.cases[0].fixPrs, []);
+});
+
+test('gap retests keep their phases, explicit fix links and unique-test denominator', (t) => {
+  const config = singleConfig();
+  const fixture = setup(t, tinyWorkbook(config), config);
+  addSegment(fixture.root, fixture.runId, 'baseline', 'original', [
+    testOptions('passed'), reportTest('WM-GAP-001', 'failed')
+  ]);
+  addSegment(fixture.root, fixture.runId, 'retest', 'fix-1', [
+    testOptions('passed'), reportTest('WM-GAP-001', 'passed')
+  ], { revision: 'fix-revision', fixPr: 'https://example.test/pull/1' });
+  writeJson(path.join(fixture.root, 'artifacts', fixture.runId, 'fixes.json'), {
+    fixes: [{ signature: 'recovery failure', caseIds: ['WM-GAP-001'], prUrl: 'https://example.test/pull/1', fixRevision: 'fix-revision', retestLabel: 'fix-1' }]
+  });
+  const result = buildReport(fixture.runId, fixture.options);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.report.summary.gapTests, 1);
+  assert.equal(result.report.summary.gapAttempts, 2);
+  const structured = projectStructured(result.report);
+  assert.equal(structured.cases[0].fixPr, null);
+  assert.deepEqual(structured.gaps.map((gap) => [gap.phase, gap.status, gap.fixPr]), [
+    ['baseline', 'failed', 'https://example.test/pull/1'],
+    ['retest', 'passed', 'https://example.test/pull/1']
+  ]);
 });
 
 test('failed case without retest remains failing', (t) => {

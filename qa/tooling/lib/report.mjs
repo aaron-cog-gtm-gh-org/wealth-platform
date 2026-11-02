@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { caseIdFromTitle, diagnostic, loadAreas, normalizeRelative, readJson, sortedDiagnostics, writeJson } from './common.mjs';
+import { areaCaseNumbers, caseIdFromTitle, diagnostic, loadAreas, normalizeRelative, readJson, sortedDiagnostics, writeJson } from './common.mjs';
 import { normalizeSegment } from './normalize.mjs';
 
 function segmentPrefix(runDir, segmentDir) {
@@ -58,6 +58,7 @@ function annotateTest(test, segment, runDir, testCase, config) {
     trace: attempts.at(-1)?.trace ?? null,
     screenshots: attempts.flatMap((attempt) => attempt.screenshots),
     revision: segment.meta.revision ?? null,
+    apiRevision: segment.meta.apiRevision ?? null,
     baseRevision: segment.meta.baseRevision ?? null,
     phase: segment.meta.phase,
     label: segment.meta.label,
@@ -89,7 +90,7 @@ function expectedCases(config, workbook) {
   if (workbook?.cases?.length) return workbook.cases;
   const generated = [];
   for (const area of config.areas) {
-    for (let number = area.first; number <= area.last; number += 1) {
+    for (const number of areaCaseNumbers(area)) {
       generated.push({
         id: `WM-TC-${String(number).padStart(3, '0')}`,
         feature: area.feature,
@@ -127,8 +128,49 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function renderHtml(report) {
+function rejectedAttempts(runDir, errors) {
+  const manifest = path.join(runDir, 'rejected', 'rejected.json');
+  if (!fs.existsSync(manifest)) return [];
+  const entries = readJson(manifest).rejected;
+  if (!Array.isArray(entries)) {
+    errors.push(diagnostic('INVALID_REJECTED_MANIFEST', 'rejected/rejected.json', 'rejected must be an array'));
+    return [];
+  }
+  return entries.flatMap((item, index) => {
+    const zip = item?.zip;
+    if (typeof zip !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/.test(zip) || zip.includes('..') ||
+        typeof item.reason !== 'string' || !fs.existsSync(path.join(runDir, 'rejected', zip)) ||
+        !fs.lstatSync(path.join(runDir, 'rejected', zip)).isFile()) {
+      errors.push(diagnostic('INVALID_REJECTED_ATTEMPT', `rejected/rejected.json:${index}`, 'entry requires a safe existing ZIP filename and reason'));
+      return [];
+    }
+    return [{
+      phase: item.phase ?? 'unknown', label: item.label ?? zip, reason: item.reason,
+      caseIds: Array.isArray(item.caseIds) ? item.caseIds : [], revision: item.revision ?? null,
+      archive: `rejected/${zip}`
+    }];
+  });
+}
+
+function embeddedVideos(runDir, report) {
+  const paths = new Set(
+    [...report.baselineRows, ...report.retestRows, ...report.gapTests]
+      .flatMap((row) => row.recordings ?? [])
+      .map((attempt) => attempt.video)
+      .filter(Boolean)
+  );
+  const videos = {};
+  for (const name of [...paths].sort()) {
+    const fullPath = path.resolve(runDir, name);
+    if (!fullPath.startsWith(`${runDir}${path.sep}`) || !fs.existsSync(fullPath)) continue;
+    videos[name] = `data:video/webm;base64,${fs.readFileSync(fullPath).toString('base64')}`;
+  }
+  return videos;
+}
+
+function renderHtml(report, videos) {
   const embedded = escapeJsonForHtml(report);
+  const media = escapeJsonForHtml(videos);
   const runLabel = escapeHtml(report.runId);
   const generatedLabel = escapeHtml(report.generatedAt ?? 'unknown');
   return `<!doctype html>
@@ -154,12 +196,15 @@ video{display:block;max-width:320px;background:#0b1726;border-radius:5px;margin:
 <button role="tab" aria-selected="false" data-panel="retest">Fixed outcome (retest)</button>
 <button role="tab" aria-selected="false" data-panel="gaps">Discovered gaps</button>
 <button role="tab" aria-selected="false" data-panel="errors">Errors <span id="error-count"></span></button>
+<button role="tab" aria-selected="false" data-panel="audit">Audit appendix <span id="rejected-count"></span></button>
 </nav>
-<section class="panel active" id="baseline"></section><section class="panel" id="retest"></section><section class="panel" id="gaps"></section><section class="panel" id="errors"></section>
+<section class="panel active" id="baseline"></section><section class="panel" id="retest"></section><section class="panel" id="gaps"></section><section class="panel" id="errors"></section><section class="panel" id="audit"></section>
 </main>
 <script type="application/json" id="report-data">${embedded}</script>
+<script type="application/json" id="video-data">${media}</script>
 <script>
 const data=JSON.parse(document.getElementById('report-data').textContent);
+const videos=JSON.parse(document.getElementById('video-data').textContent);
 const h=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined&&text!==null)e.textContent=text;if(cls)e.className=cls;return e};
 const link=(label,url,cls)=>{if(!url)return null;if(!/^https?:\\/\\//i.test(url)&&(url.startsWith('/')||url.includes('..')))return null;const a=h('a',label,cls);a.href=url;if(/^https?:/i.test(url))a.target='_blank',a.rel='noopener noreferrer';return a};
 const safeUrl=url=>typeof url==='string'&&!url.startsWith('/')&&!url.includes('..')?url:null;
@@ -175,10 +220,10 @@ function makeTable(rows){
  for(const row of rows){const line=h('tr');line.dataset.filter=[row.id,row.title,row.area,row.feature].join(' ').toLowerCase();
  line.append(h('td',row.id),h('td',row.title),h('td',row.area),h('td',row.feature));
  const jiraCell=h('td');const jira=link(row.jiraKey,row.jiraUrl,'jira');if(jira)jiraCell.append(jira);line.append(jiraCell);
- line.append(h('td',row.testPath||'—'));const statusCell=h('td');statusCell.append(h('span',row.status,'pill '+String(row.status).replace(/[^a-z]/gi,'')));line.append(statusCell);
+ const testCell=h('td',row.testPath||'—');testCell.append(h('div',row.phase+' · '+row.label),h('div','App: '+(row.revision||'unknown')),h('div','API: '+(row.apiRevision||'unknown')));line.append(testCell);const statusCell=h('td');statusCell.append(h('span',row.status,'pill '+String(row.status).replace(/[^a-z]/gi,'')));line.append(statusCell);
  const media=h('td');const recordings=row.recordings||[];const primary=recordings.at(-1)?.video||row.primaryRecording;
- if(primary){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=safeUrl(primary)||'';media.append(video)}
- const recordLinks=h('div');recordLinks.className='links';recordings.slice(0,-1).forEach((item,index)=>{const a=link('retry '+item.retry,safeUrl(item.video));if(a)recordLinks.append(a)});if(recordLinks.childNodes.length)media.append(recordLinks);line.append(media);
+ if(primary){const video=document.createElement('video');video.controls=true;video.preload='metadata';video.width=320;video.src=videos[primary]||'';video.setAttribute('aria-label','Recording of '+row.id+' '+row.title);media.append(video);if(!videos[primary])media.append(h('span','Recording missing from report; inspect evidence bundle.','error'))}
+ recordings.slice(0,-1).forEach((item)=>{const details=h('details');details.append(h('summary','Attempt '+(item.retry+1)+' · '+item.status));if(videos[item.video]){const video=document.createElement('video');video.controls=true;video.preload='none';video.width=320;video.src=videos[item.video];details.append(video)}else details.append(h('span','Recording missing from report.','error'));media.append(details)});line.append(media);
  const shots=h('td');for(const file of row.screenshots||[]){const url=safeUrl(file);if(url){const a=link('',url);const img=document.createElement('img');img.src=url;img.alt='Screenshot';img.className='thumb';a.append(img);shots.append(a)}}line.append(shots);
  const traceCell=h('td');const trace=link('trace',safeUrl(row.trace));if(trace)traceCell.append(trace);line.append(traceCell);
  const fixCell=h('td');for(const fix of (row.fixPrs||[])){const a=link(fix,fix);if(a)fixCell.append(a)}if(row.fixPr&&!row.fixPrs?.length){const a=link(row.fixPr,row.fixPr);if(a)fixCell.append(a)}line.append(fixCell);body.append(line)}
@@ -188,6 +233,7 @@ document.getElementById('baseline').append(makeTable(data.baselineRows||[]));
 document.getElementById('retest').append(makeTable(data.retestRows||[]));
 document.getElementById('gaps').append(makeTable(data.gapTests||[]));
 const errorPanel=document.getElementById('errors');for(const item of data.errors||[]){const block=h('div',item.code+' '+item.path+': '+item.message,'error');errorPanel.append(block)}for(const item of data.warnings||[]){const block=h('div',item.code+' '+item.path+': '+item.message,'warning');errorPanel.append(block)}if(!errorPanel.childNodes.length)errorPanel.append(h('div','No errors or warnings.','empty'));document.getElementById('error-count').textContent=String((data.errors||[]).length+(data.warnings||[]).length);
+const audit=document.getElementById('audit');audit.append(h('h2','Rejected attempts'),h('p','Excluded test-authoring or environment attempts remain available for review; they do not replace genuine product failures or enter the result counts.'));for(const item of data.rejectedAttempts||[]){const block=h('article');block.append(h('h3',item.phase+' / '+item.label),h('p',item.reason),h('p','Cases: '+(item.caseIds.join(', ')||'none specified')+' · Revision: '+(item.revision||'unknown')));const archive=link('Original rejected ZIP',item.archive);if(archive)block.append(archive);audit.append(block)}if(!data.rejectedAttempts?.length)audit.append(h('div','No rejected attempts.','empty'));document.getElementById('rejected-count').textContent=String(data.rejectedAttempts?.length||0);
 document.querySelectorAll('[role=tab]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[role=tab]').forEach(item=>item.setAttribute('aria-selected',String(item===button)));document.querySelectorAll('.panel').forEach(panel=>panel.classList.toggle('active',panel.id===button.dataset.panel))}));
 document.getElementById('filter').addEventListener('input',event=>{const query=event.target.value.toLowerCase();document.querySelectorAll('tbody tr').forEach(row=>row.hidden=!row.dataset.filter.includes(query))});
 </script></body></html>`;
@@ -216,7 +262,12 @@ function renderMarkdown(report) {
     output.push(`| ${row.id} | ${row.area} | ${row.feature} | ${row.initialStatus} | ${row.retestStatus ?? '—'} | ${row.finalStatus} | [${row.jiraKey}](${row.jiraUrl}) | ${row.testPath ?? '—'} |`);
   }
   output.push('', '## Discovered gaps', '');
-  for (const gap of report.gapTests) output.push(`- ${gap.id}: ${gap.title} (${gap.feature}; ${gap.status}; ${gap.wikiRef ?? 'no wiki ref'})`);
+  for (const gap of report.gapTests) output.push(`- ${gap.id}: ${gap.title} (${gap.feature}; ${gap.phase}/${gap.label}; ${gap.status}; revision ${gap.revision}; ${gap.wikiRef ?? 'no wiki ref'})${gap.primaryRecording ? ` [recording](${gap.primaryRecording})` : ''}${gap.fixPr ? ` [fix PR](${gap.fixPr})` : ''}`);
+  output.push('', '## Audit appendix: rejected attempts', '', 'Excluded attempts do not enter result counts or replace genuine product failures.', '');
+  if (!report.rejectedAttempts.length) output.push('No rejected attempts.');
+  for (const item of report.rejectedAttempts) {
+    output.push(`- **${item.phase} / ${item.label}**: ${item.reason}`, `  - Cases: ${item.caseIds.join(', ') || 'none specified'}. Revision: ${item.revision ?? 'unknown'}. [Original rejected ZIP](${item.archive})`);
+  }
   return `${output.join('\n')}\n`;
 }
 
@@ -366,10 +417,7 @@ export function buildReport(runId, {
       warnings.push(diagnostic('RETEST_WITHOUT_BASELINE_FAILURE', latestRetest.segment.relative, `${item.id} was retested without a baseline failure`));
     }
     const linkedFixes = linkedFixesFor(item.id, fixes);
-    const fixPrs = [...new Set([
-      ...linkedFixes.map((fix) => fix.prUrl),
-      ...(latestRetest?.segment.meta.fixPr ? [latestRetest.segment.meta.fixPr] : [])
-    ].filter(Boolean))];
+    const fixPrs = [...new Set(linkedFixes.map((fix) => fix.prUrl).filter(Boolean))];
     return {
       id: item.id,
       title: item.title ?? baseline?.title ?? '',
@@ -389,6 +437,10 @@ export function buildReport(runId, {
       retest: latestRetest?.row ?? null
     };
   });
+  for (const gap of gapTests) {
+    gap.fixPrs = [...new Set(linkedFixesFor(gap.id, fixes).map((fix) => fix.prUrl).filter(Boolean))];
+    gap.fixPr = gap.fixPrs[0] ?? null;
+  }
   const gapCountByStatus = gapTests.reduce((counts, gap) => {
     counts[gap.status] = (counts[gap.status] ?? 0) + 1;
     return counts;
@@ -400,7 +452,8 @@ export function buildReport(runId, {
     failing: caseSummaries.filter((item) => item.finalStatus === 'failing').length,
     flaky: caseSummaries.filter((item) => item.finalStatus === 'flaky').length,
     notRun: caseSummaries.filter((item) => item.finalStatus === 'not-run').length,
-    gapTests: gapTests.length,
+    gapTests: new Set(gapTests.map((gap) => gap.id)).size,
+    gapAttempts: gapTests.length,
     gapCounts: gapCountByStatus
   };
   const finishedDates = segments.map((segment) => segment.meta.finishedAt).filter(Boolean).sort();
@@ -435,13 +488,14 @@ export function buildReport(runId, {
     retestRows: retestRows.sort((a, b) => compare(a.id, b.id) || compare(a.label, b.label)),
     cases: caseSummaries,
     gapTests: gapTests.sort((a, b) => compare(a.id, b.id)),
+    rejectedAttempts: rejectedAttempts(runDir, errors),
     errors: sortedDiagnostics(errors),
     warnings: sortedDiagnostics(warnings)
   };
   fs.mkdirSync(runDir, { recursive: true });
   writeJson(path.join(runDir, 'report.json'), report);
   fs.writeFileSync(path.join(runDir, 'report.md'), renderMarkdown(report));
-  fs.writeFileSync(path.join(runDir, 'index.html'), renderHtml(report));
+  fs.writeFileSync(path.join(runDir, 'index.html'), renderHtml(report, embeddedVideos(runDir, report)));
   return { report, errors: report.errors, warnings: report.warnings };
 }
 

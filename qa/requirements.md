@@ -12,10 +12,10 @@ certified qTest import file.
 
 | Jira story | Module | Workspace area | Cases | Count |
 | --- | --- | --- | --- | --- |
-| [KAN-12](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12) Manage client suitability and KYC profiles | Clients | `clients` | WM-TC-001 to WM-TC-008 | 8 |
+| [KAN-12](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-12) Manage client suitability and KYC profiles | Clients | `clients` | WM-TC-001 to WM-TC-008, WM-TC-051 | 9 |
 | [KAN-13](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-13) Inspect account holdings and currency-safe valuations | Portfolio | `portfolio` | WM-TC-009 to WM-TC-018 | 10 |
-| [KAN-14](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14) Place and cancel investment orders with reservation controls | Orders | `orders` | WM-TC-019 to WM-TC-030 | 12 |
-| [KAN-15](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15) Review and confirm internal cash transfers | Move Money | `money` | WM-TC-031 to WM-TC-038 | 8 |
+| [KAN-14](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-14) Place and cancel investment orders with reservation controls | Orders | `orders` | WM-TC-019 to WM-TC-030, WM-TC-052 | 13 |
+| [KAN-15](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-15) Review and confirm internal cash transfers | Move Money | `money` | WM-TC-031 to WM-TC-038, WM-TC-053 | 9 |
 | [KAN-16](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-16) Maintain model targets and preview portfolio drift | Rebalance | `rebalance` | WM-TC-039 to WM-TC-044 | 6 |
 | [KAN-17](https://cognition-team-x9dqnayp.atlassian.net/browse/KAN-17) Assign and resolve settlement exceptions with audit history | Settlements | `settlements` | WM-TC-045 to WM-TC-050 | 6 |
 

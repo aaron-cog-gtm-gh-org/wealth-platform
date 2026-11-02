@@ -2,6 +2,20 @@
 
 The harness validates the case workbook and Playwright suite, runs a frozen test segment, then collects child evidence into a report and portable ZIP. It does not infer passing results: a missing result is `not-run`, and missing recordings are collector errors.
 
+The demo starts from the spreadsheet: `main` has no generated Playwright case specs. Children author them during each demo and keep them on a run-specific QA branch. The harness, workbook, and application unit/integration tests remain available. Before authoring, `validate-suite` should report missing cases; that is not a reason to restore historical specs or mark coverage complete.
+
+## Opening advisor journeys
+
+The workbook now has **53 manual cases**: the original `WM-TC-001..050` are unchanged, with three longer advisor journeys appended:
+
+| Video order | Case | Owner | Journey |
+| --- | --- | --- | --- |
+| 1 | WM-TC-051 | Clients | Find a KYC review, save the profile, inspect the portfolio and verify persistence |
+| 2 | WM-TC-052 | Orders | Review holdings, buy 10 RY, cancel the order and verify released cash |
+| 3 | WM-TC-053 | Move Money | Review a transfer, amend the amount, confirm and reconcile both balances |
+
+`openingCases` in `qa/tooling/areas.json` controls video order, not execution order. Each original area also owns its `additionalIds`; there are still six children. Author the new cases from their full manual steps, not prebuilt specs. All three begin in Clients and contain 10+ meaningful clicks. Import `journeyStep(page, title, action)` from the fixtures around each step: perform the browser actions and assertions inside `action`, then the helper holds the verified screen for 1.5 seconds. Click fields before typing/selecting so the cursor is visible. These reading holds are presentation, never assertions. The composer moves all baseline attempts of these journeys first, preserving failures/retries, followed by the rest of the baseline, gaps and retests. Gap coverage remains separate from the 53 manual cases.
+
 ## Setup
 
 `@playwright/test` 1.60.0 and the QA scripts are pinned in the repository. On a fresh checkout, run:
@@ -11,11 +25,13 @@ npm ci
 npx playwright install --with-deps chromium
 ```
 
+If using an existing system Chrome through `QA_CHROME`, run `npx playwright install ffmpeg` even when you do not install Playwright's Chromium. That recording encoder is separate from the system `ffmpeg` and `ffprobe` commands used by `demo-video`.
+
 The `npm run qa`, `npm run qa:test`, `npm run typecheck:qa`, and `npm run lint` scripts already exist.
 
 ## Child run
 
-Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 50-case suite.
+Start the app and verify its health before running tests. The web server uses strict port 5173. Use `validate-suite --area <slug>` while authoring an area spec; `--feature <slug-or-label>` is an alias. Without an area filter it requires the full 53-case suite.
 
 ```sh
 npm run db:up && npm run db:wait && npm run db:setup
@@ -34,13 +50,18 @@ Repeat `validate-suite` and `run` for each area slug. Workbook `feature` values 
 
 Baseline and retest examples use `QA_RETRIES=0`. `run` creates a fresh segment directory and refuses collisions; the Playwright config itself can reload an existing directory. Do not use Playwright retries or new runs to suppress product failures. Each test resets through `POST /api/test/reset`, captures `before.png` from `openArea` and attaches `after.png` automatically.
 
-After recording the baseline and making a fix, run a fresh retest segment:
+After recording the baseline, committing a fix, and opening its PR, restart the API from that fix revision and run a fresh retest segment. The retest base is the fix head, not the original baseline: the runner intentionally rejects application changes relative to its `--base-sha`.
 
 ```sh
-QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FROZEN_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts
+FIX_SHA=$(git rev-parse HEAD)
+QA_RETRIES=0 node qa/tooling/qa.mjs run --run-id "$RUN_ID" --phase retest --label fix-1 --base-sha "$FIX_SHA" --fix-pr "$FIX_PR_URL" -- qa/tests/clients.spec.ts
 ```
 
 Record each verified fix in `qa-artifacts/$RUN_ID/fixes.json` under a `fixes` array, with its `signature`, `caseIds`, `prUrl`, `fixRevision`, and `retestLabel`. `fixRevision` must equal the revision captured by that retest segment.
+
+### Author from the workbook
+
+For a fresh demo, follow `qa/playbook.md`: freeze the clean `main`, read Wiki/Jira, and have six children write new area specs from the manual cases. Integrate their test-only PRs into the run-specific QA branch, never `main`. Deduplicate product failures only after baseline execution; retest fixes using the newly authored assertions. Keep all remediation PRs unmerged and preserve earlier runs as historical evidence.
 
 ### Child evidence attachments
 
@@ -56,6 +77,8 @@ node qa/tooling/qa.mjs export-videos \
 ```
 
 Attach the segment ZIP and every per-case video file from the export directory with `message_user`. The export command writes `manifest.json` with each relative source path and attempt status, and refuses to replace an existing export. After upload, save a JSON object mapping each exported video filename to its URL, then pass it to `structured`; recording fields use the matching upload URL when present and otherwise retain their relative evidence path. Include the segment ZIP attachment URL as `segmentZip` in child structured output.
+
+For the parent session's online report, merge the latest upload maps from every child, including corrected baselines and retests. Match exact exported filenames, including phase, label and retry; never substitute an older attempt's URL. After `structured --uploads`, check that every attempted case and gap recording is an HTTPS URL. A relative recording path means the upload map is incomplete, not that the browser test failed: retrieve the missing attachment and regenerate the projection without rerunning or editing evidence. Relative links remain correct in the offline bundle's `index.html`.
 
 ## Parent collection
 
@@ -76,7 +99,7 @@ If a run is confirmed invalid because of an environment or test-authoring proble
 }
 ```
 
-Never classify a product failure as environmental or delete raw evidence. Include an **Audit appendix** in the final report listing these rejected ZIPs and reasons. `bundle` includes everything under `rejected/`. Selector repairs go through the test-only PR workflow and a new baseline label.
+Never classify a product failure as environmental or delete raw evidence. `report` renders an **Audit appendix** in Markdown and an offline HTML tab from this manifest, listing each rejected ZIP, reason, case IDs, and revision without adding them to result counts. ZIP filenames must be safe, existing files directly under `rejected/`. `bundle` includes everything under `rejected/`. Selector repairs go through the test-only PR workflow and a new baseline label.
 
 ```sh
 node qa/tooling/qa.mjs unpack-segment \
@@ -91,10 +114,13 @@ After collecting accepted segments, generate the report and bundle:
 ```sh
 node qa/tooling/qa.mjs report --run-id "$RUN_ID"
 node qa/tooling/qa.mjs structured --run-id "$RUN_ID" --uploads "qa-uploads/$RUN_ID/uploads.json"
+node qa/tooling/qa.mjs demo-video --run-id "$RUN_ID"
 node qa/tooling/qa.mjs bundle --run-id "$RUN_ID"
 ```
 
-`report` writes `report.json`, `report.md`, and self-contained `index.html`; retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection:
+`report` writes `report.json`, `report.md`, and a standalone `index.html` with embedded WebM bytes (including retry attempts); it plays in Devin preview without nearby segment folders. `demo-video` needs `ffmpeg` and `ffprobe` and produces `full-run.mp4` plus `demo-manifest.json` from all accepted Playwright attempts, with a title card before each one. Attach `full-run.mp4` to the parent session; preserve and attach individual Playwright recordings through the child sessions. `bundle` includes the compilation and the original recordings. Retest failures not linked to that segment in `fixes.json` appear as `RETEST_REGRESSION` warnings. `structured` writes `structured-output.json` and prints the compact Devin projection. Each case includes its initial and retest application/API revisions; gap rows include their own revisions. A case without a retest has null retest status, revision and recording fields:
+
+Fix links come from explicit `fixes.json` case IDs, not merely from sharing an area retest. Gap rows retain baseline/retest phases and labels. `summary.gapTests` counts unique gap IDs; `summary.gapAttempts` counts the preserved phase rows.
 
 ```sh
 node qa/tooling/qa.mjs structured \
@@ -121,6 +147,8 @@ qa-artifacts/
     ├── report.json
     ├── report.md
     ├── index.html
+    ├── full-run.mp4
+    ├── demo-manifest.json
     └── structured-output.json
 ```
 
@@ -135,7 +163,7 @@ qa-artifacts/
 | `QA_ARTIFACTS_DIR` | `qa-artifacts` | Parent directory for run segments |
 | `QA_SEGMENT_DIR` | `qa-artifacts/_adhoc` | Playwright output segment (set by `run`) |
 | `QA_RETRIES` | `0` | Playwright retries |
-| `QA_SLOW_MO` | `0` | Browser launch delay in milliseconds |
+| `QA_SLOW_MO` | `400` | Browser action delay in milliseconds; cursor and initial/final presentation time are provided by the fixture |
 | `QA_CHROME` | Playwright Chromium | Optional browser executable |
 | `QA_SEED` | `null` | Seed identifier recorded in metadata |
 | `QA_SEED_FILES` | `server/db/schema.sql,server/db/seed.sql,server/db/workflow-seed.sql` | Ordered, comma-separated repo-relative files included in the combined seed digest |
