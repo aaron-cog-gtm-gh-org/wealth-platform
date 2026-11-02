@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import type { Position } from '../api';
 import { useWorkspace } from '../context';
 import { money, qty } from '../format';
-import { availableCash, reservedCash, sortCurrencies, totalsByCurrency } from '../model';
+import { availableCash, portfolioInstrumentOptions, reservedCash, sortCurrencies, totalsByCurrency } from '../model';
 import { EmptyRow, Panel, SortHeader, useSort } from '../ui';
 
 const ALL = 'All';
@@ -18,7 +18,7 @@ export function PortfolioArea() {
   const accountChoices = data.accounts.filter(a => clientId === ALL || a.clientId === clientId);
   const scopedAccounts = accountChoices.filter(a => accountId === ALL || a.id === accountId);
   const scopedIds = new Set(scopedAccounts.map(a => a.id));
-  const symbols = [...new Set(data.positions.filter(p => scopedIds.has(p.accountId)).map(p => p.symbol))].sort();
+  const symbols = portfolioInstrumentOptions(data);
 
   const q = query.trim().toLowerCase();
   const positions = data.positions.filter(p => scopedIds.has(p.accountId)

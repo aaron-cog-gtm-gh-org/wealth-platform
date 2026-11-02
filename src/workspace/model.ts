@@ -63,6 +63,9 @@ export function instruments(data: Bootstrap): Instrument[] {
   return [...seen.values()].sort((a, b) => a.symbol.localeCompare(b.symbol));
 }
 
+/** Portfolio instrument filter choices: every instrument in the book, so a client/instrument combination may yield no holdings. */
+export const portfolioInstrumentOptions = (data: Bootstrap) => instruments(data).map(i => i.symbol);
+
 /** Indicative price: the account's own position first, otherwise any position in the symbol. */
 export function indicativePrice(data: Bootstrap, accountId: string, symbol: string) {
   const own = data.positions.find(p => p.accountId === accountId && p.symbol === symbol);
