@@ -5,6 +5,7 @@ import type { DataState, Screen } from '../types';
 import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
 import { PV_SLICES } from './pv/slice';
+import { clientSummaryCopy } from './clients';
 import type { PvModelInput } from './pv/slice';
 import { PV_SCREEN_KEYS } from './pv/context';
 
@@ -24,6 +25,7 @@ const META: Record<Screen, [string, string, string]> = {
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
+  clients: ['Portfolio Viewer / Client search', 'Client search', 'Custody clients by client name or client reference'],
   settlements: ['Portfolio Viewer / Custody', 'Settlements', 'MT544–MT547 settlement confirmations from the custody archive · newest settle date first'],
   messages: ['Portfolio Viewer / Operations', 'Message browser', 'Raw SWIFT MT535 statements and MT54x confirmations from the custody archive'],
 };
@@ -38,6 +40,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
+  clients: ['No custody clients on file', 'The Portfolio Viewer client register is empty, so a blank search returns nothing. Clients appear here once they are set up in the custody client register.', 'Search again'],
   settlements: ['No settlements in period', 'No MT54x confirmations for this custody account settle in the selected window. Widen the From / To dates and choose Show.', 'Change dates'],
   messages: ['No files match', 'No archive files match the message type, date and safe code you entered. Clear the filters, or try another date or safe code.', 'Clear filters'],
 };
@@ -52,6 +55,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
+  clients: ['Couldn’t search clients', 'The Portfolio Viewer service did not return search results. Nothing has changed. Retry, or search again in a minute.', 'Search again'],
   settlements: ['Couldn’t load settlements', 'The Portfolio Viewer service did not return the settlement confirmations for this account. Nothing has changed. Retry, or check the service health page.', 'Open health check'],
   messages: ['Couldn’t load the message archive', 'The Portfolio Viewer service did not return the archive file list or the requested message. Nothing has changed. Retry, or check the archive status on Admin.', 'Open health check'],
 };
@@ -82,7 +86,8 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const copy = slice ? PV_SLICES[screen]?.copy?.(slice.data, slice.ctx ?? null) ?? null : null;
-  const pvText = slice ? (copy ? { meta: copy.meta ?? META[screen], empty: copy.empty ?? EMPTY[screen], err: copy.error ?? ERR[screen] } : PV_TEXT[screen]) : undefined;
+  const pvText = screen === 'c360' && slice ? clientSummaryCopy(slice.data)
+    : slice ? (copy ? { meta: copy.meta ?? META[screen], empty: copy.empty ?? EMPTY[screen], err: copy.error ?? ERR[screen] } : PV_TEXT[screen]) : undefined;
   const [crumb, title, subtitle] = pvText?.meta ?? META[screen];
   const emptyText = pvText?.empty ?? EMPTY[screen], errText = pvText?.err ?? ERR[screen];
 

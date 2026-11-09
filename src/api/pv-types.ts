@@ -16,6 +16,9 @@ export interface PvClientSearchRow {
   adviserUsername: string | null; adviserName: string | null; acctCount: number;
 }
 export interface PvClient extends Omit<PvClientSearchRow, 'acctCount'> { createdDt: IsoDate | null; accounts: PvAccount[] }
+/** `GET /clients/:id/summary` (spec 008): each account's latest statement (Q8) and Σ MktValGbp; null = no statement. */
+export interface PvClientSummaryAccount extends PvAccount { stmtDate: IsoDate | null; mktValGbp: DecimalString | null }
+export interface PvClientSummary extends Omit<PvClient, 'accounts'> { accounts: PvClientSummaryAccount[]; totalMktValGbp: DecimalString | null }
 
 export interface PvHoldingLine {
   isin: string | null; instrumentName: string; msgDescription: string | null; qty: DecimalString; qtyType: string | null;

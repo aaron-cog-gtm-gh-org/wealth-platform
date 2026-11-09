@@ -33,6 +33,7 @@
 - Legacy `Holdings.aspx?acct=2001&date=…` becomes `?screen=<id>&acct=2001&stmt=2026-09-18`.
 - To add keys, extend `PvContext`, `parsePvContext` and `PV_CONTEXT_KEYS` additively.
 - Spec 006 added `pc` (`pc=1`, Position check with nothing chosen) and `all=<yyyy-mm-dd>` (Check all date). `goPv(screen, patch)` sets (string) or clears (null) keys; `PV_PAGES` rows may carry `params` for the nav.
+- Spec 008 added `?cid=<positive int CLIENT_ID>` and `?q=<raw search text>`; its links navigate with `goPv(screen, patch)`, and `c360` uses the `active(ctx)` gate (`cid != null`) so plain `?screen=c360` stays the mockup.
 
 ## 4. Slices (src/model/pv/slice.ts)
 ```ts
