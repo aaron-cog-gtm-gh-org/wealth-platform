@@ -1,0 +1,100 @@
+{
+  "format": "pv-parity-report/1",
+  "generatedAt": "2026-11-09T16:15:33.934Z",
+  "result": "PASS",
+  "golden": {
+    "path": "parity/legacy-golden/legacy-golden.json.gz",
+    "sha256": "80305da21e329c989a25ac2b58130c389ea4d2aa12213d6d050adbbfa2405c62",
+    "legacyCommit": "91261288d02323e0526cb9fe71a7d6606e2f9c0a",
+    "summary": {
+      "accounts": 120,
+      "accountsWithStatements": 120,
+      "accountStatementDatesChecked": 3065,
+      "accountStatementDatesWithDiffs": 7,
+      "noPreviousStatement": 120,
+      "positionCheckRunErrors": 0,
+      "totalDiffRows": 7,
+      "diffRowsByStatus": {
+        "CHASED": 1,
+        "NEW": 4,
+        "OPEN": 1,
+        "RESOLVED": 1
+      },
+      "holdingLines": 30645,
+      "settlementsDefault90dItems": 1572,
+      "settlementsFullRangeItems": 2950,
+      "archiveParseErrors": 0,
+      "fileSeqTies": [],
+      "settlementPageErrors": [],
+      "checkAllPageErrors": [],
+      "runtimeErrors": []
+    }
+  },
+  "divergencesDeclared": [],
+  "checks": [
+    {
+      "id": "archive-manifest",
+      "legacy": "legacy archive/ (byte-for-byte)",
+      "compared": 6044,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "archive-index",
+      "legacy": "PV.Core.ArchiveIndex.Build",
+      "compared": 1,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "statement-selection",
+      "legacy": "PV.Core.PositionBuilder.GetStatement (Q8)",
+      "compared": 3065,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "statement-dates",
+      "legacy": "PV.Core.PositionBuilder.GetStatementDates",
+      "compared": 120,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "holdings",
+      "legacy": "PV.Core.PositionBuilder + InstrumentData (Holdings.aspx)",
+      "compared": 3065,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "position-check",
+      "legacy": "PV.Core.PositionCheck.Run + PV.Data.ReconNoteData (PostgreSQL pv.recon_note)",
+      "compared": 3065,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "settlements",
+      "legacy": "PV.Core.SettlementReader.GetSettlements + ToAmount (Settlements.aspx)",
+      "compared": 240,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    },
+    {
+      "id": "check-all",
+      "legacy": "PositionCheck.aspx btnAll_Click",
+      "compared": 26,
+      "mismatches": [],
+      "accepted": [],
+      "mismatchCount": 0
+    }
+  ]
+}

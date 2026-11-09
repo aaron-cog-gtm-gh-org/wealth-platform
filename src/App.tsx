@@ -12,6 +12,17 @@ import { SettlementExceptions } from './screens/SettlementExceptions';
 import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
+import { Admin } from './screens/Admin';
+import { CustodyHoldings } from './screens/CustodyHoldings';
+import { ClientSearch } from './screens/ClientSearch';
+import { CustodyClient360 } from './screens/CustodyClient360';
+import { Settlements, SettlementsRange } from './screens/Settlements';
+import { Messages } from './screens/Messages';
+import { PvForbidden, PvSignIn } from './screens/PvGate';
+import { PV_CONTEXT_KEYS, PV_SCREEN_KEYS, parsePvContext } from './model/pv/context';
+import type { PvContext, PvContextPatch } from './model/pv/context';
+import { PositionCheck } from './screens/PositionCheck';
+import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import { Workspace } from './workspace/Workspace';
 import { isWorkspaceLocation, workspaceHref } from './workspace/model';
@@ -21,13 +32,15 @@ interface Location {
   screen: Screen;
   /** Forced via `?state=` for design review; otherwise derived from the API request. */
   dataState: DataState | null;
+  /** `?acct=&stmt=` PV deep-link context (spec 010). */
+  ctx: PvContext;
 }
 
 function readLocation(): Location {
   const q = new URLSearchParams(window.location.search);
   const screen = SCREENS.find(s => s === q.get('screen')) ?? 'c360';
   const dataState = DATA_STATES.find(s => s === q.get('state')) ?? null;
-  return { screen, dataState };
+  return { screen, dataState, ctx: parsePvContext(q) };
 }
 
 function preventHashLinks(e: MouseEvent) {
@@ -63,16 +76,34 @@ function LegacyApp() {
 
   const setState: SetUiState = useCallback(patch => setUi(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) })), []);
 
-  const go = useCallback((screen: Screen) => {
+  const navigate = useCallback((screen: Screen, keepPvContext: boolean, patch: PvContextPatch = {}) => {
     const q = new URLSearchParams(window.location.search);
     q.set('screen', screen);
+    if (!keepPvContext) PV_CONTEXT_KEYS.forEach(k => q.delete(k));
+    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, v); }
+    Object.entries(PV_SCREEN_KEYS).forEach(([s, keys]) => { if (s !== screen) keys?.forEach(k => q.delete(k)); });
     window.history.pushState(null, '', '?' + q.toString());
-    setLoc(l => ({ ...l, screen }));
+    setLoc(readLocation());
+  }, []);
+  const setParams = useCallback((params: Record<string, string | null>) => {
+    const q = new URLSearchParams(window.location.search);
+    Object.entries(params).forEach(([k, v]) => { if (v === null) q.delete(k); else q.set(k, v); });
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
+  }, []);
+  const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
+  const goPv = useCallback((screen: Screen, patch?: PvContextPatch) => navigate(screen, true, patch), [navigate]);
+  const setPvContext = useCallback((patch: PvContextPatch) => {
+    const q = new URLSearchParams(window.location.search);
+    Object.entries(patch).forEach(([k, v]) => (v ? q.set(k, v) : q.delete(k)));
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
   }, []);
 
+  const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
-  const dataState = loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load);
+  const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, setPvContext, setParams });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -94,6 +125,7 @@ function LegacyApp() {
             <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#ffd200", color: "#002d62", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "11px" }}>{userInitials}</div>
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "13px", whiteSpace: "nowrap" }}><span style={{ fontWeight: "600", color: "#fff" }}>{userName}</span><span>{userRole}</span></div>
           </div>
+          {m.pvSignedIn && <a href="#" onClick={m.pvSignOut} style={{ flex: "none", color: "#fff", fontWeight: "600", textDecoration: "underline" }}>Sign out</a>}
         </div>
       </header>
       <div style={{ flex: "1", display: "flex", minHeight: "0" }}>
@@ -155,11 +187,12 @@ function LegacyApp() {
                 </Fragment>))}
               </div>
             </>)}
+            {m.settlementsRange && <div style={{ marginBottom: "12px" }}><SettlementsRange s={m.settlementsRange} /></div>}
             {isEmpty && (<>
               <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", textAlign: "center" }}>
                 <div style={{ font: "600 15px Inter,sans-serif" }}>{emptyTitle}</div>
                 <div style={{ maxWidth: "460px", color: "rgba(25,25,25,.6)", textWrap: "pretty" }}>{emptyBody}</div>
-                <div style={{ marginTop: "6px", padding: "7px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
+                <div onClick={m.emptyAction} style={{ marginTop: "6px", padding: "7px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
               </div>
             </>)}
             {isError && (<>
@@ -174,21 +207,33 @@ function LegacyApp() {
               </div>
             </>)}
 
-            {show.c360 && <Client360 m={m} />}
+            {show.c360 && (m.client360 ? <CustodyClient360 m={m} /> : <Client360 m={m} />)}
 
-            {show.portfolio && <PortfolioDetail m={m} />}
+            {show.portfolio && (m.portfolio ? <CustodyHoldings m={m} /> : <PortfolioDetail m={m} />)}
 
             {show.orders && <RebalanceOrders m={m} />}
 
             {show.alts && <Alternatives m={m} />}
 
-            {show.exceptions && <SettlementExceptions m={m} />}
+            {show.exceptions && !m.posCheck && <SettlementExceptions m={m} />}
+
+            {show.exceptions && m.posCheck && <PositionCheck m={m} />}
 
             {show.home && <ClientHome m={m} />}
 
             {show.activity && <ActivityStatus m={m} />}
 
             {show.money && <MoveMoney m={m} />}
+
+            {m.pvGate === 'signin' && <PvSignIn m={m} />}
+
+            {m.pvGate === 'forbidden' && <PvForbidden m={m} />}
+
+            {show.admin && <Admin m={m} />}
+            {show.clients && m.clientSearch && <ClientSearch key={m.clientSearch.query ?? ''} m={m} />}
+            {show.settlements && <Settlements m={m} />}
+
+            {show.messages && <Messages m={m} />}
           </div>
         </main>
       </div>

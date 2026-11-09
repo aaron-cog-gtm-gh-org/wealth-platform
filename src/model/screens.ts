@@ -5,8 +5,22 @@ import { AMBER as amber, GREEN as green, MUTE as mute, RED as red, dayMonth, day
 import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
+import { buildAdmin } from './admin';
+import { buildPvHoldings } from './holdings';
+import type { PvHoldingsSlice } from './holdings';
+import { buildMessageBrowser } from './messages';
+import type { MessageBrowserData } from './pv/messages-slice';
+import type { PvAdminStats } from '../api/pv-types';
+import { buildSettlements } from './settlements';
+import type { SettlementsData } from './settlements';
+import type { PvModelInput } from './pv/slice';
+import { buildClientSearch, buildClientSummary } from './clients';
+import type { ClientSearchData, ClientSummaryData } from './clients';
+import { PREVIEW_USER } from './pv/preview';
+import { buildPositionCheck } from './pv/position-check';
+import type { PvPositionCheckData } from './pv/position-check';
 
-export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
+function buildMockScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
   const D = { holdings: data.holdings, total: data.totalValue, accounts: data.accounts, alloc: data.allocation, SRC: data.PRICE_SOURCE, COLORS: CLASS_COLORS, classes: data.ASSET_CLASSES };
   const R = data.raw, HH = R.household, C = HH.primaryClient;
   const totalFmt = money(D.total);
@@ -205,3 +219,30 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
 }
 
 export type ScreensModel = ReturnType<typeof buildScreens>;
+
+type MockScreens = ReturnType<typeof buildMockScreens>;
+
+/** PV screen view models (spec 010+). Built only for the active, populated, ungated PV slice. */
+function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | null) {
+  const s = pv?.slice;
+  const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
+  const goPv = pv?.goPv ?? (() => {});
+  return {
+    admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
+    clientSearch: ready?.screen === 'clients' ? buildClientSearch(ready.data as ClientSearchData, st, setState, goPv) : null,
+    client360: ready?.screen === 'c360' && (ready.data as ClientSummaryData).client
+      ? buildClientSummary((ready.data as ClientSummaryData).client!, pv!.user?.role ?? (ready.preview ? PREVIEW_USER.role : null), goPv) : null,
+    settlements: ready?.screen === 'settlements' ? buildSettlements(ready.data as SettlementsData, st, setState, pv!.setPvContext) : null,
+    /** Live empty window: the account header and date form stay above the Empty panel (D-007-4). */
+    settlementsRange: pv && s && !s.gate && s.screen === 'settlements' && s.dataState === 'Empty' && (s.data as SettlementsData | null)?.kind === 'list'
+      ? buildSettlements(s.data as SettlementsData, st, setState, pv.setPvContext) : null,
+    posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
+    portfolio: ready?.screen === 'portfolio' ? buildPvHoldings(ready.data as PvHoldingsSlice, stmt => pv!.goPv('portfolio', { stmt })) : null,
+    messages: ready?.screen === 'messages' ? buildMessageBrowser(ready.data as MessageBrowserData, st, setState, pv!.setParams) : null,
+  };
+}
+
+/** Mockup screens need the Whitfield `data`; PV screens are fed by the PV slice. */
+export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data | null, pv: PvModelInput | null = null) {
+  return { ...(data ? buildMockScreens(st, setState, go, data) : ({} as MockScreens)), ...buildPvScreens(st, setState, pv) };
+}

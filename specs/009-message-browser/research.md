@@ -1,0 +1,7 @@
+# Research: 009 Message Browser
+
+- **R1 Date input.** Decision: native `<input type="date">` (ISO) + `?date=` accepting ISO or exact `dd/MM/yyyy` (D-009-1). Rationale: the parent's default; old links keep working; the API already takes ISO. Alternative: keep a `dd/MM/yyyy` text box (Q16 preserved) — rejected because the picker removes the format error class for typed input.
+- **R2 Where filters live.** Decision: URL keys `type`/`date`/`safe`/`file`, parsed into `PvContext.messages`. Rationale: the slice reloads on context change (spec 010 `ctxKey`), links/bookmarks work, legacy already used `?type=&date=&file=`. Alternative: UI state + imperative fetch — rejected, it bypasses the slice pattern.
+- **R3 Raw lookup by name.** Decision: `/archive/files/raw?file=<name>` resolved by `findArchiveFileByName` (first entry in index order, the legacy loop). Rationale: legacy links carry only the file name; the client must not guess a path. Alternative: list first then map name → path client-side — rejected, needs a second request and still trusts the client.
+- **R4 Paging.** Decision: client-side, 50 rows, page in `UiState.msgPage`. Rationale: the API returns whole lists (≤ 6,044 rows); legacy paged a Session copy.
+- **R5 Preview fixture.** Decision: a compact synthetic list (safe code + size per file) expanded into `PvArchiveFile`s, plus one raw MT535 text from the synthetic archive. Rationale: visual-diff Populated needs no session and a stable multi-page list.

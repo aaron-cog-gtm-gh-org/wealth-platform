@@ -13,9 +13,12 @@
     "db:setup": "tsx server/db/setup.ts",
     "db:down": "tsx server/db/down.ts",
     "db:reset": "npm run db:setup",
-    "test:unit": "node --import tsx --test src/workspace/model.test.ts",
+    "pv:set-password": "tsx server/pv/set-password.ts",
+    "pv:demo-passwords": "tsx server/pv/demo-passwords.ts",
+    "test:unit": "node --import tsx --test src/workspace/model.test.ts src/model/pv/pv.test.ts src/model/pv/position-check.test.ts src/model/settlements.test.ts src/model/pv/messages.test.ts src/model/clients.test.ts src/model/holdings.test.ts",
+    "test:domain": "vitest run",
     "test:server:unit": "node --import tsx --test --test-concurrency=1 server/workflows/validation.test.ts server/db/sql-script.test.ts",
-    "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts",
+    "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts server/pv/api.int.test.ts",
     "test:backend": "npm run test:server:unit && npm run test:int",
     "test:db": "tsx server/db/container-check.ts",
     "lint": "eslint .",
@@ -25,7 +28,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b && tsc -p server",
-    "visual-diff": "node scripts/visual-diff.mjs"
+    "visual-diff": "node scripts/visual-diff.mjs",
+    "parity": "tsx server/pv/parity.ts"
   },
   "dependencies": {
     "express": "^4.22.3",
@@ -51,6 +55,7 @@
     "testcontainers": "^10.28.0",
     "tsx": "~4.19",
     "typescript": "5.6",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
   }
 }
