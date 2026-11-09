@@ -118,6 +118,12 @@ pvRouter.put('/accounts/:acctId/position-check/notes', ops, json(async (req, res
   if (note != null && (typeof note !== 'string' || note.length > 500)) badRequest('note must be at most 500 characters.');
   return saveNote(a.acctId, isin, date, status, note ?? null, session(res).username);
 }));
+/** PositionCheck.aspx ddlAllDate: every distinct statement date in the archive index, newest first (spec 006) */
+pvRouter.get('/position-check/dates', ops, json(async () => {
+  const all = new Set<IsoDate>();
+  for (const byDate of getIndex().statements.values()) for (const d of byDate.keys()) all.add(d);
+  return { dates: [...all].sort().reverse() };
+}));
 pvRouter.get('/position-check/all', ops, json(async req => {
   const date = dateParam(req.query.date, 'date') ?? badRequest('date is required.');
   const accts = await query<AccountDto>(`${ACCOUNT_SQL} ORDER BY a.acct_no COLLATE "C"`);

@@ -40,7 +40,7 @@ const FLOWS = [
 ];
 
 // App-only cases (spec 010+). `expect`: text that must be visible. `api`: routed /api/pv responses
-// ({ 'POST /login': [status, body] }). `session`: sessionStorage pv.session to seed. Default URL is ?screen=&state=.
+// ({ 'POST /login': [status, body] }, or a list of those for successive calls). `session`: sessionStorage pv.session to seed. Default URL is ?screen=&state=.
 const BASELINES = 'scripts/visual-baselines';
 const PV_TOKEN = (role, exp = 4102444800000) => `${Buffer.from(JSON.stringify({ userId: 1, username: 'PV' + role, role, exp })).toString('base64url')}.harness`;
 const PV_USER = role => ({ userId: role === 'OPS' ? 9 : 1, username: role === 'OPS' ? 'LBRENNAN' : 'PVADMIN', fullName: role === 'OPS' ? 'Lauren Brennan' : 'System Administrator', role });
@@ -59,6 +59,26 @@ const ADMIN_EXPECT = {
   Empty: ['Archive is empty'],
   Error: ['Couldn’t load archive status', 'Retry'],
 };
+const POSCHECK_EXPECT = {
+  Populated: ['Position check · 01028-01 · 26-JUN-2026', 'Run check', 'Check all', 'GB00ZZ003373', 'Foxley Telecom PLC Ord', '-1,250', 'OPEN', 'LBRENNAN', '30/06/2026', 'MT535_16558_20260626_003.txt'],
+  Loading: ['Loading position check…'],
+  Empty: ['No statements to check'],
+  Error: ['Couldn’t run the position check', 'Retry'],
+};
+const PC_DATES = ['2026-09-18', '2026-09-11', '2026-09-04'];
+const PC_ACCOUNTS = [[2001, '01001-01', 'The Penhaligon Family Trust', '16598'], [2125, '01068-02', 'Mrs R Szabo', '10554'], [2129, '01072-01', 'Mr E Marchetti', '11397']]
+  .map(([acctId, acctNo, clientName, safeCode]) => ({ acctId, acctNo, clientId: 1000 + acctId, clientName, acctType: 'SIPP', baseCcy: 'GBP', safeCode, openDt: '2019-06-10', closeDt: null, statusCd: 'O' }));
+const PC_LISTS = {
+  'GET /accounts': [200, { accounts: PC_ACCOUNTS }], 'GET /position-check/dates': [200, { dates: PC_DATES }],
+  'GET /accounts/2001/statement-dates': [200, { acctId: 2001, dates: [...PC_DATES, '2026-04-17'] }], 'GET /accounts/2125/statement-dates': [200, { acctId: 2125, dates: PC_DATES }],
+};
+// Q18: the 8-digit-SAFE MT54x for 01068-02 is not matched, so the fund units surface as a NEW break on 18-SEP-2026.
+const PC_Q18_ROW = { isin: 'LU00ZZ014180', instrument: 'Greystoke Emerging Markets Fund I Acc', prevQty: '8462.307', netSettled: '0', expected: '8462.307', stmtQty: '12238.377', diff: '3776.07', status: 'NEW', note: null, updatedBy: null, updatedDt: null };
+const PC_Q18 = { acctId: 2125, stmtDate: '2026-09-18', prevStmtDate: '2026-09-11', noPrevMessage: null, statementFile: 'MT535_10554_20260918_001.txt', rows: [PC_Q18_ROW] };
+const PC_Q18_SAVED = { ...PC_Q18, rows: [{ ...PC_Q18_ROW, status: 'CHASED', note: 'asked custodian', updatedBy: 'LBRENNAN', updatedDt: '2026-11-09T10:15:00.000' }] };
+const PC_ALL = { stmtDate: '2026-09-18', rows: [
+  { acctId: 2001, acctNo: '01001-01', client: 'The Penhaligon Family Trust', diffs: '0' }, { acctId: 2125, acctNo: '01068-02', client: 'Mrs R Szabo', diffs: '1' }, { acctId: 2129, acctNo: '01072-01', client: 'Mr E Marchetti', diffs: '1' },
+] };
 // Message Browser (spec 009): synthetic archive rows + one raw MT535 from the synthetic archive.
 const MSG_FILE = (safe, size) => ({ path: `mt535/MT535_${safe}_20260918_001.txt`, fileName: `MT535_${safe}_20260918_001.txt`, msgType: 'MT535', date: '2026-09-18', safeCode: safe, size });
 const MSG_FILES = [MSG_FILE('10024', 304), MSG_FILE('10049', 2782), MSG_FILE('10226', 4854)];
@@ -81,6 +101,25 @@ const APP_ONLY = [
   { name: 'flow-admin-forbidden', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [200, { token: PV_TOKEN('OPS'), user: PV_USER('OPS') }] }, steps: SIGN_IN, expect: ['Not authorised for this page', 'Admin requires the ADMIN role. You are signed in as LBRENNAN (OPS).'] },
   { name: 'flow-admin-expired', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [401, { error: 'Session expired.' }] }, expect: ['Your session has expired. Sign in again.', 'Sign in to Portfolio Viewer'] },
   { name: 'flow-admin-signout', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [200, PV_STATS] }, steps: [['click', 'Sign out']], expect: ['Sign in to Portfolio Viewer'] },
+  // Spec 006: PositionCheck.aspx on `exceptions` with PV context. `screen: 'poscheck'` keeps `exceptions:<state>` on the mockup comparison.
+  ...STATES.map(state => ({ name: `poscheck-${state}`, screen: 'poscheck', state, url: `?screen=exceptions&pc=1&state=${state}`, expect: POSCHECK_EXPECT[state] })),
+  { name: 'flow-poscheck-nav', screen: 'admin', steps: [['click', 'Position check']], expect: ['Run check', 'Check all', 'GB00ZZ003373'] },
+  { name: 'flow-poscheck-edit', screen: 'poscheck', url: '?screen=exceptions&pc=1&state=Populated', steps: [['click', 'Edit']], expect: ['Update', 'Cancel'] },
+  { name: 'flow-poscheck-save', screen: 'poscheck', url: '?screen=exceptions&pc=1&state=Populated', steps: [['click', 'Edit'], ['click', 'Update']], expect: ['Notes saved.', 'Edit'] },
+  { name: 'flow-poscheck-live-save', screen: 'poscheck', url: '?screen=exceptions&acct=2125&stmt=2026-09-18', session: { token: PV_TOKEN('OPS'), user: PV_USER('OPS') },
+    api: { ...PC_LISTS, 'GET /accounts/2125/position-check': [[200, PC_Q18], [200, PC_Q18_SAVED]], 'PUT /accounts/2125/position-check/notes': [200, PC_Q18_SAVED.rows[0]] },
+    steps: [['click', 'Edit'], ['select', 'select[aria-label=Status]', 'CHASED'], ['fill', 'textarea[aria-label=Note]', 'asked custodian'], ['click', 'Update']],
+    expect: ['Notes saved.', 'CHASED', 'asked custodian', 'LBRENNAN', '09/11/2026', 'Position check · 01068-02 · 18-SEP-2026'] },
+  { name: 'flow-poscheck-check-all', screen: 'poscheck', url: '?screen=exceptions&pc=1', session: { token: PV_TOKEN('OPS'), user: PV_USER('OPS') },
+    api: { ...PC_LISTS, 'GET /position-check/all': [200, PC_ALL] }, steps: [['click', 'Check all']], expect: ['Check all accounts · 18-SEP-2026', 'Accounts with differences', '2 differences in total', 'View'] },
+  { name: 'flow-poscheck-check-all-view', screen: 'poscheck', url: '?screen=exceptions&pc=1', session: { token: PV_TOKEN('OPS'), user: PV_USER('OPS') },
+    api: { ...PC_LISTS, 'GET /position-check/all': [200, PC_ALL], 'GET /accounts/2125/position-check': [200, PC_Q18] }, steps: [['click', 'Check all'], ['click', 'View', 1]],
+    expect: ['Position check · 01068-02 · 18-SEP-2026', 'LU00ZZ014180', 'Greystoke Emerging Markets Fund I Acc', '3,776.07', 'NEW'] },
+  { name: 'flow-poscheck-no-prev', screen: 'poscheck', url: '?screen=exceptions&acct=2001&stmt=2026-04-17', session: { token: PV_TOKEN('OPS'), user: PV_USER('OPS') },
+    api: { ...PC_LISTS, 'GET /accounts/2001/position-check': [200, { acctId: 2001, stmtDate: '2026-04-17', prevStmtDate: null, noPrevMessage: 'No previous statement on file.', statementFile: 'MT535_16598_20260417_001.txt', rows: [] }] },
+    expect: ['No previous statement on file.', 'None on file'] },
+  { name: 'flow-poscheck-forbidden', screen: 'poscheck', url: '?screen=exceptions&pc=1', session: { token: PV_TOKEN('ADVISER'), user: { userId: 7, username: 'JSMITH', fullName: 'James Smith', role: 'ADVISER' } },
+    expect: ['Not authorised for this page', 'Position check requires the OPS or ADMIN role. You are signed in as JSMITH (ADVISER).'] },
   ...STATES.map(state => ({ name: `messages-${state}`, screen: 'messages', state, expect: MSG_EXPECT[state] })),
   { name: 'flow-messages-list', screen: 'messages', url: '?screen=messages', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 1, files: [MSG_FILES[0]] }] },
     steps: [['select', 'select[name=type]', '535'], ['fill', 'input[name=date]', '2026-09-18'], ['fill', 'input[name=safe]', '0010024'], ['click', 'List']],
@@ -136,7 +175,9 @@ function pvSetup({ api = {}, session }) {
     if (session) await page.addInitScript(s => sessionStorage.setItem('pv.session', s), JSON.stringify(session));
     await page.route('**/api/pv/**', async route => {
       const r = route.request(), key = `${r.method()} ${new URL(r.url()).pathname.replace(/^\/api\/pv/, '')}`;
-      const hit = api[key];
+      const entry = api[key];
+      // [[status, body], ...] answers successive requests in order (the last one repeats).
+      const hit = Array.isArray(entry?.[0]) ? (entry.length > 1 ? entry.shift() : entry[0]) : entry;
       if (!hit) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: `harness: no route for ${key}` }) });
       if (typeof hit[1] === 'string') return route.fulfill({ status: hit[0], contentType: 'text/plain', headers: hit[2] ?? {}, body: hit[1] });
       await route.fulfill({ status: hit[0], contentType: 'application/json', body: JSON.stringify(hit[1]) });

@@ -22,6 +22,15 @@ export interface UiState {
   adminConfirm: boolean;
   adminBusy: boolean;
   adminNotice: string | null;
+  /** Position check (spec 006): picked-but-not-run dates, row in edit, edit fields, save in flight, lblMsg override. */
+  pcDate: string | null;
+  pcAllDate: string | null;
+  pcEdit: string | null;
+  pcEditStatus: string;
+  pcEditNote: string;
+  pcBusy: boolean;
+  pcNotice: string | null;
+  pcError: string | null;
   /** Message Browser (spec 009): current page of the file list (50 rows). */
   msgPage: number;
 }
@@ -40,6 +49,14 @@ export const INITIAL_UI_STATE: UiState = {
   adminConfirm: false,
   adminBusy: false,
   adminNotice: null,
+  pcDate: null,
+  pcAllDate: null,
+  pcEdit: null,
+  pcEditStatus: 'OPEN',
+  pcEditNote: '',
+  pcBusy: false,
+  pcNotice: null,
+  pcError: null,
   msgPage: 0,
 };
 

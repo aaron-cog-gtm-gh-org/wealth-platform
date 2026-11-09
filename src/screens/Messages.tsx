@@ -61,7 +61,7 @@ export function Messages({ m }: { m: Model }) {
                   <span style={{ fontSize: "11px", color: "rgba(25,25,25,.56)" }}>{list.pager.range}</span>
                   <div style={{ display: "flex", gap: "4px" }}>
                     <PageButton label="‹ Prev" onClick={list.pager.onPrev} />
-                    {list.pager.pages.map(p => <PageButton key={p.label} label={p.label} active={p.active} onClick={p.onClick} />)}
+                    {list.pager.pages.map((p, i) => <PageButton key={i} label={p.label} active={p.active} onClick={p.onClick} />)}
                     <PageButton label="Next ›" onClick={list.pager.onNext} />
                   </div>
                 </div>

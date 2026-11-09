@@ -15,7 +15,7 @@
     "db:reset": "npm run db:setup",
     "pv:set-password": "tsx server/pv/set-password.ts",
     "pv:demo-passwords": "tsx server/pv/demo-passwords.ts",
-    "test:unit": "node --import tsx --test src/workspace/model.test.ts src/model/pv/pv.test.ts src/model/pv/messages.test.ts",
+    "test:unit": "node --import tsx --test src/workspace/model.test.ts src/model/pv/pv.test.ts src/model/pv/position-check.test.ts src/model/pv/messages.test.ts",
     "test:domain": "vitest run",
     "test:server:unit": "node --import tsx --test --test-concurrency=1 server/workflows/validation.test.ts server/db/sql-script.test.ts",
     "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts server/pv/api.int.test.ts",

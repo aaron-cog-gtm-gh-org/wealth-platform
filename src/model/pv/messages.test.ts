@@ -5,7 +5,7 @@ import type { PvArchiveFile, PvUser } from '../../api/pv-types';
 import { INITIAL_UI_STATE } from '../../types';
 import type { UiState } from '../../types';
 import { buildModel } from '../index';
-import { MESSAGE_TEXT, MSG_PAGE_SIZE, buildMessageBrowser } from '../messages';
+import { MESSAGE_TEXT, MSG_PAGE_SIZE, buildMessageBrowser, pageWindow } from '../messages';
 import { PV_PAGES, canAccess, pvNavFor, pvPageForScreen } from './access';
 import { PV_SCREEN_KEYS, parsePvContext, pvContextKey } from './context';
 import { parseMessageDate, parseMessageQuery } from './message-query';
@@ -47,7 +47,7 @@ test('both date forms give the same query, context key and API request', async (
 
 test('URL query: legacy type values, list on presence, safe trimmed, invalid date', () => {
   assert.equal(q('screen=messages'), null);
-  assert.deepEqual(parsePvContext('?acct=2001'), { acct: 2001, stmt: null });
+  assert.deepEqual(parsePvContext('?acct=2001'), { acct: 2001, stmt: null, pc: false, all: null });
   assert.deepEqual(q('type=535'), { list: true, type: 'MT535', dateText: '', date: null, dateError: false, safe: '', file: null });
   assert.equal(q('type=54x')!.type, 'MT54x');
   assert.equal(q('type=x')!.type, null);
@@ -157,4 +157,11 @@ test('shell + buildModel: Message browser preview, Empty "Clear filters" clears 
   e.emptyAction!();
   assert.deepEqual(cleared, [{ type: null, date: null, safe: null, file: null }]);
   assert.equal(buildModel('admin', 'Empty', INITIAL_UI_STATE, noop, noop, null, noop, null).emptyAction, undefined);
+});
+
+test('pager window: first, last, current ±2 with gaps (MT54x is 60 pages)', () => {
+  assert.deepEqual(pageWindow(0, 3), [0, 1, 2]);
+  assert.deepEqual(pageWindow(0, 60), [0, 1, 2, null, 59]);
+  assert.deepEqual(pageWindow(30, 60), [0, null, 28, 29, 30, 31, 32, null, 59]);
+  assert.deepEqual(pageWindow(59, 60), [0, null, 57, 58, 59]);
 });

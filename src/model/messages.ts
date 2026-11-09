@@ -62,7 +62,7 @@ export function buildMessageBrowser(d: MessageBrowserData, st: UiState, setState
       })),
       pager: pages > 1 ? {
         range: `${from + 1}–${from + shown.length} of ${total}`,
-        pages: Array.from({ length: pages }, (_, i) => ({ label: String(i + 1), active: i === page, onClick: () => setState({ msgPage: i }) })),
+        pages: pageWindow(page, pages).map(i => i === null ? { label: '…', active: false, onClick: null } : { label: String(i + 1), active: i === page, onClick: () => setState({ msgPage: i }) }),
         onPrev: page > 0 ? () => setState({ msgPage: page - 1 }) : null,
         onNext: page < pages - 1 ? () => setState({ msgPage: page + 1 }) : null,
       } : null,
@@ -79,3 +79,13 @@ export function buildMessageBrowser(d: MessageBrowserData, st: UiState, setState
 }
 
 export type MessageBrowserModel = ReturnType<typeof buildMessageBrowser>;
+
+/** Page buttons: first, last and current ±2, with null for each gap (MT54x alone is 60 pages). */
+export function pageWindow(page: number, pages: number): (number | null)[] {
+  const out: (number | null)[] = [];
+  for (let i = 0; i < pages; i++) {
+    if (i === 0 || i === pages - 1 || Math.abs(i - page) <= 2) out.push(i);
+    else if (out[out.length - 1] !== null) out.push(null);
+  }
+  return out;
+}
