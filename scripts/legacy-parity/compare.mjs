@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { DEFAULT_TOLERANCE, classify, diffSnapshots, renderMarkdown, summarize } from './lib/diff.mjs';
+import { londonDate } from './lib/normalize.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,7 +82,8 @@ export async function fetchApiSnapshot(golden, base, { concurrency = 8, fetchImp
   });
   const positionChecks = await pool(golden.positionChecks, concurrency, async ({ acctId, statementDate }) => {
     const r = await get(`/accounts/${acctId}/position-check/${statementDate}`);
-    return r.error ? null : { acctId, statementDate, message: r.body.message ?? null, rows: r.body.rows };
+    return r.error ? null : { acctId, statementDate, message: r.body.message ?? null,
+      rows: r.body.rows.map((row) => ({ ...row, updatedAt: londonDate(row.updatedAt) })) };
   });
   const checkAll = await pool(golden.checkAll, concurrency, async ({ statementDate }) => {
     const r = await get(`/position-check/${statementDate}`);

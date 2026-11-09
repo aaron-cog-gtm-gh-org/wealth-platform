@@ -54,15 +54,15 @@ test('custody reference data is migrated with PV IDs and values', async () => {
   });
 });
 
-test('every archive file is loaded as a pending custody message with file-name metadata', async () => {
+test('every archive file is loaded as a custody message with file-name metadata and parsed by setup', async () => {
   assert.deepEqual(await pool.query(`SELECT msg_family, mt_type, count(*)::int AS files, count(day_folder)::int AS with_day,
-    count(*) FILTER (WHERE parse_status = 'pending')::int AS pending
+    count(*) FILTER (WHERE parse_status = 'ok')::int AS parsed
     FROM custody_messages GROUP BY 1, 2 ORDER BY 2`), [
-    { msg_family: 'MT535', mt_type: 535, files: 3073, with_day: 0, pending: 3073 },
-    { msg_family: 'MT54x', mt_type: 544, files: 112, with_day: 112, pending: 112 },
-    { msg_family: 'MT54x', mt_type: 545, files: 1496, with_day: 1496, pending: 1496 },
-    { msg_family: 'MT54x', mt_type: 546, files: 65, with_day: 65, pending: 65 },
-    { msg_family: 'MT54x', mt_type: 547, files: 1298, with_day: 1298, pending: 1298 },
+    { msg_family: 'MT535', mt_type: 535, files: 3073, with_day: 0, parsed: 3073 },
+    { msg_family: 'MT54x', mt_type: 544, files: 112, with_day: 112, parsed: 112 },
+    { msg_family: 'MT54x', mt_type: 545, files: 1496, with_day: 1496, parsed: 1496 },
+    { msg_family: 'MT54x', mt_type: 546, files: 65, with_day: 65, parsed: 65 },
+    { msg_family: 'MT54x', mt_type: 547, files: 1298, with_day: 1298, parsed: 1298 },
   ]);
   assert.equal(Number((await pool.query<{ n: string }>('SELECT sum(size_bytes) AS n FROM custody_messages'))[0].n), 8957493);
   const rows = await pool.query(`SELECT file_name, rel_path, msg_family, mt_type, safe_code, to_char(msg_date, 'YYYY-MM-DD') AS msg_date,
@@ -72,12 +72,12 @@ test('every archive file is loaded as a pending custody message with file-name m
     {
       file_name: 'MT535_10024_20260417_001.txt', rel_path: 'mt535/MT535_10024_20260417_001.txt', msg_family: 'MT535', mt_type: 535,
       safe_code: '10024', msg_date: '2026-04-17', file_seq: 1, day_folder: null, size_bytes: 260,
-      raw_text: readFileSync(`${archive.ARCHIVE_DIR}mt535/MT535_10024_20260417_001.txt`, 'utf8'), parse_status: 'pending', parse_error: null,
+      raw_text: readFileSync(`${archive.ARCHIVE_DIR}mt535/MT535_10024_20260417_001.txt`, 'utf8'), parse_status: 'ok', parse_error: null,
     },
     {
       file_name: 'MT545_16594_20260420_002.txt', rel_path: 'mt54x/20260420/MT545_16594_20260420_002.txt', msg_family: 'MT54x', mt_type: 545,
       safe_code: '16594', msg_date: '2026-04-20', file_seq: 2, day_folder: '20260420', size_bytes: 578,
-      raw_text: readFileSync(`${archive.ARCHIVE_DIR}mt54x/20260420/MT545_16594_20260420_002.txt`, 'utf8'), parse_status: 'pending', parse_error: null,
+      raw_text: readFileSync(`${archive.ARCHIVE_DIR}mt54x/20260420/MT545_16594_20260420_002.txt`, 'utf8'), parse_status: 'ok', parse_error: null,
     },
   ]);
   assert.match(rows[1].raw_text as string, /^\{1:F01BRKWGB2LAXXX.*\r\n:16R:GENL\r\n/);

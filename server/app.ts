@@ -6,6 +6,7 @@ import { getAlternatives, getHousehold, getPerformance, getPortfolio, getRebalan
 import { getSettlementExceptions } from './repositories/operations';
 import { getActivity, getPayments } from './repositories/portal';
 import { workflowRouter } from './workflows/routes';
+import { custodyRouter } from './custody/routes';
 import { HttpError } from './workflows/errors';
 
 type Handler = (req: Request) => Promise<unknown>;
@@ -31,6 +32,7 @@ export function createApp() {
     }
   })();
   app.use('/api/workflows', express.json({ limit: '16kb' }), workflowRouter);
+  app.use('/api/custody', express.json({ limit: '16kb' }), custodyRouter);
   app.use('/api/test', express.json({ limit: '16kb' }));
   if (process.env.ENABLE_TEST_RESET === '1') {
     app.post('/api/test/reset', async (req, res, next) => {

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { loadArchive } from '../custody/load-archive';
+import { parseArchive } from '../custody/parse-archive';
 import { dbConfig, getConnectionString, maintenanceConnectionString } from './pool';
 import { splitSqlScript } from './sql-script';
 
@@ -39,6 +40,9 @@ export async function setupDatabase(databaseUrl = dbConfig, files = DEFAULT_FILE
       const archive = await loadArchive(client);
       console.log(`custody archive: ${archive.mt535} MT535 + ${archive.mt54x} MT54x files `
         + `(${archive.inserted} inserted, ${archive.updated} updated, ${archive.removed} removed) in ${Date.now() - started} ms`);
+      const parsed = await parseArchive(client, started);
+      console.log(`custody parse: ${parsed.load.statements} statements, ${parsed.load.confirmations} confirmations, `
+        + `${parsed.parseErrors} parse errors in ${parsed.load.loadMs} ms`);
     }
     await client.query('COMMIT');
   } catch (error) {
