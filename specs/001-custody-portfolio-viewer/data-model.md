@@ -22,14 +22,37 @@ statements/lines/confirmations, sets status ok/error, and writes a `custody_arch
 
 ## Domain types (C2 exports, `server/custody/swift/types.ts`)
 ```ts
+// server/custody/swift/types.ts
 export interface StatementLine { isin: string; description: string; qty: number; qtyType: string; price: number; ccy: string; mktVal: number; mktValGbp: number }
 export interface Statement { function: string | null; statementDate: string; safekeepingAcct: string | null; lines: StatementLine[] }
 export interface Confirmation { mtType: number; seme: string | null; prev: string | null; function: string | null; tradeDate: string; settleDate: string; isin: string | null; qty: number; safekeepingAcct: string | null; amountRaw: string | null; amount: number | null; ccy: string | null; direction: 'REC' | 'DEL' }
+export interface ArchiveFileName { fileName: string; family: 'MT535' | 'MT54x'; mtType: number; safeCode: string; date: string; fileSeq: number }
+// server/custody/swift/parse.ts (throw SwiftParseError on malformed input)
 export function parseStatement(text: string): Statement
 export function parseConfirmation(text: string): Confirmation
-// server/custody/domain
-export function activeConfirmations(all: (Confirmation & { dayFolder: string })[]): ...            // D2 fix
-export function settlementsFor(confs, safeCode: string, from: string, to: string): ...             // D1 fix, newest first
-export function positionCheck(prev: Statement | null, curr: Statement | null, settles, notes): PositionCheckResult
+export function parseArchiveFileName(fileName: string): ArchiveFileName | null   // null when not MT535_/MT54n_<safe>_<yyyyMMdd>[_NNN].txt
+export function parseSwiftAmount(raw: string | null): number | null              // D3: `GBP11524,8` -> 11524.8; any size/decimals
+export function safeKey(code: string | null | undefined): string                 // leading zeros stripped (D1)
+// server/custody/domain/holdings.ts
+export interface StatementFile { fileSeq: number; statement: Statement }
+export function statementDates(files: StatementFile[], safeCode: string): string[]            // newest first
+export function statementFor(files, safeCode, date): Statement | null                         // highest fileSeq for 98A::STAT date
+export function latestStatement(files, safeCode): Statement | null
+export function previousStatement(files, safeCode, date): Statement | null                    // latest strictly earlier
+export function holdings(st: Statement, names?: ReadonlyMap<string, string>): { statementDate; function; rows: HoldingRow[]; totalGbp: number }
+// HoldingRow = StatementLine minus description plus instrument (ref name or `UNKNOWN INSTRUMENT <ISIN>`)
+// server/custody/domain/settlements.ts
+export type ArchivedConfirmation = Confirmation & { dayFolder: string; fileName?: string }
+export function activeConfirmations<T extends ArchivedConfirmation>(all: T[]): T[]            // D2: CANC PREV removes SEME in any folder; CANCs dropped
+export function settlementsFor<T extends ArchivedConfirmation>(confs: T[], safeCode: string, from: string, to: string): T[]
+                                                // D1 safe match; from <= settleDate <= to; settleDate desc, then dayFolder, fileName
+export function defaultSettlementWindow(latestStatementDate: string | null, today: string): { from: string; to: string } // to - 90 days
+// server/custody/domain/position-check.ts
+export interface ReconNote { isin: string; status: string; note: string | null; updatedBy: string | null; updatedAt: string | null }
+export interface PositionCheckRow { isin; instrument; prevQty; netSettled; expected; stmtQty; diff; status; note; updatedBy; updatedAt }
+export interface PositionCheckResult { prevStmtDate: string | null; noPrevMessage: string | null; rows: PositionCheckRow[]; statement: Statement | null }
+export function positionCheckWindow(prevStmtDate: string, stmtDate: string): { from: string; to: string }   // (prev, stmt]
+export function positionCheck(prev: Statement | null, curr: Statement | null, settles: Confirmation[], notes?: ReconNote[], names?: ReadonlyMap<string, string>): PositionCheckResult
+export function runPositionCheck(statements: StatementFile[], confirmations: ArchivedConfirmation[], safeCode: string, stmtDate: string, notes?: ReconNote[], names?): PositionCheckResult
 ```
-Dates are ISO strings; quantities are numbers rounded to 4 dp and amounts to 2 dp.
+Dates are ISO strings; statement quantities are rounded to 4 dp (half-even, as .NET), MT54x quantities are as sent, amounts are rounded to 2 dp. Position-check arithmetic is exact decimal (no float drift). `qtyType`/`ccy` are `''` if 93B/19A is absent (never in the PV archive).
