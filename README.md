@@ -77,7 +77,7 @@ All domain data is served by the API in `server/`, backed by PostgreSQL.
 
 The archive load inserts new files, rewrites changed ones as pending, removes files no longer on
 disk and leaves unchanged rows alone, so it can be re-run. Seed conversion notes are at the top of
-`custody-seed.sql`: PV status `OPEN` is stored as `O`, `ACCT_TYPE` is kept verbatim (including
+`custody-seed.sql`: recon statuses are stored verbatim (legacy `O`/`C` and `OPEN`), `ACCT_TYPE` is kept verbatim (including
 `'SIPP '`), and recon-note update times are PV server time (Europe/London). `POST /api/test/reset`
 re-applies `custody-seed.sql`, restoring the 13 recon notes.
 

@@ -48,7 +48,7 @@ CREATE TABLE custody_recon_notes (
   acct_id     INT           REFERENCES custody_accounts (acct_id),
   isin        CHAR(12),
   stmt_date   DATE,
-  status      VARCHAR(10)   CHECK (status IN ('NEW', 'O', 'CHASED', 'C', 'RESOLVED', 'WRITEOFF')),
+  status      VARCHAR(10)   CHECK (status IN ('NEW', 'O', 'C', 'OPEN', 'CHASED', 'RESOLVED', 'WRITEOFF')),
   note        VARCHAR(500),
   updated_by  VARCHAR(20)   NULL,
   updated_at  TIMESTAMPTZ   NULL,

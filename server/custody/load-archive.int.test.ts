@@ -45,7 +45,7 @@ test('custody reference data is migrated with PV IDs and values', async () => {
     [{ client_id: 1001, client_ref: 'C2017-0124', name: 'The Penhaligon Family Trust', adviser_user_id: 7, status: 'A' }]);
   const notes = await pool.query<{ acct_id: number; stmt_date: string }>(RECON_NOTES);
   assert.deepEqual(notes.find(note => note.acct_id === 2038), {
-    acct_id: 2038, isin: 'GB00ZZ003373', stmt_date: '2026-06-26', status: 'O',
+    acct_id: 2038, isin: 'GB00ZZ003373', stmt_date: '2026-06-26', status: 'OPEN',
     note: 'custodian resent statement for this date, qty looks short vs contract note. raised with KSS',
     updated_by: 'LBRENNAN', updated_at: '2026-06-30T08:41',
   });

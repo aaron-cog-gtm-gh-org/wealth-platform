@@ -6,8 +6,7 @@
 --   ACCOUNT    -> custody_accounts: OPEN_DT/CLOSE_DT DATETIME -> DATE; ACCT_TYPE kept verbatim
 --                 (12 rows are 'SIPP ' with a trailing space, trimmed on display).
 --   INSTRUMENT -> custody_instruments: INSTR_NAME -> name, ASSET_CLASS_CD -> asset_class, ADDED_DT -> DATE.
---   RECON_NOTE -> custody_recon_notes: STATUS_CD 'OPEN' (PV PositionCheck dropdown value, 1 row:
---                 2038 / GB00ZZ003373 / 2026-06-26) -> 'O', the open code allowed by the status CHECK;
+--   RECON_NOTE -> custody_recon_notes: STATUS_CD kept verbatim (legacy O/C alongside OPEN/CHASED/RESOLVED/WRITEOFF);
 --                 UPDATED_DT (PVSQL01 server local time) -> TIMESTAMPTZ in Europe/London.
 TRUNCATE custody_recon_notes, custody_accounts, custody_clients, custody_users, custody_instruments;
 
@@ -508,6 +507,6 @@ INSERT INTO custody_recon_notes (acct_id, isin, stmt_date, status, note, updated
   (2004, 'US00ZZ009472', '2018-04-13', 'WRITEOFF', 'Residual fractional entitlement, written off per KP', 'LBRENNAN', '2018-04-13 15:20:00 Europe/London'),
   (2102, 'GB00ZZ001328', '2018-10-26', 'CHASED', 'Chased KSS x2', 'LBRENNAN', '2018-10-26 15:20:00 Europe/London'),
   (2121, 'GB00ZZ000080', '2026-05-15', 'RESOLVED', 'Price wrong on original stmt, KSS sent RPLC. OK now', 'LBRENNAN', '2026-05-15 11:30:00 Europe/London'),
-  (2038, 'GB00ZZ003373', '2026-06-26', 'O', 'custodian resent statement for this date, qty looks short vs contract note. raised with KSS', 'LBRENNAN', '2026-06-30 09:41:00 Europe/London'),
+  (2038, 'GB00ZZ003373', '2026-06-26', 'OPEN', 'custodian resent statement for this date, qty looks short vs contract note. raised with KSS', 'LBRENNAN', '2026-06-30 09:41:00 Europe/London'),
   (2001, 'GB00ZZ011962', '2026-07-17', 'RESOLVED', 'Bonus issue 1 for 1 per custodian CA notice KS/CA/26/0412. Qty agrees to notice. No action.', 'LBRENNAN', '2026-07-21 10:14:00 Europe/London'),
   (2074, 'GB00ZZ000908', '2026-07-31', 'CHASED', 'On stmt but no MT545 received. Contract note on file (trade 27/07). Chased KSS ops 03/08 and again 10/08', 'LBRENNAN', '2026-08-10 16:02:00 Europe/London');
