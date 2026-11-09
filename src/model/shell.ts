@@ -22,6 +22,7 @@ const META: Record<Screen, [string, string, string]> = {
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
+  settlements: ['Portfolio Viewer / Custody', 'Settlements', 'MT544–MT547 settlement confirmations from the custody archive · newest settle date first'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -34,6 +35,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
+  settlements: ['No settlements in period', 'No MT54x confirmations for this custody account settle in the selected window. Widen the From / To dates and choose Show.', 'Change dates'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -46,6 +48,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
+  settlements: ['Couldn’t load settlements', 'The Portfolio Viewer service did not return the settlement confirmations for this account. Nothing has changed. Retry, or check the service health page.', 'Open health check'],
 };
 
 /** Shell text for screens while a PV slice drives them (spec 006: `exceptions` with PV context is PositionCheck.aspx). */
