@@ -50,3 +50,9 @@ export function writeStoredSession(s: StoredPvSession | null, store: Store = def
   if (s) store.setItem(PV_SESSION_KEY, JSON.stringify(s));
   else store.removeItem(PV_SESSION_KEY);
 }
+
+/** Pure (safe to call twice under StrictMode): an expired stored token is reported, not cleared. */
+export function readInitialSession(store: Store = defaultStore(), now = Date.now()): { auth: StoredPvSession | null; expired: boolean } {
+  const s = readStoredSession(store);
+  return s && isTokenExpired(s.token, now) ? { auth: null, expired: true } : { auth: s, expired: false };
+}

@@ -8,6 +8,7 @@ import { buildModel } from '../index';
 import { buildShell } from '../shell';
 import { PV_PAGES, canAccess, pvNavFor } from './access';
 import { parsePvContext } from './context';
+import { PV_SESSION_KEY, readInitialSession } from '../../pv/session';
 import { PREVIEW_ADMIN_STATS } from './preview';
 import { PV_SLICES, pvSliceFor, resolvePvSlice } from './slice';
 import type { PvModelInput, PvSliceDef } from './slice';
@@ -128,4 +129,16 @@ test('session storage and token expiry', () => {
   assert.equal(readStoredSession(store), null);
   writeStoredSession(null, store);
   assert.equal(mem.size, 0);
+});
+
+test('expired stored session is reported on every read (StrictMode double-invokes the initializer)', () => {
+  const m = new Map<string, string>();
+  const store = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) };
+  const token = `${btoa(JSON.stringify({ userId: 1, username: 'PVADMIN', role: 'ADMIN', exp: 1 }))}.sig`;
+  store.setItem(PV_SESSION_KEY, JSON.stringify({ token, user: { username: 'PVADMIN', role: 'ADMIN' } }));
+  assert.deepEqual(readInitialSession(store), { auth: null, expired: true });
+  assert.deepEqual(readInitialSession(store), { auth: null, expired: true });
+  const live = `${btoa(JSON.stringify({ userId: 1, username: 'PVADMIN', role: 'ADMIN', exp: Date.now() + 60_000 }))}.sig`;
+  store.setItem(PV_SESSION_KEY, JSON.stringify({ token: live, user: { username: 'PVADMIN', role: 'ADMIN' } }));
+  assert.equal(readInitialSession(store).expired, false);
 });

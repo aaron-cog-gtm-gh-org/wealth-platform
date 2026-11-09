@@ -7,8 +7,7 @@ import type { PvPositionCheckData } from '../model/pv/position-check';
 import { pvSliceFor, resolvePvSlice } from '../model/pv/slice';
 import type { PvOp, PvSliceStatus } from '../model/pv/slice';
 import type { DataState, Screen } from '../types';
-import { isTokenExpired, readStoredSession, tokenExp, writeStoredSession } from './session';
-import type { StoredPvSession } from './session';
+import { readInitialSession, tokenExp, writeStoredSession } from './session';
 
 const SUPPORT_EXT = '4417';
 /** Login.aspx.cs messages (legacy text). */
@@ -21,18 +20,14 @@ export const SIGN_IN_MESSAGES = {
 
 export type { PvOp };
 
-function initialAuth(): { auth: StoredPvSession | null; expired: boolean } {
-  const s = readStoredSession();
-  if (s && isTokenExpired(s.token)) { writeStoredSession(null); return { auth: null, expired: true }; }
-  return { auth: s, expired: false };
-}
 
 /**
  * Shell PV state: session (sign-in / sign-out / 401 expiry), and the current screen's PV slice
  * resolved to a gate + DataState. Screens without a registered slice get `slice: null` (no PV I/O).
  */
 export function usePv(screen: Screen, ctx: PvContext, forced: DataState | null) {
-  const [{ auth, expired }, setAuthState] = useState(initialAuth);
+  const [{ auth, expired }, setAuthState] = useState(() => readInitialSession());
+  useEffect(() => { if (expired && !auth) writeStoredSession(null); }, [auth, expired]);
   const tokenRef = useRef<string | null>(auth?.token ?? null);
   tokenRef.current = auth?.token ?? null;
   const api = useMemo(() => createPvClient({ token: () => tokenRef.current }), []);
