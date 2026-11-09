@@ -7,6 +7,8 @@ import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
 import { buildAdmin } from './admin';
 import type { PvAdminStats } from '../api/pv-types';
+import { buildSettlements } from './settlements';
+import type { SettlementsData } from './settlements';
 import type { PvModelInput } from './pv/slice';
 import { buildClientSearch, buildClientSummary } from './clients';
 import type { ClientSearchData, ClientSummaryData } from './clients';
@@ -226,6 +228,10 @@ function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | nu
     clientSearch: ready?.screen === 'clients' ? buildClientSearch(ready.data as ClientSearchData, st, setState, goPv) : null,
     client360: ready?.screen === 'c360' && (ready.data as ClientSummaryData).client
       ? buildClientSummary((ready.data as ClientSummaryData).client!, pv!.user?.role ?? (ready.preview ? PREVIEW_USER.role : null), goPv) : null,
+    settlements: ready?.screen === 'settlements' ? buildSettlements(ready.data as SettlementsData, st, setState, pv!.setPvContext) : null,
+    /** Live empty window: the account header and date form stay above the Empty panel (D-007-4). */
+    settlementsRange: pv && s && !s.gate && s.screen === 'settlements' && s.dataState === 'Empty' && (s.data as SettlementsData | null)?.kind === 'list'
+      ? buildSettlements(s.data as SettlementsData, st, setState, pv.setPvContext) : null,
     posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
   };
 }

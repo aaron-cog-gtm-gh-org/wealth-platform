@@ -18,7 +18,7 @@ export const PV_PAGES: readonly PvPage[] = [
   { page: 'ClientSearch.aspx', label: 'Client search', roles: null, screen: 'clients' },
   { page: 'ClientSummary.aspx', label: 'Client summary', roles: null, screen: 'c360' },
   { page: 'Holdings.aspx', label: 'Holdings', roles: null, screen: null },
-  { page: 'Settlements.aspx', label: 'Settlements', roles: null, screen: null },
+  { page: 'Settlements.aspx', label: 'Settlements', roles: null, screen: 'settlements' },
   { page: 'PositionCheck.aspx', label: 'Position check', roles: ['OPS', 'ADMIN'], screen: 'exceptions', params: { pc: '1' } },
   { page: 'MessageBrowser.aspx', label: 'Message browser', roles: ['OPS', 'ADMIN'], screen: null },
   { page: 'Admin.aspx', label: 'Admin', roles: ['ADMIN'], screen: 'admin' },

@@ -12,9 +12,12 @@ export interface PvContext {
   cid?: number | null;
   /** Last client search text, raw and untrimmed like legacy `txtSearch.Text` (spec 008); null = not searched. */
   q?: string | null;
+  /** Settlements window (spec 007): present only when the URL value is a valid ISO or legacy dd/MM/yyyy date. */
+  from?: IsoDate;
+  to?: IsoDate;
 }
 
-export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'pc', 'all', 'cid', 'q'] as const;
+export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'pc', 'all', 'cid', 'q', 'from', 'to'] as const;
 export type PvContextKey = (typeof PV_CONTEXT_KEYS)[number];
 /** Context changes applied by `goPv`: a string sets the key, null removes it, omitted keys are kept. */
 export type PvContextPatch = Partial<Record<PvContextKey, string | null>>;
@@ -36,7 +39,27 @@ export function parsePvContext(search: string | URLSearchParams): PvContext {
     all: isIsoDate(all) ? (all as IsoDate) : null,
     cid: /^\d{1,9}$/.test(c) && Number(c) > 0 ? Number(c) : null,
     q: q.get('q'),
+    ...dateParam(q, 'from'),
+    ...dateParam(q, 'to'),
   };
 }
 
-export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}|${c.cid ?? ''}|${c.q == null ? '' : 'q=' + c.q}`;
+/**
+ * A typed or deep-linked date: ISO `yyyy-mm-dd`, or the legacy `dd/MM/yyyy` (`WebUtil.TryParseUkDate`,
+ * exact after trim). Returns the ISO date or null (spec 007 D-007-1).
+ */
+export function parseDateInput(raw: string | null | undefined): IsoDate | null {
+  const v = raw?.trim() ?? '';
+  if (isIsoDate(v)) return v as IsoDate;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+  const iso = m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+  return isIsoDate(iso) ? (iso as IsoDate) : null;
+}
+
+const dateParam = (q: URLSearchParams, k: 'from' | 'to') => {
+  const d = parseDateInput(q.get(k));
+  return d ? { [k]: d } : {};
+};
+
+export const pvContextKey = (c: PvContext) =>
+  `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}${c.cid != null || c.q != null ? `|${c.cid ?? ''}|${c.q == null ? '' : 'q=' + c.q}` : ''}${c.from || c.to ? `|${c.from ?? ''}|${c.to ?? ''}` : ''}`;

@@ -15,6 +15,7 @@ import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
 import { ClientSearch } from './screens/ClientSearch';
 import { CustodyClient360 } from './screens/CustodyClient360';
+import { Settlements, SettlementsRange } from './screens/Settlements';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
 import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
 import type { PvContext, PvContextPatch } from './model/pv/context';
@@ -83,11 +84,17 @@ function LegacyApp() {
   }, []);
   const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
   const goPv = useCallback((screen: Screen, patch?: PvContextPatch) => navigate(screen, true, patch), [navigate]);
+  const setPvContext = useCallback((patch: PvContextPatch) => {
+    const q = new URLSearchParams(window.location.search);
+    Object.entries(patch).forEach(([k, v]) => (v ? q.set(k, v) : q.delete(k)));
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
+  }, []);
 
   const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, setPvContext });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -171,6 +178,7 @@ function LegacyApp() {
                 </Fragment>))}
               </div>
             </>)}
+            {m.settlementsRange && <div style={{ marginBottom: "12px" }}><SettlementsRange s={m.settlementsRange} /></div>}
             {isEmpty && (<>
               <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", textAlign: "center" }}>
                 <div style={{ font: "600 15px Inter,sans-serif" }}>{emptyTitle}</div>
@@ -214,6 +222,7 @@ function LegacyApp() {
 
             {show.admin && <Admin m={m} />}
             {show.clients && m.clientSearch && <ClientSearch key={m.clientSearch.query ?? ''} m={m} />}
+            {show.settlements && <Settlements m={m} />}
           </div>
         </main>
       </div>
