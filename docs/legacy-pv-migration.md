@@ -64,3 +64,13 @@ Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format
 - **D-010-5** An expired session says so, where legacy silently redirected to Login.
 
 The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.
+
+## Spec 007 decisions (Settlements screen)
+
+`Settlements.aspx` becomes the new `?screen=settlements` and does not reuse ActivityStatus, which is the retail client portal. Q9, Q10, Q14, Q15 (default window) and Q18 are preserved. The server applies them and the screen keeps the API order.
+- **D-007-1** Date inputs take ISO `yyyy-mm-dd` and still accept typed or deep-linked legacy `dd/MM/yyyy`. The message is "Enter dates as yyyy-mm-dd.".
+- **D-007-2** The From/To window is written to the URL (`from`/`to`).
+- **D-007-3** No account or an unknown account shows an account picker, where legacy redirected to `ClientSearch.aspx`.
+- **D-007-4** An empty window shows the Empty panel "No settlements in period" with the date form kept above it.
+- **D-007-5** An unreadable amount shows `0.00` with a warning, where legacy went to `Error.aspx`.
+- **D-007-6** Confirmation, REC and DEL counts and the window length are shown above the grid.

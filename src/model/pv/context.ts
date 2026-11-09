@@ -4,9 +4,13 @@ import type { IsoDate } from '../../api/pv-types';
 export interface PvContext {
   acct: number | null;
   stmt: IsoDate | null;
+  /** Settlements window (spec 007): present only when the URL value is a valid ISO or legacy dd/MM/yyyy date. */
+  from?: IsoDate;
+  to?: IsoDate;
 }
 
-export const PV_CONTEXT_KEYS = ['acct', 'stmt'] as const;
+export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'from', 'to'] as const;
+export type PvContextKey = (typeof PV_CONTEXT_KEYS)[number];
 
 const isIsoDate = (s: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
@@ -21,7 +25,26 @@ export function parsePvContext(search: string | URLSearchParams): PvContext {
   return {
     acct: /^\d{1,9}$/.test(a) && Number(a) > 0 ? Number(a) : null,
     stmt: isIsoDate(s) ? (s as IsoDate) : null,
+    ...dateParam(q, 'from'),
+    ...dateParam(q, 'to'),
   };
 }
 
-export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}`;
+/**
+ * A typed or deep-linked date: ISO `yyyy-mm-dd`, or the legacy `dd/MM/yyyy` (`WebUtil.TryParseUkDate`,
+ * exact after trim). Returns the ISO date or null (spec 007 D-007-1).
+ */
+export function parseDateInput(raw: string | null | undefined): IsoDate | null {
+  const v = raw?.trim() ?? '';
+  if (isIsoDate(v)) return v as IsoDate;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+  const iso = m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+  return isIsoDate(iso) ? (iso as IsoDate) : null;
+}
+
+const dateParam = (q: URLSearchParams, k: 'from' | 'to') => {
+  const d = parseDateInput(q.get(k));
+  return d ? { [k]: d } : {};
+};
+
+export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}${c.from || c.to ? `|${c.from ?? ''}|${c.to ?? ''}` : ''}`;

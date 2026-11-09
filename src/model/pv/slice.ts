@@ -2,8 +2,9 @@ import type { createPvClient } from '../../api/pv';
 import type { PvAdminStats, PvUser } from '../../api/pv-types';
 import type { DataState, Screen } from '../../types';
 import { canAccess, pvPageForScreen } from './access';
-import type { PvContext } from './context';
+import type { PvContext, PvContextKey } from './context';
 import { PREVIEW_ADMIN_STATS } from './preview';
+import { settlementsSlice } from '../settlements';
 
 export type PvApi = ReturnType<typeof createPvClient>;
 
@@ -47,6 +48,7 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 // Specs 005–009: add `<screen>: <slice>` here (additively).
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
+  settlements: settlementsSlice as PvSliceDef<unknown>,
 };
 
 /** The PV slice that drives `screen` for this URL context, or null (existing behaviour). */
@@ -92,4 +94,6 @@ export interface PvModelInput {
   run: (op: 'reloadArchive') => Promise<void>;
   /** Navigate to a PV screen keeping `acct`/`stmt`. */
   goPv: (s: Screen) => void;
+  /** Update PV URL context keys (null removes one) and reload the slice (spec 007). */
+  setPvContext?: (patch: Partial<Record<PvContextKey, string | null>>) => void;
 }
