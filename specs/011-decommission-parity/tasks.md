@@ -14,7 +14,7 @@
 
 ## Phase 3: User Story 3 - decommission checklist (P2)
 - [x] T009 [US3] Write `checklists/decommission.md` covering PV.Core, PV.Data, PV.Web, PV.Tests and Q1–Q18.
-- [ ] T010 [US3] Tick the screen rows (005–009) once their PRs are merged and re-run `npm run parity` on the final integration branch.
+- [x] T010 [US3] Tick the screen rows (005–009) once their PRs are merged and re-run `npm run parity` on the final integration branch.
 
 ## Dependencies & Execution Order
 T001–T002 → T003–T007 → T008. T009 can run in parallel. T010 runs after the screen specs merge.

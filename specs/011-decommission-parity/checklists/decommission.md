@@ -27,11 +27,11 @@
 | PV.Data SqlHelper + Account/Client/Instrument/ReconNote/UserData | PostgreSQL `pv` schema + `/api/pv/*` (`server/pv`) | 004 | [x] |
 | PV.Tests (SwiftParserTests, PositionCheckTests, ArchiveFileTests) | Vitest (`npm run test:domain`); 2 legacy `[Ignore]` cases kept skipped with reasons | 001–003 | [x] |
 | Login.aspx / Admin.aspx / Site.Master / BasePage | shell auth + Admin screen | 010 | [x] |
-| Holdings.aspx | PortfolioDetail (custody context) | 005 | [ ] |
-| PositionCheck.aspx | SettlementExceptions (custody context) | 006 | [ ] |
+| Holdings.aspx | PortfolioDetail (custody context) | 005 | [x] |
+| PositionCheck.aspx | SettlementExceptions (custody context) | 006 | [x] |
 | Settlements.aspx | new Settlements screen | 007 | [x] |
-| ClientSearch.aspx / ClientSummary.aspx | Client360 (custody context) | 008 | [ ] |
-| MessageBrowser.aspx | new Message Browser screen | 009 | [ ] |
+| ClientSearch.aspx / ClientSummary.aspx | Client360 (custody context) | 008 | [x] |
+| MessageBrowser.aspx | new Message Browser screen | 009 | [x] |
 | Error.aspx | shell error state (`Error` DataState) | 010 | [x] |
 | db/ schema + seed | kept as reference in legacy repo; ported to `server/db/pv-schema.sql`, `pv-seed.sql` | 004 | [x] |
 
@@ -40,16 +40,16 @@
 - [x] CHK010 Q1–Q9, Q11–Q13 preserved; covered by the parity checks above.
 - [x] CHK011 Q10 (`ToAmount` single fraction digit read as hundredths, 283 settlements) preserved; **business decision open** — fix or keep.
 - [x] CHK012 Q18 (8-digit `97A::SAFE` never matches, 2 NEW breaks on 2026-09-18) preserved; **business decision open** — fix or keep.
-- [ ] CHK013 Q14 display formats, Q15 Settlements window, Q16 Message Browser filters: verified per screen spec (005–009).
+- [x] CHK013 Q14 display formats, Q15 Settlements window, Q16 Message Browser filters: verified per screen spec (005–009); Q16 also covered by `server/pv/api.int.test.ts`.
 - [x] CHK014 Q17 roles preserved; SHA1 passwords deliberately not carried forward (constitution VI).
 
 ## Deliberate divergences
 
 - [x] CHK015 Recon/parity divergences declared in `parity/divergences.json`: none.
-- [ ] CHK016 Screen-level UX divergences recorded in each screen spec (010: deep link after sign-in, in-place 403, archive path hidden, inline reload confirm, explicit expiry message; 009: ISO date input with legacy `dd/MM/yyyy` deep links).
+- [x] CHK016 Screen-level UX divergences recorded in each screen spec and `docs/legacy-pv-migration.md`: D-005-1..6, D-006-1..6, D-007-1..6, D-008-1..5, D-009-1..5, plus 010's five (deep link after sign-in, in-place 403, archive path hidden, inline reload confirm, explicit expiry message). None changes a domain result.
 
 ## Sign-off
 
-- [ ] CHK017 All screen specs 005–009 merged and `npm run parity` re-run on the final integration branch: PASS.
+- [x] CHK017 All screen specs 005–009 merged and `npm run parity` re-run on the final integration branch: PASS (no declared divergences). typecheck, lint, build, test:unit, test:domain, test:backend, test:db, qa:test and the full visual-diff also pass.
 - [ ] CHK018 Business owner decision recorded for Q10 and Q18.
 - [ ] CHK019 Legacy app switched to read-only, then retired.
