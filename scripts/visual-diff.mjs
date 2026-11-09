@@ -1,6 +1,7 @@
 // Screenshots every screen × data state of the app and the mockup, then pixel-diffs them.
 // App-only screens (no mockup counterpart, e.g. Admin, Settlements) are checked by text assertions and against
-// committed PNG baselines in scripts/visual-baselines/ instead.
+// committed PNG baselines in scripts/visual-baselines/ instead. PV cases on mockup screens (e.g. portfolio-pv-*, spec 005)
+// use `?acct=` and are named apart from the mockup cases.
 // Usage: node scripts/visual-diff.mjs [screen[:state] | flow-name | flows | app ...]
 // Env: APP_URL (default http://localhost:5173), MOCK_URL (mockup .dc.html served over http), CHROME (executable path), WIDTH, HEIGHT,
 //      UPDATE_BASELINES=1 (rewrite app-only baselines), BASELINE_MAX (allowed app-only diff ratio, default 0.005).
@@ -58,6 +59,19 @@ const ADMIN_EXPECT = {
   Loading: ['Loading admin…'],
   Empty: ['Archive is empty'],
   Error: ['Couldn’t load archive status', 'Retry'],
+};
+// Spec 005: custody holdings on `portfolio` with ?acct= (fixtures: synthetic archive statements, scripts/visual-fixtures/).
+const HF = JSON.parse(readFileSync('scripts/visual-fixtures/pv-holdings.json', 'utf8'));
+const HOLDINGS_API = {
+  'GET /accounts/2018': [200, HF.account2018], 'GET /accounts/2018/statement-dates': [200, { acctId: 2018, dates: HF.dates2018 }],
+  'GET /accounts/2018/holdings': [200, HF.holdings2018], 'GET /accounts/2018/holdings?date=2026-10-02': [200, HF.holdings2018_20261002],
+};
+const ADMIN_SESSION = { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') };
+const HOLDINGS_EXPECT = {
+  Populated: ['Portfolio Viewer / Custody holdings / 01012-01 · Prof J Castellan', 'Acct No', 'Safe Code', '10367', 'Latest of 26 statements', '295,859.50', 'UNKNOWN INSTRUMENT GB00ZZ004322', 'FAMT', 'MT535_10367_20261009_001.txt', 'Total Mkt Val (GBP)', 'Holdings'],
+  Loading: ['Loading custody holdings…', 'Portfolio Viewer / Custody holdings / Account 2018'],
+  Empty: ['No statement on file', 'has no MT535 statements of holdings'],
+  Error: ['Couldn’t load custody holdings', 'Retry'],
 };
 const C360_PV = '?screen=c360&cid=1001';
 const PV_ADVISER = { userId: 7, username: 'JSMITH', fullName: 'James Smith', role: 'ADVISER' };
@@ -160,6 +174,13 @@ const MSG_EXPECT = {
 };
 const APP_ONLY = [
   ...STATES.map(state => ({ name: `admin-${state}`, screen: 'admin', state, expect: ADMIN_EXPECT[state] })),
+  ...STATES.map(state => ({ name: `portfolio-pv-${state}`, screen: 'portfolio', url: `?screen=portfolio&acct=2018&state=${state}`, expect: HOLDINGS_EXPECT[state] })),
+  { name: 'flow-portfolio-pv-stmt', screen: 'portfolio', url: '?screen=portfolio&acct=2018', session: ADMIN_SESSION, api: HOLDINGS_API, steps: [['select', 'select[name=stmt]', '2026-10-02']], expect: ['15 lines · statement 02-OCT-2026', 'MT535_10367_20261002_001.txt', '26 statements on file'] },
+  { name: 'flow-portfolio-pv-legacy-stmt', screen: 'portfolio', url: '?screen=portfolio&acct=2018&stmt=20261002', session: ADMIN_SESSION, api: HOLDINGS_API, expect: ['15 lines · statement 02-OCT-2026', 'MT535_10367_20261002_001.txt', '26 statements on file'] },
+  { name: 'flow-portfolio-pv-no-holdings', screen: 'portfolio', url: '?screen=portfolio&acct=2051', session: ADMIN_SESSION, api: { 'GET /accounts/2051': [200, HF.account2051], 'GET /accounts/2051/statement-dates': [200, { acctId: 2051, dates: HF.dates2051 }], 'GET /accounts/2051/holdings': [200, HF.holdings2051] }, expect: ['No holdings on statement.', 'Mrs A Lindqvist'] },
+  { name: 'flow-portfolio-pv-not-on-file', screen: 'portfolio', url: '?screen=portfolio&acct=2018&stmt=2026-01-02', session: ADMIN_SESSION, api: { ...HOLDINGS_API, 'GET /accounts/2018/holdings?date=2026-01-02': [200, { acctId: 2018, stmtDate: '2026-01-02', statement: null, lines: [] }] }, expect: ['No statement on file for this date.', 'statement 02-JAN-2026'] },
+  { name: 'flow-portfolio-pv-unknown', screen: 'portfolio', url: '?screen=portfolio&acct=9999', session: ADMIN_SESSION, api: { 'GET /accounts/9999': [404, { error: 'Account not found.' }] }, expect: ['Custody account not found', 'No Portfolio Viewer account has ID 9999.'] },
+  { name: 'flow-portfolio-pv-signin', screen: 'portfolio', url: '?screen=portfolio&acct=2018', api: { 'POST /login': [200, { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }], ...HOLDINGS_API }, steps: SIGN_IN, expect: ['295,859.50', 'Latest of 26 statements', 'PVADMIN · ADMIN'] },
   { name: 'flow-admin-reload-confirm', screen: 'admin', steps: [['click', 'Reload archive']], expect: ['Reload the archive index?', 'Cancel'] },
   { name: 'flow-admin-reload', screen: 'admin', steps: [['click', 'Reload archive'], ['click', 'Reload']], expect: ['Archive reloaded.'] },
   { name: 'flow-admin-signin', screen: 'admin', url: '?screen=admin', expect: ['Sign in to Portfolio Viewer', 'User ID', 'Password'] },
@@ -212,6 +233,7 @@ const APP_ONLY = [
   { name: 'flow-messages-clear-filters', screen: 'messages', url: '?screen=messages&type=535&safe=99999', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 0, files: [] }] }, steps: [['click', 'Clear filters']], expect: ['Choose a message type, date or safe code, then select List.'] },
   { name: 'flow-messages-forbidden', screen: 'messages', url: '?screen=messages&type=535', session: { token: PV_TOKEN('ADVISER'), user: PV_USER('ADVISER') }, expect: ['Not authorised for this page', 'Message browser requires the'] },
 ].map(c => ({ ...c, appOnly: true }));
+const APP_ONLY_SCREENS = [...new Set(APP_ONLY.map(c => c.screen))].filter(s => !SCREENS.includes(s));
 APP_ONLY.push(
   ...STATES.map(state => ({ name: `clients-${state}`, screen: 'clients', state, expect: CLIENTS_EXPECT[state] })),
   ...STATES.map(state => ({ name: `c360pv-${state}`, screen: 'c360pv', state, url: `${C360_PV}&state=${state}`, expect: C360PV_EXPECT[state] })),
@@ -222,10 +244,11 @@ APP_ONLY.push(
   { name: 'flow-c360pv-adviser-closed', screen: 'c360pv', url: '?screen=c360&cid=1063', session: ADVISER_SESSION, api: { 'GET /clients/1063/summary': [200, SUMMARY_1063] }, expect: ['Dr T Okonjo', 'Closed', '21-AUG-2026', '0.00', '188,488.45', 'JSMITH · ADVISER'] },
   { name: 'flow-c360pv-back-to-search', screen: 'c360pv', url: '?screen=c360&cid=1001&q=penhal', session: ADVISER_SESSION, api: { 'GET /clients/1001/summary': [200, SUMMARY_1001], 'GET /clients/search': [200, { clients: [PENHALIGON_ROW] }] }, steps: [['click', 'Back to search']], expect: ['Results for “penhal”', '1 client', 'The Penhaligon Family Trust'] },
   { name: 'flow-c360pv-not-found', screen: 'c360pv', url: '?screen=c360&cid=999999', session: ADVISER_SESSION, api: { 'GET /clients/999999/summary': [404, { error: 'Not found' }] }, expect: ['Client not found'] },
+  // Spec 005 × 008: the ClientSummary Holdings link (nav 'Holdings' is index 0) opens Portfolio detail for that account.
+  { name: 'flow-c360pv-holdings-link', screen: 'c360pv', url: C360_PV, session: ADVISER_SESSION, api: { 'GET /clients/1001/summary': [200, SUMMARY_1001], 'GET /accounts/2001': [200, HF.account2001], 'GET /accounts/2001/statement-dates': [200, { acctId: 2001, dates: HF.dates2001 }], 'GET /accounts/2001/holdings?date=2026-10-09': [200, HF.holdings2001] }, steps: [['click', 'Holdings', 1]], expect: ['Portfolio Viewer / Custody holdings / 01001-01 · The Penhaligon Family Trust', 'MT535_16598_20261009_001.txt', `Latest of ${HF.dates2001.length} statements`, 'JSMITH · ADVISER'] },
   { name: 'flow-c360pv-signin', screen: 'c360pv', url: C360_PV, expect: ['Sign in to Portfolio Viewer', 'Client 360 is part of Portfolio Viewer.'] },
 );
 APP_ONLY.forEach(c => { c.appOnly = true; });
-const APP_ONLY_SCREENS = [...new Set(APP_ONLY.map(c => c.screen))];
 
 const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
@@ -247,7 +270,7 @@ async function shoot(url, setup, steps = [], expect = []) {
     if (kind === 'click') await page.getByText(target, { exact: true }).nth(arg ?? 0).click();
     else if (kind === 'hover') await page.getByText(target, { exact: true }).nth(arg ?? 0).hover();
     else if (kind === 'fill') await page.locator(target).first().fill(arg);
-    else if (kind === 'select') await page.locator(target).first().selectOption(arg);
+    else if (kind === 'select') { await page.locator(target).first().selectOption(arg); await page.waitForLoadState('networkidle'); }
   }
   if (!steps.some(s => s[0] === 'hover')) await page.mouse.move(0, HEIGHT - 1);
   await page.waitForTimeout(400);

@@ -4,6 +4,7 @@ import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
 import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
+import { PV_SLICES } from './pv/slice';
 import { clientSummaryCopy } from './clients';
 import type { PvModelInput } from './pv/slice';
 import { PV_SCREEN_KEYS } from './pv/context';
@@ -84,7 +85,9 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   const gate = slice?.gate ?? null;
   const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
-  const pvText = screen === 'c360' && slice ? clientSummaryCopy(slice.data) : slice ? PV_TEXT[screen] : undefined;
+  const copy = slice ? PV_SLICES[screen]?.copy?.(slice.data, slice.ctx ?? null) ?? null : null;
+  const pvText = screen === 'c360' && slice ? clientSummaryCopy(slice.data)
+    : slice ? (copy ? { meta: copy.meta ?? META[screen], empty: copy.empty ?? EMPTY[screen], err: copy.error ?? ERR[screen] } : PV_TEXT[screen]) : undefined;
   const [crumb, title, subtitle] = pvText?.meta ?? META[screen];
   const emptyText = pvText?.empty ?? EMPTY[screen], errText = pvText?.err ?? ERR[screen];
 
@@ -152,7 +155,7 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
       body: `${pvPageForScreen(screen)?.label ?? title} requires the ${rolesLabel(pvPageForScreen(screen)?.roles ?? null)} role. You are signed in as ${pv?.user?.username ?? ''} (${pv?.user?.role ?? ''}).`,
       ref: `Ref ${screen.toUpperCase()}-403 · ${pvPageForScreen(screen)?.page ?? ''}`,
     },
-    loadingMsg: 'Loading ' + title.toLowerCase() + '…',
+    loadingMsg: copy?.loading ?? 'Loading ' + title.toLowerCase() + '…',
     skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
     emptyTitle: emptyText[0],
     emptyBody: emptyText[1],

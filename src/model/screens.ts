@@ -6,6 +6,8 @@ import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
 import { buildAdmin } from './admin';
+import { buildPvHoldings } from './holdings';
+import type { PvHoldingsSlice } from './holdings';
 import { buildMessageBrowser } from './messages';
 import type { MessageBrowserData } from './pv/messages-slice';
 import type { PvAdminStats } from '../api/pv-types';
@@ -235,6 +237,7 @@ function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | nu
     settlementsRange: pv && s && !s.gate && s.screen === 'settlements' && s.dataState === 'Empty' && (s.data as SettlementsData | null)?.kind === 'list'
       ? buildSettlements(s.data as SettlementsData, st, setState, pv.setPvContext) : null,
     posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
+    portfolio: ready?.screen === 'portfolio' ? buildPvHoldings(ready.data as PvHoldingsSlice, stmt => pv!.goPv('portfolio', { stmt })) : null,
     messages: ready?.screen === 'messages' ? buildMessageBrowser(ready.data as MessageBrowserData, st, setState, pv!.setParams) : null,
   };
 }

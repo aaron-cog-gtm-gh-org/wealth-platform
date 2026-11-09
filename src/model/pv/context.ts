@@ -38,14 +38,23 @@ const isIsoDate = (s: string) => {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 };
 
-/** `?acct=<positive integer>&stmt=<yyyy-mm-dd>`; anything malformed is ignored (null). */
+/** `?stmt=`: ISO `yyyy-mm-dd`, or the legacy `Holdings.aspx` `yyyyMMdd` (`TryParseExact`, spec 005 D-005-1), normalised to ISO. */
+export function parseStmtParam(raw: string | null | undefined): IsoDate | null {
+  const v = raw?.trim() ?? '';
+  if (isIsoDate(v)) return v as IsoDate;
+  const m = /^(\d{4})(\d{2})(\d{2})$/.exec(v);
+  const iso = m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+  return isIsoDate(iso) ? (iso as IsoDate) : null;
+}
+
+/** `?acct=<positive integer>&stmt=<yyyy-mm-dd | yyyyMMdd>`; anything malformed is ignored (null). */
 export function parsePvContext(search: string | URLSearchParams): PvContext {
   const q = typeof search === 'string' ? new URLSearchParams(search) : search;
   const a = q.get('acct')?.trim() ?? '', s = q.get('stmt')?.trim() ?? '', all = q.get('all')?.trim() ?? '', c = q.get('cid')?.trim() ?? '';
   const messages = parseMessageQuery(q);
   return {
     acct: /^\d{1,9}$/.test(a) && Number(a) > 0 ? Number(a) : null,
-    stmt: isIsoDate(s) ? (s as IsoDate) : null,
+    stmt: parseStmtParam(s),
     pc: q.get('pc') === '1',
     all: isIsoDate(all) ? (all as IsoDate) : null,
     ...(/^\d{1,9}$/.test(c) && Number(c) > 0 ? { cid: Number(c) } : {}),

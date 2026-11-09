@@ -13,6 +13,7 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
+import { CustodyHoldings } from './screens/CustodyHoldings';
 import { ClientSearch } from './screens/ClientSearch';
 import { CustodyClient360 } from './screens/CustodyClient360';
 import { Settlements, SettlementsRange } from './screens/Settlements';
@@ -208,7 +209,7 @@ function LegacyApp() {
 
             {show.c360 && (m.client360 ? <CustodyClient360 m={m} /> : <Client360 m={m} />)}
 
-            {show.portfolio && <PortfolioDetail m={m} />}
+            {show.portfolio && (m.portfolio ? <CustodyHoldings m={m} /> : <PortfolioDetail m={m} />)}
 
             {show.orders && <RebalanceOrders m={m} />}
 

@@ -75,6 +75,18 @@ Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Up
 - **D-006-5** A derived KPI strip summarises the check.
 - **D-006-6** `GET /api/pv/position-check/dates` serves the all-account date list.
 
+## Spec 005 decisions (Holdings → PortfolioDetail)
+
+`Holdings.aspx?acct=` becomes `?screen=portfolio&acct=<ACCT_ID>[&stmt=yyyy-mm-dd|yyyyMMdd]`; without `acct` the Whitfield Portfolio detail is unchanged. Q2–Q5, Q8 and Q13 come unchanged from the server; Q14 formats (`dd-MMM-yyyy`, `#,##0.####`, `#,##0.0000`, `#,##0.00`) are preserved with half-away-from-zero rounding, and the GBP total is an exact decimal sum. Explicit divergences, none of which changes a domain result:
+- **D-005-1** `stmt` accepts ISO `yyyy-mm-dd` and the legacy `Holdings.aspx` form `yyyyMMdd` (exact), normalised to ISO by `parseStmtParam` in the shared PV context; the picker writes ISO. Anything else falls back to the latest statement, as legacy did for malformed values.
+- **D-005-2** No `acct` → Whitfield Portfolio detail; unknown `acct` → Empty "Custody account not found" (legacy redirected to `ClientSearch.aspx`).
+- **D-005-3** A requested date not on file stays selected in the picker, marked "(not on file)" (legacy showed the latest date while saying "No statement on file for this date.").
+- **D-005-4** Quantity type (UNIT/FAMT) is displayed.
+- **D-005-5** The statement's `23G` function and file name are displayed (selection still follows Q8).
+- **D-005-6** Account type and base currency are shown next to Acct No / Client / Safe Code.
+
+Shared plumbing added additively for later specs: optional `PvSliceDef.copy` (takes precedence over the static `PV_TEXT`), `slice.ctx`, and the visual-diff `select` step plus query-aware API routes (`specs/005-holdings-portfolio/contracts/holdings-view.md`).
+
 ## Spec 007 decisions (Settlements screen)
 
 `Settlements.aspx` becomes the new `?screen=settlements` and does not reuse ActivityStatus, which is the retail client portal. Q9, Q10, Q14, Q15 (default window) and Q18 are preserved. The server applies them and the screen keeps the API order.

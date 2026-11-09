@@ -33,6 +33,7 @@ test('Site.Master/BasePage role table (Q17)', () => {
   assert.ok(!pvNavFor('ADVISER').some(p => p.screen === 'exceptions'));
   assert.ok(pvNavFor('ADVISER').some(p => p.screen === 'settlements'));
   assert.ok(pvNavFor('OPS').some(p => p.screen === 'messages'));
+  assert.ok(pvNavFor('ADVISER').some(p => p.screen === 'portfolio'), 'spec 005: Holdings for every role');
 });
 
 test('URL context ?acct=&stmt=', () => {
@@ -43,15 +44,17 @@ test('URL context ?acct=&stmt=', () => {
 });
 
 test('slices: unregistered screens and missing context keep existing behaviour', () => {
-  assert.equal(pvSliceFor('portfolio', { acct: 2001, stmt: null, pc: false, all: null }), null);
+  assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null, pc: false, all: null }), null);
   assert.ok(pvSliceFor('admin', { acct: null, stmt: null, pc: false, all: null }));
+  assert.equal(pvSliceFor('portfolio', { acct: null, stmt: '2026-09-18', pc: false, all: null }), null, 'spec 005: Whitfield portfolio without ?acct=');
+  assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: null, pc: false, all: null }));
   const needsAcct: PvSliceDef<number[]> = { needs: 'acct+stmt', load: async () => [], isEmpty: d => !d.length, preview: () => [1] };
-  PV_SLICES.portfolio = needsAcct as PvSliceDef<unknown>;
+  PV_SLICES.alts = needsAcct as PvSliceDef<unknown>;
   try {
-    assert.equal(pvSliceFor('portfolio', { acct: null, stmt: null, pc: false, all: null }), null);
-    assert.equal(pvSliceFor('portfolio', { acct: 2001, stmt: null, pc: false, all: null }), null);
-    assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: '2026-09-18', pc: false, all: null }));
-  } finally { delete PV_SLICES.portfolio; }
+    assert.equal(pvSliceFor('alts', { acct: null, stmt: null, pc: false, all: null }), null);
+    assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null, pc: false, all: null }), null);
+    assert.ok(pvSliceFor('alts', { acct: 2001, stmt: '2026-09-18', pc: false, all: null }));
+  } finally { delete PV_SLICES.alts; }
 });
 
 test('slice → gate / DataState mapping', () => {
