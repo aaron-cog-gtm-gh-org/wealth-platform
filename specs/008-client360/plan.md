@@ -19,11 +19,11 @@ React 18 / Vite 5 / TS 5.6; Express + PostgreSQL 16; pure domain in `src/domain/
 | `server/pv/routes.ts` | `CLIENT_SQL` shared; `GET /clients/:clientId/summary` |
 | `src/api/pv(-types).ts` | `clientSummary()`, `PvClientSummary` |
 | `src/model/pv/context.ts` | `cid`, `q` keys (optional fields, additive) |
-| `src/model/pv/slice.ts` | optional `active(ctx)`; register `clients`, `c360`; `openPv` on `PvModelInput` |
+| `src/model/pv/slice.ts` | optional `active(ctx)`; register `clients`, `c360`; `goPv` on `PvModelInput` |
 | `src/model/pv/access.ts` | `ClientSearch.aspx → clients`, `ClientSummary.aspx → c360` |
 | `src/model/clients.ts` | slices, view models, custody shell copy |
 | `src/model/shell.ts` / `screens.ts` | `clients` META/EMPTY/ERR; c360 PV copy override; `clientSearch`/`client360` models |
-| `src/App.tsx` | `openPv(screen, patch)`; render `ClientSearch`, `CustodyClient360` |
+| `src/App.tsx` | `goPv(screen, patch)`; render `ClientSearch`, `CustodyClient360` |
 | `src/types.ts` | `clients` screen; `UiState.clientPage` |
 | `scripts/visual-diff.mjs` | app-only cases + flows, baselines |
 

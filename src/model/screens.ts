@@ -11,6 +11,8 @@ import type { PvModelInput } from './pv/slice';
 import { buildClientSearch, buildClientSummary } from './clients';
 import type { ClientSearchData, ClientSummaryData } from './clients';
 import { PREVIEW_USER } from './pv/preview';
+import { buildPositionCheck } from './pv/position-check';
+import type { PvPositionCheckData } from './pv/position-check';
 
 function buildMockScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
   const D = { holdings: data.holdings, total: data.totalValue, accounts: data.accounts, alloc: data.allocation, SRC: data.PRICE_SOURCE, COLORS: CLASS_COLORS, classes: data.ASSET_CLASSES };
@@ -218,12 +220,13 @@ type MockScreens = ReturnType<typeof buildMockScreens>;
 function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | null) {
   const s = pv?.slice;
   const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
-  const openPv = pv?.openPv ?? (() => {});
+  const goPv = pv?.goPv ?? (() => {});
   return {
     admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
-    clientSearch: ready?.screen === 'clients' ? buildClientSearch(ready.data as ClientSearchData, st, setState, openPv) : null,
+    clientSearch: ready?.screen === 'clients' ? buildClientSearch(ready.data as ClientSearchData, st, setState, goPv) : null,
     client360: ready?.screen === 'c360' && (ready.data as ClientSummaryData).client
-      ? buildClientSummary((ready.data as ClientSummaryData).client!, pv!.user?.role ?? (ready.preview ? PREVIEW_USER.role : null), openPv) : null,
+      ? buildClientSummary((ready.data as ClientSummaryData).client!, pv!.user?.role ?? (ready.preview ? PREVIEW_USER.role : null), goPv) : null,
+    posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
   };
 }
 

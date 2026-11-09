@@ -6,7 +6,7 @@ import { Decimal } from '../domain/decimal';
 import { fmtMoney, statusText } from '../domain/format';
 import type { Screen, SetUiState, UiState } from '../types';
 import { canAccess, PV_PAGES } from './pv/access';
-import type { PvContextKey } from './pv/context';
+import type { PvContextPatch } from './pv/context';
 import { PREVIEW_CLIENT_SEARCH, PREVIEW_CLIENT_SUMMARY } from './pv/preview';
 import type { PvSliceDef } from './pv/slice';
 
@@ -36,14 +36,14 @@ export const clientSummarySlice: PvSliceDef<ClientSummaryData> = {
   preview: () => ({ client: PREVIEW_CLIENT_SUMMARY }),
 };
 
-type OpenPv = (s: Screen, patch: Partial<Record<PvContextKey, string | null>>) => void;
+type GoPv = (s: Screen, patch?: PvContextPatch) => void;
 
 const dt = (d: IsoDate | null) => (d ? formatDate(d) : '');
 const money = (v: string | null) => (v === null ? '-' : fmtMoney(Decimal.parse(v)));
 const pageScreen = (page: string) => PV_PAGES.find(p => p.page === page) ?? null;
 
 /** ClientSearch.aspx: Client Ref, Client Name (link), Adviser, Status (WebUtil.StatusText), No. Accts. */
-export function buildClientSearch(d: ClientSearchData, st: UiState, setState: SetUiState, openPv: OpenPv) {
+export function buildClientSearch(d: ClientSearchData, st: UiState, setState: SetUiState, goPv: GoPv) {
   const pages = Math.max(1, Math.ceil(d.clients.length / CLIENT_PAGE_SIZE));
   const page = Math.min(Math.max(0, st.clientPage), pages - 1);
   const slice = d.clients.slice(page * CLIENT_PAGE_SIZE, (page + 1) * CLIENT_PAGE_SIZE);
@@ -59,7 +59,7 @@ export function buildClientSearch(d: ClientSearchData, st: UiState, setState: Se
       ref: c.clientRef,
       name: c.clientName,
       href: `?screen=c360&cid=${c.clientId}`,
-      open: () => openPv('c360', { cid: String(c.clientId), acct: null, stmt: null }),
+      open: () => goPv('c360', { cid: String(c.clientId), acct: null, stmt: null }),
       adviser: c.adviserName ?? '',
       status: statusText(c.statusCd) ?? '',
       statusTone: c.statusCd === 'A' ? 'ok' : c.statusCd === 'D' ? 'warn' : 'off',
@@ -68,15 +68,15 @@ export function buildClientSearch(d: ClientSearchData, st: UiState, setState: Se
     pager: pages > 1 ? Array.from({ length: pages }, (_, i) => ({ label: String(i + 1), current: i === page, go: () => setState({ clientPage: i }) })) : [],
     prev: page > 0 ? () => setState({ clientPage: page - 1 }) : null,
     next: page < pages - 1 ? () => setState({ clientPage: page + 1 }) : null,
-    search: (text: string) => { setState({ clientPage: 0 }); openPv('clients', { q: text }); },
+    search: (text: string) => { setState({ clientPage: 0 }); goPv('clients', { q: text }); },
   };
 }
 
-function accountLinks(a: PvClientSummaryAccount, role: string | null, openPv: OpenPv) {
-  const link = (page: string, label: string, patch: Partial<Record<PvContextKey, string | null>>, when: boolean) => {
+function accountLinks(a: PvClientSummaryAccount, role: string | null, goPv: GoPv) {
+  const link = (page: string, label: string, patch: PvContextPatch, when: boolean) => {
     const p = pageScreen(page);
     if (!when || !p || !canAccess(p.roles, role)) return null;
-    return { label, enabled: p.screen !== null, go: () => p.screen && openPv(p.screen, patch) };
+    return { label, enabled: p.screen !== null, go: () => p.screen && goPv(p.screen, patch) };
   };
   const acct = String(a.acctId);
   return [
@@ -87,7 +87,7 @@ function accountLinks(a: PvClientSummaryAccount, role: string | null, openPv: Op
 }
 
 /** ClientSummary.aspx: client fields, accounts by ACCT_NO with latest statement + GBP value, grand total. */
-export function buildClientSummary(c: PvClientSummary, role: string | null, openPv: OpenPv) {
+export function buildClientSummary(c: PvClientSummary, role: string | null, goPv: GoPv) {
   const withStmt = c.accounts.filter(a => a.stmtDate !== null);
   const latest = withStmt.map(a => a.stmtDate!).sort().slice(-1)[0] ?? null;
   const open = c.accounts.filter(a => a.statusCd === 'O').length;
@@ -117,11 +117,11 @@ export function buildClientSummary(c: PvClientSummary, role: string | null, open
       closed: dt(a.closeDt),
       stmt: a.stmtDate ? formatDate(a.stmtDate) : '-',
       value: money(a.mktValGbp),
-      links: accountLinks(a, role, openPv),
+      links: accountLinks(a, role, goPv),
     })),
     totalLabel: 'Grand Total (GBP):',
     total: money(c.totalMktValGbp),
-    back: () => openPv('clients', { cid: null }),
+    back: () => goPv('clients', { cid: null }),
   };
 }
 

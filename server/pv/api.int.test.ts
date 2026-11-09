@@ -37,6 +37,7 @@ describe('auth (Q17)', () => {
   });
   test('role checks: adviser cannot reach position check, archive or admin; ops cannot reach admin', async () => {
     assert.equal((await get('/accounts/2001/position-check?date=2026-07-17', 'JSMITH')).response.status, 403);
+    assert.equal((await get('/position-check/dates', 'JSMITH')).response.status, 403);
     assert.equal((await get('/archive/files', 'JSMITH')).response.status, 403);
     assert.equal((await get('/admin/stats', 'LBRENNAN')).response.status, 403);
     assert.equal((await get('/accounts', 'JSMITH')).response.status, 200);
@@ -107,6 +108,7 @@ describe('position check with PostgreSQL RECON_NOTE (Q11, Q12, Q18)', () => {
       rows += body.rows.length;
     }
     assert.equal(rows, 7);
+    assert.deepEqual((await get('/position-check/dates')).body.dates, golden.checkAll.map((d: any) => d.stmtDate).reverse());
     for (const day of golden.checkAll) assert.deepEqual((await get(`/position-check/all?date=${day.stmtDate}`)).body.rows, day.rows, day.stmtDate);
   });
   test('save note: update-else-insert, stamped with the session user', async () => {

@@ -5,7 +5,7 @@
 
 ## Phase 2 — Foundational (blocking)
 - [x] T002 [P] `PvContext` `cid`/`q` + `PV_CONTEXT_KEYS` + `pvContextKey` (`src/model/pv/context.ts`)
-- [x] T003 [P] `PvSliceDef.active`, `PvModelInput.openPv` (`src/model/pv/slice.ts`); `openPv` in `src/App.tsx`
+- [x] T003 [P] `PvSliceDef.active`, `goPv(screen, patch)` (`src/model/pv/slice.ts`); `goPv` in `src/App.tsx`
 - [x] T004 [P] `clients` screen id, `UiState.clientPage` (`src/types.ts`)
 
 ## Phase 3 — US1 Client search (P1)

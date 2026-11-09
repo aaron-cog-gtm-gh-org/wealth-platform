@@ -32,7 +32,8 @@
 - `?acct=<positive int ACCT_ID>&stmt=<yyyy-mm-dd>` → `PvContext {acct, stmt}`. Malformed values become null.
 - Legacy `Holdings.aspx?acct=2001&date=…` becomes `?screen=<id>&acct=2001&stmt=2026-09-18`.
 - To add keys, extend `PvContext`, `parsePvContext` and `PV_CONTEXT_KEYS` additively.
-- Spec 008 added `?cid=<positive int CLIENT_ID>` and `?q=<raw search text>` (optional fields), plus an optional `PvSliceDef.active(ctx)` gate and `PvModelInput.openPv(screen, patch)` for navigation that sets context keys.
+- Spec 006 added `pc` (`pc=1`, Position check with nothing chosen) and `all=<yyyy-mm-dd>` (Check all date). `goPv(screen, patch)` sets (string) or clears (null) keys; `PV_PAGES` rows may carry `params` for the nav.
+- Spec 008 added `?cid=<positive int CLIENT_ID>` and `?q=<raw search text>`; its links navigate with `goPv(screen, patch)`, and `c360` uses the `active(ctx)` gate (`cid != null`) so plain `?screen=c360` stays the mockup.
 
 ## 4. Slices (src/model/pv/slice.ts)
 ```ts
@@ -44,6 +45,7 @@ interface PvSliceDef<T> {
 }
 PV_SLICES[screen] = def;                           // register additively
 ```
+Optional `active?(ctx)` (spec 006): when it returns false, `pvSliceFor()` returns null, so one screen id can be a mockup screen without PV context and a PV screen with it (`exceptions`).
 `resolvePvSlice(screen, def, forced, user, status)` decides what the shell shows, in this order:
 
 | Condition | Gate | DataState | Fetch |

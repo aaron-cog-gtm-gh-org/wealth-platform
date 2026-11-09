@@ -15,12 +15,12 @@ import type { PvApi, PvModelInput } from './pv/slice';
 const row = (i: number, statusCd = 'A'): PvClientSearchRow =>
   ({ clientId: 1000 + i, clientRef: `PV${1000 + i}`, clientName: `Client ${String(i).padStart(2, '0')}`, statusCd, adviserUsername: 'JSMITH', adviserName: 'James Smith', acctCount: i % 3 });
 const opened: [Screen, Record<string, string | null>][] = [];
-const openPv = (s: Screen, p: Record<string, string | null>) => { opened.push([s, p]); };
+const goPv = (s: Screen, p: Record<string, string | null> = {}) => { opened.push([s, p]); };
 const ctx = (search: string) => parsePvContext(search);
 
 test('context: ?cid= positive integer, ?q= raw text (untrimmed, blank kept); both cleared by mockup nav', () => {
-  assert.deepEqual(ctx('?cid=1001&q=%20smith'), { acct: null, stmt: null, cid: 1001, q: ' smith' });
-  assert.deepEqual(ctx('?cid=0&q='), { acct: null, stmt: null, cid: null, q: '' });
+  assert.deepEqual(ctx('?cid=1001&q=%20smith'), { acct: null, stmt: null, pc: false, all: null, cid: 1001, q: ' smith' });
+  assert.deepEqual(ctx('?cid=0&q='), { acct: null, stmt: null, pc: false, all: null, cid: null, q: '' });
   assert.equal(ctx('?cid=abc').cid, null);
   assert.ok(PV_CONTEXT_KEYS.includes('cid') && PV_CONTEXT_KEYS.includes('q'));
   assert.notEqual(pvContextKey(ctx('?q=')), pvContextKey(ctx('')));
@@ -60,25 +60,25 @@ test('search slice: no query → not searched (no request); blank → all; Empty
 });
 
 test('search model: legacy "No clients found.", StatusText, 25 per page, search resets paging', () => {
-  const none = buildClientSearch({ query: 'zz', clients: [] }, INITIAL_UI_STATE, () => {}, openPv);
+  const none = buildClientSearch({ query: 'zz', clients: [] }, INITIAL_UI_STATE, () => {}, goPv);
   assert.equal(none.noResults, 'No clients found.');
-  assert.equal(buildClientSearch({ query: null, clients: [] }, INITIAL_UI_STATE, () => {}, openPv).searched, false);
+  assert.equal(buildClientSearch({ query: null, clients: [] }, INITIAL_UI_STATE, () => {}, goPv).searched, false);
   const many = Array.from({ length: 30 }, (_, i) => row(i, i === 3 ? 'D' : i === 4 ? 'C' : i === 5 ? 'X' : 'A'));
-  const p1 = buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, () => {}, openPv);
+  const p1 = buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, () => {}, goPv);
   assert.equal(p1.rows.length, 25);
   assert.deepEqual(p1.rows.slice(2, 6).map(r => r.status), ['Active', 'Dormant', 'Closed', 'X']);
   assert.deepEqual(p1.pager.map(p => [p.label, p.current]), [['1', true], ['2', false]]);
   assert.equal(p1.rangeLabel, '1–25 of 30 · sorted by client name');
-  const p2 = buildClientSearch({ query: 'c', clients: many }, { ...INITIAL_UI_STATE, clientPage: 7 }, () => {}, openPv);
+  const p2 = buildClientSearch({ query: 'c', clients: many }, { ...INITIAL_UI_STATE, clientPage: 7 }, () => {}, goPv);
   assert.equal(p2.rows.length, 5);
   assert.equal(p2.rangeLabel, '26–30 of 30 · sorted by client name');
   assert.equal(p2.next, null);
   let moved: unknown = null;
-  buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, p => { moved = p; }, openPv).next!();
+  buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, p => { moved = p; }, goPv).next!();
   assert.deepEqual(moved, { clientPage: 1 });
   let patch: unknown = null;
   opened.length = 0;
-  buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, p => { patch = p; }, openPv).search(' smi');
+  buildClientSearch({ query: 'c', clients: many }, INITIAL_UI_STATE, p => { patch = p; }, goPv).search(' smi');
   assert.deepEqual(patch, { clientPage: 0 });
   assert.deepEqual(opened, [['clients', { q: ' smi' }]]);
   p1.rows[0].open();
@@ -95,7 +95,7 @@ const summary = (over: Partial<PvClientSummary> = {}): PvClientSummary => ({
 });
 
 test('summary model: dd-MMM-yyyy dates, #,##0.00 money, "-" without a statement, Holdings only with a statement', () => {
-  const s = buildClientSummary(summary(), 'ADMIN', openPv);
+  const s = buildClientSummary(summary(), 'ADMIN', goPv);
   assert.deepEqual(s.fields.map(f => f.v), ['C2017-0124', 'The Penhaligon Family Trust', 'James Smith', 'Active', '15-JUN-2017']);
   assert.deepEqual(s.accounts.map(a => [a.no, a.status, a.opened, a.closed, a.stmt, a.value]), [
     ['01001-01', 'Open', '10-JUN-2019', '', '09-OCT-2026', '283,880.39'],
@@ -103,15 +103,15 @@ test('summary model: dd-MMM-yyyy dates, #,##0.00 money, "-" without a statement,
     ['01001-03', 'Closed', '10-JUN-2019', '31-MAR-2023', '-', '-'],
   ]);
   assert.equal(s.total, '360,175.62');
-  assert.equal(buildClientSummary(summary({ totalMktValGbp: null }), 'ADMIN', openPv).total, '-');
+  assert.equal(buildClientSummary(summary({ totalMktValGbp: null }), 'ADMIN', goPv).total, '-');
   assert.deepEqual(s.accounts[0].links.map(l => l.label), ['Holdings', 'Settlements', 'Position check']);
   assert.deepEqual(s.accounts[2].links.map(l => l.label), ['Settlements']);
 });
 
 test('summary links: Position check for OPS/ADMIN only; targets follow PV_PAGES (disabled until migrated)', () => {
-  assert.deepEqual(buildClientSummary(summary(), 'ADVISER', openPv).accounts[0].links.map(l => l.label), ['Holdings', 'Settlements']);
-  assert.deepEqual(buildClientSummary(summary(), 'OPS', openPv).accounts[0].links.map(l => l.label), ['Holdings', 'Settlements', 'Position check']);
-  const links = buildClientSummary(summary(), 'OPS', openPv).accounts[0].links;
+  assert.deepEqual(buildClientSummary(summary(), 'ADVISER', goPv).accounts[0].links.map(l => l.label), ['Holdings', 'Settlements']);
+  assert.deepEqual(buildClientSummary(summary(), 'OPS', goPv).accounts[0].links.map(l => l.label), ['Holdings', 'Settlements', 'Position check']);
+  const links = buildClientSummary(summary(), 'OPS', goPv).accounts[0].links;
   for (const l of links) {
     const target = PV_PAGES.find(p => p.label === l.label)!.screen;
     assert.equal(l.enabled, target !== null);
@@ -120,7 +120,7 @@ test('summary links: Position check for OPS/ADMIN only; targets follow PV_PAGES 
     if (target) assert.deepEqual(opened[0][0], target);
   }
   opened.length = 0;
-  buildClientSummary(summary(), 'OPS', openPv).back();
+  buildClientSummary(summary(), 'OPS', goPv).back();
   assert.deepEqual(opened, [['clients', { cid: null }]]);
 });
 
@@ -133,7 +133,7 @@ test('summary slice: 404 → Empty (client not found); other errors → Error', 
 
 test('buildModel: custody Client 360 shell copy + view model only in PV context; signed-out preview is ADMIN', () => {
   const slice = { ...resolvePvSlice('c360', clientSummarySlice as never, 'Populated', null, { kind: 'idle' }), screen: 'c360' as Screen, retry: () => {} };
-  const pv: PvModelInput = { user: null, slice, signIn: { pending: false, error: null, notice: null, submit: () => {} }, signOut: () => {}, run: async () => {}, goPv: () => {}, openPv };
+  const pv: PvModelInput = { user: null, slice, signIn: { pending: false, error: null, notice: null, submit: () => {} }, signOut: () => {}, run: async () => {}, goPv };
   const m = buildModel('c360', 'Populated', INITIAL_UI_STATE, () => {}, () => {}, null, () => {}, pv);
   assert.equal(m.crumb, 'Portfolio Viewer / Client search / C2017-0124');
   assert.equal(m.title, 'The Penhaligon Family Trust');

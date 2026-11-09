@@ -46,6 +46,7 @@ export function createPvClient(opts: PvClientOptions = {}) {
     settlements: (acctId: number, range: { from?: IsoDate; to?: IsoDate } = {}) => json<PvSettlements>('GET', `${acct(acctId)}/settlements${qs(range)}`),
     positionCheck: (acctId: number, date: IsoDate) => json<PvPositionCheck>('GET', `${acct(acctId)}/position-check${qs({ date })}`),
     saveNote: (acctId: number, note: PvSaveNote) => json<PvReconNote>('PUT', `${acct(acctId)}/position-check/notes`, note),
+    positionCheckDates: () => json<{ dates: IsoDate[] }>('GET', '/position-check/dates'),
     checkAll: (date: IsoDate) => json<PvCheckAll>('GET', `/position-check/all${qs({ date })}`),
     archiveFiles: (f: { type?: 'MT535' | 'MT54x'; safe?: string; date?: IsoDate } = {}) => json<PvArchiveFiles>('GET', `/archive/files${qs(f)}`),
     archiveRaw: async (path: string) => (await send('GET', `/archive/files/raw${qs({ path })}`)).text(),

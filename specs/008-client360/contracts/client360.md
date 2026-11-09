@@ -18,7 +18,7 @@
 | `?screen=c360&cid=<id>` | custody Client 360 for the PV client |
 | `…&state=Populated|Loading|Empty|Error` | forced state (signed-out Populated = preview fixture) |
 
-`cid` and `q` are `PV_CONTEXT_KEYS`: `goPv`/`openPv` keep them, mockup `go` drops them.
+`cid` and `q` are `PV_CONTEXT_KEYS`: `goPv`/`goPv` keep them, mockup `go` drops them.
 
 ## Model
 - `m.clientSearch`: `{ query, searched, total, resultLabel, noResults, rangeLabel, rows[{ref,name,href,open,adviser,status,statusTone,accts}], pager[], prev, next, search(text) }`

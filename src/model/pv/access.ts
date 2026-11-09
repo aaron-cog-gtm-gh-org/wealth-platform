@@ -1,5 +1,6 @@
 import type { PvRole } from '../../api/pv-types';
 import type { Screen } from '../../types';
+import type { PvContextPatch } from './context';
 
 /** One legacy PV page: Site.Master nav link + BasePage.RequiredRoles (null = any signed-in user). */
 export interface PvPage {
@@ -8,6 +9,8 @@ export interface PvPage {
   roles: readonly PvRole[] | null;
   /** Migrated screen id; null until that page's screen spec (005–009) lands. */
   screen: Screen | null;
+  /** Context the nav link sets on top of the kept PV context. */
+  params?: PvContextPatch;
 }
 
 /** Site.Master.cs navigation + each page's RequiredRoles (legacy Q17). Order = legacy nav order. */
@@ -16,7 +19,7 @@ export const PV_PAGES: readonly PvPage[] = [
   { page: 'ClientSummary.aspx', label: 'Client summary', roles: null, screen: 'c360' },
   { page: 'Holdings.aspx', label: 'Holdings', roles: null, screen: null },
   { page: 'Settlements.aspx', label: 'Settlements', roles: null, screen: null },
-  { page: 'PositionCheck.aspx', label: 'Position check', roles: ['OPS', 'ADMIN'], screen: null },
+  { page: 'PositionCheck.aspx', label: 'Position check', roles: ['OPS', 'ADMIN'], screen: 'exceptions', params: { pc: '1' } },
   { page: 'MessageBrowser.aspx', label: 'Message browser', roles: ['OPS', 'ADMIN'], screen: null },
   { page: 'Admin.aspx', label: 'Admin', roles: ['ADMIN'], screen: 'admin' },
 ];
