@@ -130,5 +130,10 @@ export function findArchiveFile(idx: ArchiveIndex, path: string): ArchiveFileEnt
   return null;
 }
 
+/** MessageBrowser.ShowFile: the first index entry (index order) with this file name; never a path built from input. */
+export function findArchiveFileByName(idx: ArchiveIndex, fileName: string): ArchiveFileEntry | null {
+  return idx.files.find(f => f.fileName === fileName) ?? null;
+}
+
 /** Statement key used by the index: safekeeping account without leading zeros. */
 export const statementKey = (safeCode: string) => trimChars(safeCode, '0', 'start');
