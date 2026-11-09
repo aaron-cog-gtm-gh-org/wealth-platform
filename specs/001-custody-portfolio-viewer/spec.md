@@ -136,7 +136,7 @@ confirmations loaded, parse errors and last load time, with an action to reload 
   zeros.
 - **FR-006**: Position check MUST compute expected = previous qty + net settled and list only
   non-zero differences sorted by ISIN, with no tolerance, for one account or all accounts on a date.
-- **FR-007**: Ops MUST be able to set a recon status (NEW, O, CHASED, C, RESOLVED, WRITEOFF) and a
+- **FR-007**: Ops MUST be able to set a recon status (OPEN, CHASED, RESOLVED, WRITEOFF) and a
   note (max 500 characters) per account/ISIN/statement date; saving MUST persist, record operator
   and time, and write an audit event.
 - **FR-008**: Messages MUST filter by type, date and safekeeping account and display raw text only

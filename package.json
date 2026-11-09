@@ -15,7 +15,7 @@
     "db:reset": "npm run db:setup",
     "test:unit": "node --import tsx --test src/workspace/model.test.ts",
     "test:server:unit": "node --import tsx --test --test-concurrency=1 server/workflows/validation.test.ts server/db/sql-script.test.ts server/custody/swift/parse.test.ts server/custody/domain/holdings.test.ts server/custody/domain/position-check.test.ts server/custody/domain/settlements.test.ts",
-    "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts",
+    "test:int": "node --import tsx --test --test-concurrency=1 server/workflows/api.int.test.ts server/legacy.int.test.ts server/custody/load-archive.int.test.ts",
     "test:backend": "npm run test:server:unit && npm run test:int",
     "test:db": "tsx server/db/container-check.ts",
     "lint": "eslint .",
