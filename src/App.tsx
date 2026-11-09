@@ -13,6 +13,7 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
+import { CustodyHoldings } from './screens/CustodyHoldings';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
 import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
 import type { PvContext } from './model/pv/context';
@@ -79,11 +80,17 @@ function LegacyApp() {
   }, []);
   const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
   const goPv = useCallback((screen: Screen) => navigate(screen, true), [navigate]);
+  const goPvContext = useCallback((patch: Partial<PvContext>) => {
+    const q = new URLSearchParams(window.location.search);
+    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, String(v)); }
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
+  }, []);
 
   const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, goPvContext });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -188,7 +195,7 @@ function LegacyApp() {
 
             {show.c360 && <Client360 m={m} />}
 
-            {show.portfolio && <PortfolioDetail m={m} />}
+            {show.portfolio && (m.portfolio ? <CustodyHoldings m={m} /> : <PortfolioDetail m={m} />)}
 
             {show.orders && <RebalanceOrders m={m} />}
 

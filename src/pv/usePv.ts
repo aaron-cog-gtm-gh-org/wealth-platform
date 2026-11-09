@@ -101,7 +101,7 @@ export function usePv(screen: Screen, ctx: PvContext, forced: DataState | null) 
     expired,
     signIn: { ...signIn, notice: expired ? SIGN_IN_MESSAGES.expired : null, submit: doSignIn },
     signOut: () => endSession('signout'),
-    slice: resolved && { screen, ...resolved, retry: () => setNonce(n => n + 1) },
+    slice: resolved && { screen, ctx, ...resolved, retry: () => setNonce(n => n + 1) },
     run,
   };
 }

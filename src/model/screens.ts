@@ -6,6 +6,8 @@ import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
 import { buildAdmin } from './admin';
+import { buildPvHoldings } from './holdings';
+import type { PvHoldingsSlice } from './holdings';
 import type { PvAdminStats } from '../api/pv-types';
 import type { PvModelInput } from './pv/slice';
 
@@ -217,6 +219,7 @@ function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | nu
   const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
   return {
     admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
+    portfolio: ready?.screen === 'portfolio' ? buildPvHoldings(ready.data as PvHoldingsSlice, pv!.goPvContext) : null,
   };
 }
 

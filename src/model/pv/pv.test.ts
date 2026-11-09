@@ -26,8 +26,9 @@ test('Site.Master/BasePage role table (Q17)', () => {
   }
   assert.equal(canAccess(['ADMIN'], 'admin'), false, 'exact, case-sensitive match');
   assert.equal(canAccess(null, null), false, 'no session, no access');
-  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['admin']);
-  assert.deepEqual(pvNavFor('OPS'), []);
+  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['portfolio', 'admin']);
+  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['portfolio']);
+  assert.deepEqual(pvNavFor('ADVISER').map(p => p.screen), ['portfolio']);
 });
 
 test('URL context ?acct=&stmt=', () => {
@@ -38,15 +39,17 @@ test('URL context ?acct=&stmt=', () => {
 });
 
 test('slices: unregistered screens and missing context keep existing behaviour', () => {
-  assert.equal(pvSliceFor('portfolio', { acct: 2001, stmt: null }), null);
+  assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null }), null);
   assert.ok(pvSliceFor('admin', { acct: null, stmt: null }));
+  assert.equal(pvSliceFor('portfolio', { acct: null, stmt: '2026-09-18' }), null, 'spec 005: Whitfield portfolio without ?acct=');
+  assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: null }));
   const needsAcct: PvSliceDef<number[]> = { needs: 'acct+stmt', load: async () => [], isEmpty: d => !d.length, preview: () => [1] };
-  PV_SLICES.portfolio = needsAcct as PvSliceDef<unknown>;
+  PV_SLICES.alts = needsAcct as PvSliceDef<unknown>;
   try {
-    assert.equal(pvSliceFor('portfolio', { acct: null, stmt: null }), null);
-    assert.equal(pvSliceFor('portfolio', { acct: 2001, stmt: null }), null);
-    assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: '2026-09-18' }));
-  } finally { delete PV_SLICES.portfolio; }
+    assert.equal(pvSliceFor('alts', { acct: null, stmt: null }), null);
+    assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null }), null);
+    assert.ok(pvSliceFor('alts', { acct: 2001, stmt: '2026-09-18' }));
+  } finally { delete PV_SLICES.alts; }
 });
 
 test('slice → gate / DataState mapping', () => {

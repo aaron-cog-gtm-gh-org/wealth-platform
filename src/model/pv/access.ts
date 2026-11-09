@@ -14,7 +14,7 @@ export interface PvPage {
 export const PV_PAGES: readonly PvPage[] = [
   { page: 'ClientSearch.aspx', label: 'Client search', roles: null, screen: null },
   { page: 'ClientSummary.aspx', label: 'Client summary', roles: null, screen: null },
-  { page: 'Holdings.aspx', label: 'Holdings', roles: null, screen: null },
+  { page: 'Holdings.aspx', label: 'Holdings', roles: null, screen: 'portfolio' },
   { page: 'Settlements.aspx', label: 'Settlements', roles: null, screen: null },
   { page: 'PositionCheck.aspx', label: 'Position check', roles: ['OPS', 'ADMIN'], screen: null },
   { page: 'MessageBrowser.aspx', label: 'Message browser', roles: ['OPS', 'ADMIN'], screen: null },

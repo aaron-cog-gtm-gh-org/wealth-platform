@@ -64,3 +64,15 @@ Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format
 - **D-010-5** An expired session says so, where legacy silently redirected to Login.
 
 The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.
+
+## Spec 005 decisions (Holdings → PortfolioDetail)
+
+`Holdings.aspx?acct=` becomes `?screen=portfolio&acct=<ACCT_ID>[&stmt=yyyy-mm-dd]`; without `acct` the Whitfield Portfolio detail is unchanged. Q2–Q5, Q8 and Q13 come unchanged from the server; Q14 formats (`dd-MMM-yyyy`, `#,##0.####`, `#,##0.0000`, `#,##0.00`) are preserved with half-away-from-zero rounding, and the GBP total is an exact decimal sum. Explicit divergences, none of which changes a domain result:
+- **D-005-1** `stmt` is ISO (`yyyy-mm-dd`, shared PV context); a legacy `yyyyMMdd` value is malformed and falls back to the latest statement, as legacy did for malformed values.
+- **D-005-2** No `acct` → Whitfield Portfolio detail; unknown `acct` → Empty "Custody account not found" (legacy redirected to `ClientSearch.aspx`).
+- **D-005-3** A requested date not on file stays selected in the picker, marked "(not on file)" (legacy showed the latest date while saying "No statement on file for this date.").
+- **D-005-4** Quantity type (UNIT/FAMT) is displayed.
+- **D-005-5** The statement's `23G` function and file name are displayed (selection still follows Q8).
+- **D-005-6** Account type and base currency are shown next to Acct No / Client / Safe Code.
+
+Shared plumbing added additively for later specs: optional `PvSliceDef.copy`, `slice.ctx`, `PvModelInput.goPvContext`, and the visual-diff `select` step plus query-aware API routes (`specs/005-holdings-portfolio/contracts/holdings-view.md`).

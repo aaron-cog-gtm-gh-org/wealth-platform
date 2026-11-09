@@ -4,6 +4,7 @@ import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
 import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
+import { PV_SLICES } from './pv/slice';
 import type { PvModelInput } from './pv/slice';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
@@ -64,7 +65,9 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   const gate = slice?.gate ?? null;
   const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
-  const [crumb, title, subtitle] = META[screen];
+  const copy = slice ? PV_SLICES[screen]?.copy?.(slice.data, slice.ctx ?? null) ?? null : null;
+  const [crumb, title, subtitle] = copy?.meta ?? META[screen];
+  const empty = copy?.empty ?? EMPTY[screen], err = copy?.error ?? ERR[screen];
 
   const nav = NAV_GROUPS.map(g => ({
     label: g.label,
@@ -130,14 +133,14 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
       body: `${pvPageForScreen(screen)?.label ?? title} requires the ${rolesLabel(pvPageForScreen(screen)?.roles ?? null)} role. You are signed in as ${pv?.user?.username ?? ''} (${pv?.user?.role ?? ''}).`,
       ref: `Ref ${screen.toUpperCase()}-403 · ${pvPageForScreen(screen)?.page ?? ''}`,
     },
-    loadingMsg: 'Loading ' + title.toLowerCase() + '…',
+    loadingMsg: copy?.loading ?? 'Loading ' + title.toLowerCase() + '…',
     skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
-    emptyTitle: EMPTY[screen][0],
-    emptyBody: EMPTY[screen][1],
-    emptyCta: EMPTY[screen][2],
-    errTitle: ERR[screen][0],
-    errBody: ERR[screen][1],
-    errAction: ERR[screen][2],
+    emptyTitle: empty[0],
+    emptyBody: empty[1],
+    emptyCta: empty[2],
+    errTitle: err[0],
+    errBody: err[1],
+    errAction: err[2],
     errRef: 'Ref ' + screen.toUpperCase() + '-503-7f2a · 14:47:12 ET',
   };
 }

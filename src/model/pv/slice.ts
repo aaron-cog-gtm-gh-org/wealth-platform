@@ -4,6 +4,7 @@ import type { DataState, Screen } from '../../types';
 import { canAccess, pvPageForScreen } from './access';
 import type { PvContext } from './context';
 import { PREVIEW_ADMIN_STATS } from './preview';
+import { holdingsSlice } from '../holdings';
 
 export type PvApi = ReturnType<typeof createPvClient>;
 
@@ -18,6 +19,15 @@ export interface PvSliceDef<T> {
   isEmpty: (data: T) => boolean;
   /** Fixed synthetic data rendered for `?state=Populated` without a session (design preview / visual-diff). */
   preview: () => T;
+  /** Optional shell copy while this slice is active (spec 005): breadcrumb/title/subtitle and DataState panels. `data` is null unless loaded or previewed. */
+  copy?: (data: T | null, ctx: PvContext | null) => PvSliceCopy;
+}
+
+export interface PvSliceCopy {
+  meta?: [crumb: string, title: string, subtitle: string];
+  loading?: string;
+  empty?: [title: string, body: string, cta: string];
+  error?: [title: string, body: string, action: string];
 }
 
 export type PvSliceStatus =
@@ -47,6 +57,7 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 // Specs 005–009: add `<screen>: <slice>` here (additively).
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
+  portfolio: holdingsSlice as PvSliceDef<unknown>,
 };
 
 /** The PV slice that drives `screen` for this URL context, or null (existing behaviour). */
@@ -86,10 +97,12 @@ export function resolvePvSlice(screen: Screen, def: PvSliceDef<unknown>, forced:
 /** What `buildModel` needs from the shell's PV state (`src/pv/usePv.ts` provides it). Null = no PV at all. */
 export interface PvModelInput {
   user: PvUser | null;
-  slice: (PvResolved & { screen: Screen; retry: () => void }) | null;
+  slice: (PvResolved & { screen: Screen; retry: () => void; ctx?: PvContext }) | null;
   signIn: { pending: boolean; error: string | null; notice: string | null; submit: (username: string, password: string) => void };
   signOut: () => void;
   run: (op: 'reloadArchive') => Promise<void>;
   /** Navigate to a PV screen keeping `acct`/`stmt`. */
   goPv: (s: Screen) => void;
+  /** Stay on the current screen and set (or, with null, clear) PV context keys, e.g. `{ stmt }` (spec 005). */
+  goPvContext?: (patch: Partial<PvContext>) => void;
 }
