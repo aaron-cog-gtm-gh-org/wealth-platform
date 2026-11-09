@@ -2,6 +2,9 @@ import type { Data } from '../data';
 import { GREEN, INK, dayMonthYear, money, weekdayDate } from '../format';
 import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
+import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
+import { PREVIEW_USER } from './pv/preview';
+import type { PvModelInput } from './pv/slice';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
@@ -18,6 +21,7 @@ const META: Record<Screen, [string, string, string]> = {
   home: ['Client portal / Home', 'Good afternoon, Eleanor', 'Last sign-in 08-Oct-2026 from iPhone'],
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
+  admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -29,6 +33,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   home: ['Welcome to RBC Wealth', 'Your accounts will appear here once your first deposit arrives. Most transfers take 3–5 business days.', 'Make a deposit'],
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
+  admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -40,6 +45,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   home: ['We can’t show your balances right now', 'Something went wrong on our side. Your money is safe and no transactions are affected. Try again in a few minutes, or call 1-800-555-0199.', 'Call us'],
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
+  admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
@@ -50,8 +56,13 @@ export const AS_OF = '2026-10-12';
 export const totalSource = (d: Data) =>
   `Sum of ${d.holdings.length} positions across ${d.accounts.length} accounts · listed prices 14:45 ET · fund NAVs 09-Oct · private NAVs 30-Jun`;
 
-export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null) {
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen) => void, data: Data | null, pv: PvModelInput | null = null) {
   const isOps = screen === 'exceptions';
+  const slice = pv?.slice ?? null;
+  const gate = slice?.gate ?? null;
+  const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const [crumb, title, subtitle] = META[screen];
 
@@ -73,6 +84,14 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
       };
     }),
   }));
+  const pvItems = pvNavFor(pvUser?.role);
+  if (pv && pvUser && pvItems.length) nav.push({
+    label: 'Portfolio Viewer',
+    items: pvItems.map(p => {
+      const active = p.screen === screen;
+      return { id: p.screen, label: p.label, badge: null, onClick: () => pv.goPv(p.screen), bar: active ? '#005daa' : 'transparent', bg: active ? '#eaf1fa' : 'transparent', fg: active ? '#00427a' : INK, weight: active ? 600 : 500, badgeBg: '#e6eef8', badgeFg: '#00498a' };
+    }),
+  });
 
   const hh = data?.raw.household, c = hh?.primaryClient;
   const ctx = ((data && hh && c ? [
@@ -87,14 +106,30 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     subtitle,
     ctx,
     isClientView,
-    showCtx: !isOps && !isClientView,
-    userInitials: isOps ? 'AN' : 'AD',
-    userName: isOps ? 'A. Nguyen' : 'Aaron Diamond',
-    userRole: isOps ? 'Wealth Ops · Settlement' : 'Investment Advisor · Toronto–Bay St',
-    show: Object.fromEntries(SCREENS.map(k => [k, dataState === 'Populated' && k === screen])) as Record<Screen, boolean>,
-    isLoading: dataState === 'Loading',
-    isEmpty: dataState === 'Empty',
-    isError: dataState === 'Error',
+    showCtx: !isOps && !isClientView && !slice,
+    userInitials: pvUser ? initials(pvUser.fullName || pvUser.username) : isOps ? 'AN' : 'AD',
+    userName: pvUser ? pvUser.fullName || pvUser.username : isOps ? 'A. Nguyen' : 'Aaron Diamond',
+    userRole: pvUser ? `${pvUser.username} · ${pvUser.role}` : isOps ? 'Wealth Ops · Settlement' : 'Investment Advisor · Toronto–Bay St',
+    show: Object.fromEntries(SCREENS.map(k => [k, !gate && dataState === 'Populated' && k === screen])) as Record<Screen, boolean>,
+    isLoading: !gate && dataState === 'Loading',
+    isEmpty: !gate && dataState === 'Empty',
+    isError: !gate && dataState === 'Error',
+    pvGate: gate,
+    pvSignedIn: !!pv?.user,
+    pvSignOut: () => pv?.signOut(),
+    pvSignIn: {
+      title: 'Sign in to Portfolio Viewer',
+      body: `${title} is part of Portfolio Viewer. Sign in with your Portfolio Viewer user ID to continue.`,
+      notice: pv?.signIn.notice ?? null,
+      error: pv?.signIn.error ?? null,
+      pending: pv?.signIn.pending ?? false,
+      submit: (u: string, p: string) => pv?.signIn.submit(u, p),
+    },
+    pvForbidden: {
+      title: 'Not authorised for this page',
+      body: `${pvPageForScreen(screen)?.label ?? title} requires the ${rolesLabel(pvPageForScreen(screen)?.roles ?? null)} role. You are signed in as ${pv?.user?.username ?? ''} (${pv?.user?.role ?? ''}).`,
+      ref: `Ref ${screen.toUpperCase()}-403 · ${pvPageForScreen(screen)?.page ?? ''}`,
+    },
     loadingMsg: 'Loading ' + title.toLowerCase() + '…',
     skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
     emptyTitle: EMPTY[screen][0],

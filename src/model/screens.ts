@@ -5,8 +5,11 @@ import { AMBER as amber, GREEN as green, MUTE as mute, RED as red, dayMonth, day
 import type { PillKind } from '../format';
 import type { Period, Rail, Screen, SetUiState, UiState } from '../types';
 import { AS_OF, totalSource } from './shell';
+import { buildAdmin } from './admin';
+import type { PvAdminStats } from '../api/pv-types';
+import type { PvModelInput } from './pv/slice';
 
-export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
+function buildMockScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
   const D = { holdings: data.holdings, total: data.totalValue, accounts: data.accounts, alloc: data.allocation, SRC: data.PRICE_SOURCE, COLORS: CLASS_COLORS, classes: data.ASSET_CLASSES };
   const R = data.raw, HH = R.household, C = HH.primaryClient;
   const totalFmt = money(D.total);
@@ -205,3 +208,19 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
 }
 
 export type ScreensModel = ReturnType<typeof buildScreens>;
+
+type MockScreens = ReturnType<typeof buildMockScreens>;
+
+/** PV screen view models (spec 010+). Built only for the active, populated, ungated PV slice. */
+function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | null) {
+  const s = pv?.slice;
+  const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
+  return {
+    admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
+  };
+}
+
+/** Mockup screens need the Whitfield `data`; PV screens are fed by the PV slice. */
+export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data | null, pv: PvModelInput | null = null) {
+  return { ...(data ? buildMockScreens(st, setState, go, data) : ({} as MockScreens)), ...buildPvScreens(st, setState, pv) };
+}
