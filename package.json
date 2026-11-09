@@ -28,7 +28,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b && tsc -p server",
-    "visual-diff": "node scripts/visual-diff.mjs"
+    "visual-diff": "node scripts/visual-diff.mjs",
+    "parity": "tsx server/pv/parity.ts"
   },
   "dependencies": {
     "express": "^4.22.3",
