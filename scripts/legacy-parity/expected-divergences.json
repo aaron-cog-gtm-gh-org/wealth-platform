@@ -1,0 +1,34 @@
+{
+  "$comment": "Diffs between legacy PV (golden) and /api/custody that are intentional (research.md R3). Each rule matches diff records from lib/diff.mjs on any of: dataset, kind, acctId, clientId, date, q, key, field, legacy, api, delta (api - legacy). A diff matching no rule is unexplained and fails parity:compare.",
+  "divergences": [
+    {
+      "id": "D1",
+      "title": "MT54x safekeeping account matched with leading zeros stripped (PV requires exact 7-digit padding), so 2 unpadded confirmations are now counted",
+      "messages": [
+        { "file": "archive/mt54x/20260916/MT544_11397_20260916_001.txt", "seme": "KS5400063562", "safe": "00011397", "isin": "LU00ZZ013430", "acctId": 2129, "acctNo": "01072-01", "settleDate": "2026-09-16" },
+        { "file": "archive/mt54x/20260916/MT545_10554_20260916_001.txt", "seme": "KS5400063556", "safe": "00010554", "isin": "LU00ZZ014180", "acctId": 2125, "acctNo": "01068-02", "settleDate": "2026-09-16" }
+      ],
+      "expect": [
+        { "dataset": "settlements", "acctId": 2129, "kind": "added", "key": "KS5400063562" },
+        { "dataset": "settlements", "acctId": 2125, "kind": "added", "key": "KS5400063556" },
+        { "dataset": "positionChecks", "acctId": 2129, "date": "2026-09-18", "kind": "missing", "key": "LU00ZZ013430", "$comment": "PV: NEW break prev 0, net 0, stmt 2775.949; with the receipt counted expected == stmt" },
+        { "dataset": "positionChecks", "acctId": 2125, "date": "2026-09-18", "kind": "missing", "key": "LU00ZZ014180", "$comment": "PV: NEW break prev 0, net 0, stmt 3776.07" },
+        { "dataset": "checkAll", "date": "2026-09-18", "acctId": 2129, "kind": "changed", "field": "breaks", "delta": -1 },
+        { "dataset": "checkAll", "date": "2026-09-18", "acctId": 2125, "kind": "changed", "field": "breaks", "delta": -1 }
+      ]
+    },
+    {
+      "id": "D2",
+      "title": "CANC removes its PREV confirmation across the whole archive (PV only within the same day folder)",
+      "messages": [
+        { "file": "archive/mt54x/20260715/MT545_16056_20260715_002.txt", "seme": "KS5400064555", "function": "CANC", "prev": "KS5400060882", "acctId": 2145, "acctNo": "01079-03" },
+        { "file": "archive/mt54x/20260714/MT545_16056_20260714_001.txt", "seme": "KS5400060882", "function": "NEWM", "isin": "GB00ZZ001500", "qty": 210, "acctId": 2145, "acctNo": "01079-03", "settleDate": "2026-07-14", "$comment": "the cancelled original" }
+      ],
+      "expect": [
+        { "dataset": "settlements", "acctId": 2145, "kind": "missing", "key": "KS5400060882" },
+        { "dataset": "positionChecks", "acctId": 2145, "date": "2026-07-17", "kind": "missing", "key": "GB00ZZ001500", "$comment": "PV: NEW break prev 0, net +210, stmt 0, diff -210" },
+        { "dataset": "checkAll", "date": "2026-07-17", "acctId": 2145, "kind": "changed", "field": "breaks", "delta": -1 }
+      ]
+    }
+  ]
+}
