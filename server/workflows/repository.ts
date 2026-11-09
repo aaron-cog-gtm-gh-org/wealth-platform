@@ -233,8 +233,10 @@ export async function resetWorkflowData() {
   const client = await (await import('../db/pool')).getPool().connect();
   try {
     await client.query('BEGIN');
-    const statements = splitSqlScript(readFileSync(`${DB_DIR}workflow-seed.sql`, 'utf8'));
-    for (const statement of statements) await client.query(statement);
+    for (const file of ['workflow-seed.sql', 'custody-seed.sql']) {
+      const statements = splitSqlScript(readFileSync(`${DB_DIR}${file}`, 'utf8'));
+      for (const statement of statements) await client.query(statement);
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
