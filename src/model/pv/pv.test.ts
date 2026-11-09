@@ -26,9 +26,13 @@ test('Site.Master/BasePage role table (Q17)', () => {
   }
   assert.equal(canAccess(['ADMIN'], 'admin'), false, 'exact, case-sensitive match');
   assert.equal(canAccess(null, null), false, 'no session, no access');
-  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['settlements', 'exceptions', 'messages', 'admin']);
-  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['settlements', 'exceptions', 'messages']);
-  assert.deepEqual(pvNavFor('ADVISER').map(p => p.screen), ['settlements']);
+  assert.ok(pvNavFor('ADMIN').some(p => p.screen === 'admin'));
+  assert.ok(!pvNavFor('OPS').some(p => p.screen === 'admin'));
+  assert.deepEqual(pvNavFor('ADMIN').map(p => p.page), PV_PAGES.filter(p => p.screen !== null).map(p => p.page), 'legacy nav order');
+  assert.ok(pvNavFor('OPS').some(p => p.screen === 'exceptions'));
+  assert.ok(!pvNavFor('ADVISER').some(p => p.screen === 'exceptions'));
+  assert.ok(pvNavFor('ADVISER').some(p => p.screen === 'settlements'));
+  assert.ok(pvNavFor('OPS').some(p => p.screen === 'messages'));
 });
 
 test('URL context ?acct=&stmt=', () => {

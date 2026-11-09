@@ -12,6 +12,9 @@ import type { PvAdminStats } from '../api/pv-types';
 import { buildSettlements } from './settlements';
 import type { SettlementsData } from './settlements';
 import type { PvModelInput } from './pv/slice';
+import { buildClientSearch, buildClientSummary } from './clients';
+import type { ClientSearchData, ClientSummaryData } from './clients';
+import { PREVIEW_USER } from './pv/preview';
 import { buildPositionCheck } from './pv/position-check';
 import type { PvPositionCheckData } from './pv/position-check';
 
@@ -221,8 +224,12 @@ type MockScreens = ReturnType<typeof buildMockScreens>;
 function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | null) {
   const s = pv?.slice;
   const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
+  const goPv = pv?.goPv ?? (() => {});
   return {
     admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
+    clientSearch: ready?.screen === 'clients' ? buildClientSearch(ready.data as ClientSearchData, st, setState, goPv) : null,
+    client360: ready?.screen === 'c360' && (ready.data as ClientSummaryData).client
+      ? buildClientSummary((ready.data as ClientSummaryData).client!, pv!.user?.role ?? (ready.preview ? PREVIEW_USER.role : null), goPv) : null,
     settlements: ready?.screen === 'settlements' ? buildSettlements(ready.data as SettlementsData, st, setState, pv!.setPvContext) : null,
     /** Live empty window: the account header and date form stay above the Empty panel (D-007-4). */
     settlementsRange: pv && s && !s.gate && s.screen === 'settlements' && s.dataState === 'Empty' && (s.data as SettlementsData | null)?.kind === 'list'

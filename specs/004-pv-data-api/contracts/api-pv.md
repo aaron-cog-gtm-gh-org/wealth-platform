@@ -16,6 +16,7 @@ Decimals are strings, and dates are `yyyy-mm-dd`.
 | GET | `/accounts/:acctId` | any | `PvAccount` |
 | GET | `/clients/search?q=` | any | `{ clients: [{ clientId, clientRef, clientName, statusCd, adviserUsername, adviserName, acctCount }] }` |
 | GET | `/clients/:clientId` | any | client + adviser + `accounts` |
+| GET | `/clients/:clientId/summary` | any | client + `accounts` with `stmtDate` (latest, Q8) and `mktValGbp` (Σ line MktValGbp), `totalMktValGbp` (spec 008) |
 | GET | `/accounts/:acctId/statement-dates` | any | `{ acctId, dates }` newest first |
 | GET | `/accounts/:acctId/holdings?date=` | any | `{ acctId, stmtDate, statement \| null, lines: HoldingLine[] }`; default is the latest statement |
 | GET | `/accounts/:acctId/settlements?from=&to=` | any | `{ acctId, custAcct, from, to, items }`; each item is a `SettlementConfirm` + `fileName`, `instrumentName`, `amount`, `amountError` |

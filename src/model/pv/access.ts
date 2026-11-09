@@ -15,8 +15,8 @@ export interface PvPage {
 
 /** Site.Master.cs navigation + each page's RequiredRoles (legacy Q17). Order = legacy nav order. */
 export const PV_PAGES: readonly PvPage[] = [
-  { page: 'ClientSearch.aspx', label: 'Client search', roles: null, screen: null },
-  { page: 'ClientSummary.aspx', label: 'Client summary', roles: null, screen: null },
+  { page: 'ClientSearch.aspx', label: 'Client search', roles: null, screen: 'clients' },
+  { page: 'ClientSummary.aspx', label: 'Client summary', roles: null, screen: 'c360' },
   { page: 'Holdings.aspx', label: 'Holdings', roles: null, screen: null },
   { page: 'Settlements.aspx', label: 'Settlements', roles: null, screen: 'settlements' },
   { page: 'PositionCheck.aspx', label: 'Position check', roles: ['OPS', 'ADMIN'], screen: 'exceptions', params: { pc: '1' } },

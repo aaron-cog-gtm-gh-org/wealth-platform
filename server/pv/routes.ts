@@ -3,7 +3,8 @@ import express, { Router, type NextFunction, type Request, type Response } from 
 import { findArchiveFile, findArchiveFileByName } from '../../src/domain/archive/archive-index';
 import { getSettlements, toAmount } from '../../src/domain/archive/settlements';
 import { addDays, isIsoDate, type IsoDate } from '../../src/domain/date';
-import { getStatement, getStatementDates, holdingLines, instrumentName } from '../../src/domain/positions/position-builder';
+import { Decimal, sumDecimals } from '../../src/domain/decimal';
+import { getLatest, getStatement, getStatementDates, holdingLines, instrumentName } from '../../src/domain/positions/position-builder';
 import { checkAll, runPositionCheck, type PositionCheckDeps } from '../../src/domain/positions/position-check';
 import { query } from '../db/pool';
 import { badRequest, HttpError, notFound } from '../workflows/errors';
@@ -60,13 +61,30 @@ pvRouter.get('/clients/search', json(async req => {
     WHERE c.client_name ILIKE '%' || $1 || '%' OR c.client_ref ILIKE $1 || '%'
     ORDER BY lower(c.client_name), c.client_name`, [q]) };
 }));
+const CLIENT_SQL = `SELECT c.client_id AS "clientId", c.client_ref AS "clientRef", c.client_name AS "clientName",
+      c.status_cd AS "statusCd", to_char(c.created_dt, 'YYYY-MM-DD') AS "createdDt", u.username AS "adviserUsername", u.full_name AS "adviserName"
+    FROM pv.client c LEFT JOIN pv.app_user u ON u.user_id = c.adviser_user_id WHERE c.client_id = $1`;
 pvRouter.get('/clients/:clientId', json(async req => {
   const id = intParam(req.params.clientId);
-  const [client] = await query(`SELECT c.client_id AS "clientId", c.client_ref AS "clientRef", c.client_name AS "clientName",
-      c.status_cd AS "statusCd", to_char(c.created_dt, 'YYYY-MM-DD') AS "createdDt", u.username AS "adviserUsername", u.full_name AS "adviserName"
-    FROM pv.client c LEFT JOIN pv.app_user u ON u.user_id = c.adviser_user_id WHERE c.client_id = $1`, [id]);
+  const [client] = await query(CLIENT_SQL, [id]);
   if (!client) return null;
   return { ...client, accounts: await query(`${ACCOUNT_SQL} WHERE a.client_id = $1 ORDER BY a.acct_no COLLATE "C"`, [id]) };
+}));
+/** legacy: ClientSummary.aspx.cs - accounts by ACCT_NO, PositionBuilder.GetLatest per safe code (Q8), Σ MktValGbp per account and in total */
+pvRouter.get('/clients/:clientId/summary', json(async req => {
+  const id = intParam(req.params.clientId);
+  const [client] = await query(CLIENT_SQL, [id]);
+  if (!client) return null;
+  const idx = getIndex();
+  let total = Decimal.ZERO, any = false;
+  const accounts = (await query<AccountDto>(`${ACCOUNT_SQL} WHERE a.client_id = $1 ORDER BY a.acct_no COLLATE "C"`, [id])).map(a => {
+    const st = getLatest(idx, safeOf(a));
+    if (!st) return { ...a, stmtDate: null, mktValGbp: null };
+    const mv = sumDecimals(st.lines.map(l => l.mktValGbp));
+    total = total.add(mv); any = true;
+    return { ...a, stmtDate: st.statementDate, mktValGbp: mv.toString() };
+  });
+  return { ...client, accounts, totalMktValGbp: any ? total.toString() : null };
 }));
 
 pvRouter.get('/accounts/:acctId/statement-dates', json(async req => {

@@ -84,3 +84,12 @@ Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Up
 - **D-007-4** An empty window shows the Empty panel "No settlements in period" with the date form kept above it.
 - **D-007-5** An unreadable amount shows `0.00` with a warning, where legacy went to `Error.aspx`.
 - **D-007-6** Confirmation, REC and DEL counts and the window length are shown above the grid.
+
+## Spec 008 decisions (ClientSearch / ClientSummary → Client 360)
+
+Search keeps `usp_ClientSearch` semantics (spec 004 route); the summary keeps Q8 (latest statement by highest file sequence), Q14 (`dd-MMM-yyyy`, `#,##0.00`) and Q17 (any role; Position check link only for OPS/ADMIN). New screen `clients`; the custody summary is `c360` with `?cid=`, and `?screen=c360` alone stays the Whitfield mockup. Explicit divergences:
+- **D-008-1** The last search is kept in the URL (`?q=`) and re-queried, not cached in Session.
+- **D-008-2** An unknown client shows an in-place "Client not found" state, where legacy redirected to ClientSearch.
+- **D-008-3** Account rows also link to Position check (OPS/ADMIN); Holdings/Position check links carry the latest statement date.
+- **D-008-4** A numeric pager with Previous/Next replaces the postback pager (25 rows per page kept).
+- **D-008-5** Client 360 adds a KPI strip above the legacy fields.

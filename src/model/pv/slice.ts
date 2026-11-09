@@ -5,6 +5,7 @@ import { canAccess, pvPageForScreen } from './access';
 import type { PvContext, PvContextPatch } from './context';
 import { positionCheckSlice } from './position-check';
 import { PREVIEW_ADMIN_STATS } from './preview';
+import { clientSearchSlice, clientSummarySlice } from '../clients';
 import { settlementsSlice } from '../settlements';
 import { messagesSlice } from './messages-slice';
 
@@ -17,7 +18,7 @@ export type PvApi = ReturnType<typeof createPvClient>;
  */
 export interface PvSliceDef<T> {
   needs: 'none' | 'acct' | 'acct+stmt';
-  /** Optional context test that replaces `needs` (spec 006: `exceptions` is PV only with `pc`/`acct`/`all`). */
+  /** Optional context test that replaces `needs` (spec 006: `exceptions` needs `pc`/`acct`/`all`; spec 008: `c360` needs `cid`). */
   active?: (ctx: PvContext) => boolean;
   load: (api: PvApi, ctx: PvContext) => Promise<T>;
   isEmpty: (data: T) => boolean;
@@ -52,6 +53,8 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 // Specs 005–009: add `<screen>: <slice>` here (additively).
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
+  clients: clientSearchSlice as PvSliceDef<unknown>,
+  c360: clientSummarySlice as PvSliceDef<unknown>,
   settlements: settlementsSlice as PvSliceDef<unknown>,
   exceptions: positionCheckSlice as PvSliceDef<unknown>,
   messages: messagesSlice as PvSliceDef<unknown>,

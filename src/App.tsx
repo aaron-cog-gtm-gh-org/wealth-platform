@@ -13,6 +13,8 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
+import { ClientSearch } from './screens/ClientSearch';
+import { CustodyClient360 } from './screens/CustodyClient360';
 import { Settlements, SettlementsRange } from './screens/Settlements';
 import { Messages } from './screens/Messages';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
@@ -204,7 +206,7 @@ function LegacyApp() {
               </div>
             </>)}
 
-            {show.c360 && <Client360 m={m} />}
+            {show.c360 && (m.client360 ? <CustodyClient360 m={m} /> : <Client360 m={m} />)}
 
             {show.portfolio && <PortfolioDetail m={m} />}
 
@@ -227,6 +229,7 @@ function LegacyApp() {
             {m.pvGate === 'forbidden' && <PvForbidden m={m} />}
 
             {show.admin && <Admin m={m} />}
+            {show.clients && m.clientSearch && <ClientSearch key={m.clientSearch.query ?? ''} m={m} />}
             {show.settlements && <Settlements m={m} />}
 
             {show.messages && <Messages m={m} />}
