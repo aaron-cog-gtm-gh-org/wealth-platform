@@ -5,6 +5,7 @@ import { canAccess, pvPageForScreen } from './access';
 import type { PvContext, PvContextPatch } from './context';
 import { positionCheckSlice } from './position-check';
 import { PREVIEW_ADMIN_STATS } from './preview';
+import { settlementsSlice } from '../settlements';
 import { messagesSlice } from './messages-slice';
 
 export type PvApi = ReturnType<typeof createPvClient>;
@@ -51,6 +52,7 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 // Specs 005–009: add `<screen>: <slice>` here (additively).
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
+  settlements: settlementsSlice as PvSliceDef<unknown>,
   exceptions: positionCheckSlice as PvSliceDef<unknown>,
   messages: messagesSlice as PvSliceDef<unknown>,
 };
@@ -102,6 +104,8 @@ export interface PvModelInput {
   run: (op: PvOp) => Promise<void>;
   /** Navigate to a PV screen keeping the PV context, with optional context changes. */
   goPv: (s: Screen, patch?: PvContextPatch) => void;
+  /** Update PV URL context keys (null removes one) and reload the slice (spec 007). */
+  setPvContext?: (patch: PvContextPatch) => void;
   /** Set (string) or remove (null) URL keys on the current screen, e.g. Message Browser filters (spec 009). */
   setParams?: (params: Record<string, string | null>) => void;
 }

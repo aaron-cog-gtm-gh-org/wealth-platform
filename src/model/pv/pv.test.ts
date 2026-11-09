@@ -26,9 +26,9 @@ test('Site.Master/BasePage role table (Q17)', () => {
   }
   assert.equal(canAccess(['ADMIN'], 'admin'), false, 'exact, case-sensitive match');
   assert.equal(canAccess(null, null), false, 'no session, no access');
-  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['exceptions', 'messages', 'admin']);
-  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['exceptions', 'messages']);
-  assert.deepEqual(pvNavFor('ADVISER'), []);
+  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['settlements', 'exceptions', 'messages', 'admin']);
+  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['settlements', 'exceptions', 'messages']);
+  assert.deepEqual(pvNavFor('ADVISER').map(p => p.screen), ['settlements']);
 });
 
 test('URL context ?acct=&stmt=', () => {

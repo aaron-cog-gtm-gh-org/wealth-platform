@@ -11,11 +11,14 @@ export interface PvContext {
   pc: boolean;
   /** `?all=<yyyy-mm-dd>`: PositionCheck "Check All" date (spec 006). */
   all: IsoDate | null;
+  /** Settlements window (spec 007): present only when the URL value is a valid ISO or legacy dd/MM/yyyy date. */
+  from?: IsoDate;
+  to?: IsoDate;
   /** Message Browser filters (spec 009); present only when one of its keys is in the URL. */
   messages?: MessageQuery;
 }
 
-export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'pc', 'all'] as const;
+export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'pc', 'all', 'from', 'to'] as const;
 export type PvContextKey = (typeof PV_CONTEXT_KEYS)[number];
 /** Context changes applied by `goPv`: a string sets the key, null removes it, omitted keys are kept. */
 export type PvContextPatch = Partial<Record<PvContextKey, string | null>>;
@@ -41,8 +44,27 @@ export function parsePvContext(search: string | URLSearchParams): PvContext {
     stmt: isIsoDate(s) ? (s as IsoDate) : null,
     pc: q.get('pc') === '1',
     all: isIsoDate(all) ? (all as IsoDate) : null,
+    ...dateParam(q, 'from'),
+    ...dateParam(q, 'to'),
     ...(messages ? { messages } : {}),
   };
 }
 
-export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}${c.messages ? `|${messageQueryKey(c.messages)}` : ''}`;
+/**
+ * A typed or deep-linked date: ISO `yyyy-mm-dd`, or the legacy `dd/MM/yyyy` (`WebUtil.TryParseUkDate`,
+ * exact after trim). Returns the ISO date or null (spec 007 D-007-1).
+ */
+export function parseDateInput(raw: string | null | undefined): IsoDate | null {
+  const v = raw?.trim() ?? '';
+  if (isIsoDate(v)) return v as IsoDate;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+  const iso = m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+  return isIsoDate(iso) ? (iso as IsoDate) : null;
+}
+
+const dateParam = (q: URLSearchParams, k: 'from' | 'to') => {
+  const d = parseDateInput(q.get(k));
+  return d ? { [k]: d } : {};
+};
+
+export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}${c.from || c.to ? `|${c.from ?? ''}|${c.to ?? ''}` : ''}${c.messages ? `|${messageQueryKey(c.messages)}` : ''}`;

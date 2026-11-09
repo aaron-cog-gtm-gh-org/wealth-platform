@@ -29,7 +29,7 @@
 | Login.aspx / Admin.aspx / Site.Master / BasePage | shell auth + Admin screen | 010 | [x] |
 | Holdings.aspx | PortfolioDetail (custody context) | 005 | [ ] |
 | PositionCheck.aspx | SettlementExceptions (custody context) | 006 | [ ] |
-| Settlements.aspx | new Settlements screen | 007 | [ ] |
+| Settlements.aspx | new Settlements screen | 007 | [x] |
 | ClientSearch.aspx / ClientSummary.aspx | Client360 (custody context) | 008 | [ ] |
 | MessageBrowser.aspx | new Message Browser screen | 009 | [ ] |
 | Error.aspx | shell error state (`Error` DataState) | 010 | [x] |

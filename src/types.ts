@@ -1,4 +1,4 @@
-export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin', 'messages'] as const;
+export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin', 'settlements', 'messages'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const DATA_STATES = ['Populated', 'Loading', 'Empty', 'Error'] as const;
@@ -22,6 +22,10 @@ export interface UiState {
   adminConfirm: boolean;
   adminBusy: boolean;
   adminNotice: string | null;
+  /** Settlements (spec 007): From / To input drafts (null = show the loaded window) and validation message. */
+  stlFrom: string | null;
+  stlTo: string | null;
+  stlMsg: string | null;
   /** Position check (spec 006): picked-but-not-run dates, row in edit, edit fields, save in flight, lblMsg override. */
   pcDate: string | null;
   pcAllDate: string | null;
@@ -49,6 +53,9 @@ export const INITIAL_UI_STATE: UiState = {
   adminConfirm: false,
   adminBusy: false,
   adminNotice: null,
+  stlFrom: null,
+  stlTo: null,
+  stlMsg: null,
   pcDate: null,
   pcAllDate: null,
   pcEdit: null,
