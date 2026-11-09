@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['src/domain/**/*.test.ts', 'server/pv/**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/*.int.test.ts'],
     testTimeout: 60_000,
     environment: 'node',
   },
