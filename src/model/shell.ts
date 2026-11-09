@@ -6,6 +6,7 @@ import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
 import { PV_SLICES } from './pv/slice';
 import type { PvModelInput } from './pv/slice';
+import { PV_SCREEN_KEYS } from './pv/context';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
@@ -24,6 +25,7 @@ const META: Record<Screen, [string, string, string]> = {
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
   settlements: ['Portfolio Viewer / Custody', 'Settlements', 'MT544–MT547 settlement confirmations from the custody archive · newest settle date first'],
+  messages: ['Portfolio Viewer / Operations', 'Message browser', 'Raw SWIFT MT535 statements and MT54x confirmations from the custody archive'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -37,6 +39,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
   settlements: ['No settlements in period', 'No MT54x confirmations for this custody account settle in the selected window. Widen the From / To dates and choose Show.', 'Change dates'],
+  messages: ['No files match', 'No archive files match the message type, date and safe code you entered. Clear the filters, or try another date or safe code.', 'Clear filters'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -50,6 +53,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
   settlements: ['Couldn’t load settlements', 'The Portfolio Viewer service did not return the settlement confirmations for this account. Nothing has changed. Retry, or check the service health page.', 'Open health check'],
+  messages: ['Couldn’t load the message archive', 'The Portfolio Viewer service did not return the archive file list or the requested message. Nothing has changed. Retry, or check the archive status on Admin.', 'Open health check'],
 };
 
 /** Shell text for screens while a PV slice drives them (spec 006: `exceptions` with PV context is PositionCheck.aspx). */
@@ -151,6 +155,8 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     emptyTitle: emptyText[0],
     emptyBody: emptyText[1],
     emptyCta: emptyText[2],
+    /** Empty CTA for PV screens with URL filters (spec 009 "Clear filters"): removes the screen's keys. */
+    emptyAction: PV_SCREEN_KEYS[screen] && pv?.setParams ? () => pv.setParams!(Object.fromEntries(PV_SCREEN_KEYS[screen]!.map(k => [k, null]))) : undefined,
     errTitle: errText[0],
     errBody: errText[1],
     errAction: errText[2],

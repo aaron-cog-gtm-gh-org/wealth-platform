@@ -1,4 +1,4 @@
-export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin', 'settlements'] as const;
+export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin', 'settlements', 'messages'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const DATA_STATES = ['Populated', 'Loading', 'Empty', 'Error'] as const;
@@ -35,6 +35,8 @@ export interface UiState {
   pcBusy: boolean;
   pcNotice: string | null;
   pcError: string | null;
+  /** Message Browser (spec 009): current page of the file list (50 rows). */
+  msgPage: number;
 }
 
 export const INITIAL_UI_STATE: UiState = {
@@ -62,6 +64,7 @@ export const INITIAL_UI_STATE: UiState = {
   pcBusy: false,
   pcNotice: null,
   pcError: null,
+  msgPage: 0,
 };
 
 export type SetUiState = (patch: Partial<UiState> | ((s: UiState) => Partial<UiState>)) => void;

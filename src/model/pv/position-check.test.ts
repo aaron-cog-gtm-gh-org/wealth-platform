@@ -150,7 +150,7 @@ test('shell: Position check title, active PV nav item, model wiring', () => {
   assert.ok(m.posCheck); assert.equal(m.show.exceptions, true);
   const ops = m.nav.find(g => g.label === 'Operations')!.items[0], pvNav = m.nav.find(g => g.label === 'Portfolio Viewer')!.items;
   assert.equal(ops.weight, 500, 'mockup Settlement exceptions item is not active');
-  assert.deepEqual(pvNav.map(i => [i.label, i.weight]), [['Holdings', 500], ['Settlements', 500], ['Position check', 600], ['Admin', 500]]);
+  assert.deepEqual(pvNav.map(i => [i.label, i.weight]), [['Holdings', 500], ['Settlements', 500], ['Position check', 600], ['Message browser', 500], ['Admin', 500]]);
   const empty = buildShell('exceptions', 'Empty', noop, null, { ...pv, slice: { ...pv.slice!, dataState: 'Empty', data: null } });
   assert.equal(empty.emptyTitle, 'No statements to check');
   const forbidden = buildShell('exceptions', 'Loading', noop, null, { ...pv, user: user('ADVISER'), slice: { ...pv.slice!, gate: 'forbidden', data: null } });

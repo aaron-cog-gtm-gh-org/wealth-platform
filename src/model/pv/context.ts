@@ -1,4 +1,7 @@
 import type { IsoDate } from '../../api/pv-types';
+import type { Screen } from '../../types';
+import { MESSAGE_KEYS, messageQueryKey, parseMessageQuery } from './message-query';
+import type { MessageQuery } from './message-query';
 
 /** Custody account / statement selected through the URL (legacy `Holdings.aspx?acct=` deep links). */
 export interface PvContext {
@@ -11,12 +14,19 @@ export interface PvContext {
   /** Settlements window (spec 007): present only when the URL value is a valid ISO or legacy dd/MM/yyyy date. */
   from?: IsoDate;
   to?: IsoDate;
+  /** Message Browser filters (spec 009); present only when one of its keys is in the URL. */
+  messages?: MessageQuery;
 }
 
 export const PV_CONTEXT_KEYS = ['acct', 'stmt', 'pc', 'all', 'from', 'to'] as const;
 export type PvContextKey = (typeof PV_CONTEXT_KEYS)[number];
 /** Context changes applied by `goPv`: a string sets the key, null removes it, omitted keys are kept. */
 export type PvContextPatch = Partial<Record<PvContextKey, string | null>>;
+
+/** Screen-local URL keys, dropped when navigating to another screen (specs 005–009 add theirs). */
+export const PV_SCREEN_KEYS: Partial<Record<Screen, readonly string[]>> = {
+  messages: MESSAGE_KEYS,
+};
 
 const isIsoDate = (s: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
@@ -28,6 +38,7 @@ const isIsoDate = (s: string) => {
 export function parsePvContext(search: string | URLSearchParams): PvContext {
   const q = typeof search === 'string' ? new URLSearchParams(search) : search;
   const a = q.get('acct')?.trim() ?? '', s = q.get('stmt')?.trim() ?? '', all = q.get('all')?.trim() ?? '';
+  const messages = parseMessageQuery(q);
   return {
     acct: /^\d{1,9}$/.test(a) && Number(a) > 0 ? Number(a) : null,
     stmt: isIsoDate(s) ? (s as IsoDate) : null,
@@ -35,6 +46,7 @@ export function parsePvContext(search: string | URLSearchParams): PvContext {
     all: isIsoDate(all) ? (all as IsoDate) : null,
     ...dateParam(q, 'from'),
     ...dateParam(q, 'to'),
+    ...(messages ? { messages } : {}),
   };
 }
 
@@ -55,4 +67,4 @@ const dateParam = (q: URLSearchParams, k: 'from' | 'to') => {
   return d ? { [k]: d } : {};
 };
 
-export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}${c.from || c.to ? `|${c.from ?? ''}|${c.to ?? ''}` : ''}`;
+export const pvContextKey = (c: PvContext) => `${c.acct ?? ''}|${c.stmt ?? ''}|${c.pc ? 1 : ''}|${c.all ?? ''}${c.from || c.to ? `|${c.from ?? ''}|${c.to ?? ''}` : ''}${c.messages ? `|${messageQueryKey(c.messages)}` : ''}`;
