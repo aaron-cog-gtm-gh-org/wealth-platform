@@ -48,3 +48,8 @@ Source: [`aaron-cog-gtm-gh-org/legacy-wealth-platform`](https://github.com/aaron
 | Q15 | `Settlements.aspx` | Default window = 90 days ending at latest statement date (else today); dates entered as dd/MM/yyyy. |
 | Q16 | `MessageBrowser.aspx` | Filter date entered as dd/MM/yyyy; safe filter trims leading zeros; files served only by index lookup under archive root. |
 | Q17 | `BasePage` / `Site.Master` | Roles ADVISER / OPS / ADMIN; Position Check + Message Browser need OPS or ADMIN, Admin needs ADMIN; passwords SHA1 upper-hex (must not be carried forward). |
+| Q18 | `SettlementReader` / archive data | Two MT54x messages carry an 8-digit `97A::SAFE` (`00011397`, `00010554`); the exact compare to `PadLeft(7,'0')` never matches them, so they surface as NEW breaks on 2026-09-18 in legacy output. |
+
+## Legacy golden output
+
+`parity/legacy-golden/legacy-golden.json.gz` (from unmodified legacy PV.Core/PV.Data under Mono + SQL Server; see `parity/legacy-oracle/README.md`): 120 accounts × 26 statement dates (3,065 `PositionCheck.Run` calls), 7 diff rows, 30,645 holdings lines, settlements default-90d and full-range, Check All per date. Decimals are strings with legacy scale (compare numerically); settlement ties on settle date are ordered `folder, fileName`.
