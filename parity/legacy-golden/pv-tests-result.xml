@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="/tmp/pvwork/bin/PV.Tests.dll" total="10" errors="0" failures="0" not-run="2" inconclusive="0" ignored="2" skipped="0" invalid="0" date="2026-11-09" time="15:25:16">
+  <environment nunit-version="2.6.4.14350" clr-version="4.0.30319.42000" os-version="Unix 6.8.0.1060" platform="Unix" cwd="/tmp/pvwork/bin" machine-name="devin-box" user="ubuntu" user-domain="devin-box" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="Assembly" name="/tmp/pvwork/bin/PV.Tests.dll" executed="True" result="Success" success="True" time="0.049" asserts="0">
+    <results>
+      <test-suite type="Namespace" name="PV" executed="True" result="Success" success="True" time="0.045" asserts="0">
+        <results>
+          <test-suite type="Namespace" name="Tests" executed="True" result="Success" success="True" time="0.045" asserts="0">
+            <results>
+              <test-suite type="TestFixture" name="ArchiveFileTests" executed="True" result="Inconclusive" success="False" time="0.008" asserts="0">
+                <results>
+                  <test-case name="PV.Tests.ArchiveFileTests.ParseStatement_FromArchiveFile" executed="False" result="Ignored">
+                    <reason>
+                      <message><![CDATA[fails since archive refresh]]></message>
+                    </reason>
+                  </test-case>
+                  <test-case name="PV.Tests.ArchiveFileTests.StatementCount_MatchesSnapshot" executed="False" result="Ignored">
+                    <reason>
+                      <message><![CDATA[archive path changed - RJM]]></message>
+                    </reason>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="PositionCheckTests" executed="True" result="Success" success="True" time="0.013" asserts="0">
+                <results>
+                  <test-case name="PV.Tests.PositionCheckTests.ExpectedQty_PrevPlusRecMinusDel" executed="True" result="Success" success="True" time="0.010" asserts="1" />
+                  <test-case name="PV.Tests.PositionCheckTests.ToAmount_NoDecimals" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+                  <test-case name="PV.Tests.PositionCheckTests.ToAmount_PoundsAndPence" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="SwiftParserTests" executed="True" result="Success" success="True" time="0.020" asserts="0">
+                <results>
+                  <test-case name="PV.Tests.SwiftParserTests.FormatDate_UsesStatementFormat" executed="True" result="Success" success="True" time="0.005" asserts="1" />
+                  <test-case name="PV.Tests.SwiftParserTests.ParseConfirm_ReadsSettlement" executed="True" result="Success" success="True" time="0.007" asserts="10" />
+                  <test-case name="PV.Tests.SwiftParserTests.ParseDecimal_CommaDecimal" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                  <test-case name="PV.Tests.SwiftParserTests.ParseDecimal_FractionOnly" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                  <test-case name="PV.Tests.SwiftParserTests.ParseDecimal_TrailingComma" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                  <test-case name="PV.Tests.SwiftParserTests.ParseStatement_ReadsHeaderAndLines" executed="True" result="Success" success="True" time="0.005" asserts="12" />
+                  <test-case name="PV.Tests.SwiftParserTests.StatementKey_UsesUnpaddedSafe" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
