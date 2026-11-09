@@ -1,0 +1,8 @@
+# Research: 007 Settlements
+
+- **New screen vs ActivityStatus** — Decision: new `settlements` screen. Rationale: ActivityStatus is the retail client portal and mockup-pinned, while Settlements is an ops/adviser custody list with SWIFT detail. Alternative: add a tab to ActivityStatus. Rejected because it breaks pixel-identity and shows SWIFT detail to clients.
+- **Date entry** — Decision: ISO `yyyy-mm-dd` inputs, also accepting typed and deep-link `dd/MM/yyyy` (D-007-1). Rationale: the parent default, and other screens use ISO. Alternatives: keep dd/MM/yyyy only (legacy), or `<input type=date>` (locale-dependent rendering breaks pixel baselines and hides the accepted format).
+- **Where the window lives** — Decision: `from`/`to` in the URL via `PvContext`, so the slice key changes and the slice reloads. Rationale: reuses `usePv` caching and keying, and the window is shareable. Alternative: local state with a manual fetch. Rejected because it would duplicate `usePv`.
+- **Window defaults** — Decision: leave them to the server (Q15 already implemented there; the response echoes `from`/`to`). Alternative: compute the default in the browser. Rejected because it needs the statement list (a second request) and duplicates logic.
+- **No account** — Decision: the slice uses `needs: 'none'` and shows an account picker when `acct` is missing or returns 404 (D-007-3). Alternative: `needs: 'acct'`. Rejected because the shell would then fall through to the mockup data path with no settlements model.
+- **Number formatting** — Decision: string-based `#,##0.####` / `#,##0.00` with half-away-from-zero rounding on the API's decimal strings. Rationale: no floats (constitution II), and no browser import of domain code.

@@ -6,6 +6,7 @@ import type { PvContext, PvContextPatch } from './context';
 import { positionCheckSlice } from './position-check';
 import { PREVIEW_ADMIN_STATS } from './preview';
 import { holdingsSlice } from '../holdings';
+import { settlementsSlice } from '../settlements';
 
 export type PvApi = ReturnType<typeof createPvClient>;
 
@@ -61,6 +62,7 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
   portfolio: holdingsSlice as PvSliceDef<unknown>,
+  settlements: settlementsSlice as PvSliceDef<unknown>,
   exceptions: positionCheckSlice as PvSliceDef<unknown>,
 };
 
@@ -111,4 +113,6 @@ export interface PvModelInput {
   run: (op: PvOp) => Promise<void>;
   /** Navigate to a PV screen keeping the PV context, with optional context changes. */
   goPv: (s: Screen, patch?: PvContextPatch) => void;
+  /** Update PV URL context keys (null removes one) and reload the slice (spec 007). */
+  setPvContext?: (patch: PvContextPatch) => void;
 }

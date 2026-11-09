@@ -86,3 +86,13 @@ Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Up
 - **D-005-6** Account type and base currency are shown next to Acct No / Client / Safe Code.
 
 Shared plumbing added additively for later specs: optional `PvSliceDef.copy` (takes precedence over the static `PV_TEXT`), `slice.ctx`, and the visual-diff `select` step plus query-aware API routes (`specs/005-holdings-portfolio/contracts/holdings-view.md`).
+
+## Spec 007 decisions (Settlements screen)
+
+`Settlements.aspx` becomes the new `?screen=settlements` and does not reuse ActivityStatus, which is the retail client portal. Q9, Q10, Q14, Q15 (default window) and Q18 are preserved. The server applies them and the screen keeps the API order.
+- **D-007-1** Date inputs take ISO `yyyy-mm-dd` and still accept typed or deep-linked legacy `dd/MM/yyyy`. The message is "Enter dates as yyyy-mm-dd.".
+- **D-007-2** The From/To window is written to the URL (`from`/`to`).
+- **D-007-3** No account or an unknown account shows an account picker, where legacy redirected to `ClientSearch.aspx`.
+- **D-007-4** An empty window shows the Empty panel "No settlements in period" with the date form kept above it.
+- **D-007-5** An unreadable amount shows `0.00` with a warning, where legacy went to `Error.aspx`.
+- **D-007-6** Confirmation, REC and DEL counts and the window length are shown above the grid.
