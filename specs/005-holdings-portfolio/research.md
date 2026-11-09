@@ -16,4 +16,4 @@ Legacy shows "No statement on file for this date." / "No holdings on statement."
 `buildShell` used fixed per-screen `META/EMPTY/ERR`. An optional `PvSliceDef.copy(data, ctx)` lets a slice override them only while active; Admin has no `copy`, so it is unchanged.
 
 ## R6 Picker navigation
-`goPvContext({ stmt })` pushes `?…&stmt=` and keeps `screen`/`acct`, mirroring legacy `Response.Redirect("Holdings.aspx?acct=&stmt=")`. The slice key includes the context, so the new statement is loaded and stale rows are never shown.
+`goPv('portfolio', { stmt })` pushes `?…&stmt=` and keeps `screen`/`acct`, mirroring legacy `Response.Redirect("Holdings.aspx?acct=&stmt=")`. The slice key includes the context, so the new statement is loaded and stale rows are never shown.

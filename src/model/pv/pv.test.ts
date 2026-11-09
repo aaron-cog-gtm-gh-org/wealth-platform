@@ -26,29 +26,29 @@ test('Site.Master/BasePage role table (Q17)', () => {
   }
   assert.equal(canAccess(['ADMIN'], 'admin'), false, 'exact, case-sensitive match');
   assert.equal(canAccess(null, null), false, 'no session, no access');
-  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['portfolio', 'admin']);
-  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['portfolio']);
+  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['portfolio', 'exceptions', 'admin']);
+  assert.deepEqual(pvNavFor('OPS').map(p => p.screen), ['portfolio', 'exceptions']);
   assert.deepEqual(pvNavFor('ADVISER').map(p => p.screen), ['portfolio']);
 });
 
 test('URL context ?acct=&stmt=', () => {
-  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18' });
-  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null });
-  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null });
-  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null });
+  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18', pc: false, all: null });
+  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null, pc: false, all: null });
+  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null, pc: false, all: null });
+  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null, pc: false, all: null });
 });
 
 test('slices: unregistered screens and missing context keep existing behaviour', () => {
-  assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null }), null);
-  assert.ok(pvSliceFor('admin', { acct: null, stmt: null }));
-  assert.equal(pvSliceFor('portfolio', { acct: null, stmt: '2026-09-18' }), null, 'spec 005: Whitfield portfolio without ?acct=');
-  assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: null }));
+  assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null, pc: false, all: null }), null);
+  assert.ok(pvSliceFor('admin', { acct: null, stmt: null, pc: false, all: null }));
+  assert.equal(pvSliceFor('portfolio', { acct: null, stmt: '2026-09-18', pc: false, all: null }), null, 'spec 005: Whitfield portfolio without ?acct=');
+  assert.ok(pvSliceFor('portfolio', { acct: 2001, stmt: null, pc: false, all: null }));
   const needsAcct: PvSliceDef<number[]> = { needs: 'acct+stmt', load: async () => [], isEmpty: d => !d.length, preview: () => [1] };
   PV_SLICES.alts = needsAcct as PvSliceDef<unknown>;
   try {
-    assert.equal(pvSliceFor('alts', { acct: null, stmt: null }), null);
-    assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null }), null);
-    assert.ok(pvSliceFor('alts', { acct: 2001, stmt: '2026-09-18' }));
+    assert.equal(pvSliceFor('alts', { acct: null, stmt: null, pc: false, all: null }), null);
+    assert.equal(pvSliceFor('alts', { acct: 2001, stmt: null, pc: false, all: null }), null);
+    assert.ok(pvSliceFor('alts', { acct: 2001, stmt: '2026-09-18', pc: false, all: null }));
   } finally { delete PV_SLICES.alts; }
 });
 

@@ -10,6 +10,8 @@ import { buildPvHoldings } from './holdings';
 import type { PvHoldingsSlice } from './holdings';
 import type { PvAdminStats } from '../api/pv-types';
 import type { PvModelInput } from './pv/slice';
+import { buildPositionCheck } from './pv/position-check';
+import type { PvPositionCheckData } from './pv/position-check';
 
 function buildMockScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
   const D = { holdings: data.holdings, total: data.totalValue, accounts: data.accounts, alloc: data.allocation, SRC: data.PRICE_SOURCE, COLORS: CLASS_COLORS, classes: data.ASSET_CLASSES };
@@ -219,7 +221,8 @@ function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | nu
   const ready = pv && s && !s.gate && s.dataState === 'Populated' && s.data ? s : null;
   return {
     admin: ready?.screen === 'admin' ? buildAdmin(ready.data as PvAdminStats, st, setState, pv!.run) : null,
-    portfolio: ready?.screen === 'portfolio' ? buildPvHoldings(ready.data as PvHoldingsSlice, pv!.goPvContext) : null,
+    posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
+    portfolio: ready?.screen === 'portfolio' ? buildPvHoldings(ready.data as PvHoldingsSlice, stmt => pv!.goPv('portfolio', { stmt })) : null,
   };
 }
 

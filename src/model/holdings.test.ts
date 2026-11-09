@@ -75,10 +75,10 @@ test('legacy messages and the not-on-file picker option (D-005-3)', () => {
 
 test('picker navigates by URL, ignoring the current date', () => {
   const calls: unknown[] = [];
-  const v = buildPvHoldings(slice(), patch => calls.push(patch));
+  const v = buildPvHoldings(slice(), stmt => calls.push(stmt));
   v.picker.onChange('2026-10-09');
   v.picker.onChange('2026-10-02');
-  assert.deepEqual(calls, [{ stmt: '2026-10-02' }]);
+  assert.deepEqual(calls, ['2026-10-02']);
 });
 
 test('slice: loads via the API, 404 → not found (Empty), isEmpty rules', async () => {
@@ -89,16 +89,16 @@ test('slice: loads via the API, 404 → not found (Empty), isEmpty rules', async
     statementDates: async (id: number) => { seen.push(`dates ${id}`); return { acctId: id, dates: p.dates }; },
     holdings: async (id: number, date?: string) => { seen.push(`holdings ${id} ${date ?? ''}`); return p.holdings!; },
   } as unknown as PvApi;
-  const d = await holdingsSlice.load(api, { acct: 2018, stmt: '2026-10-02' });
+  const d = await holdingsSlice.load(api, { acct: 2018, stmt: '2026-10-02', pc: false, all: null });
   assert.deepEqual(seen, ['account 2018', 'dates 2018', 'holdings 2018 2026-10-02']);
   assert.equal(holdingsSlice.isEmpty(d), false);
-  const missing = await holdingsSlice.load(api, { acct: 9999, stmt: null });
+  const missing = await holdingsSlice.load(api, { acct: 9999, stmt: null, pc: false, all: null });
   assert.equal(missing.account, null);
   assert.equal(holdingsSlice.isEmpty(missing), true);
-  assert.equal(holdingsSlice.copy!(missing, { acct: 9999, stmt: null }).empty![0], 'Custody account not found');
+  assert.equal(holdingsSlice.copy!(missing, { acct: 9999, stmt: null, pc: false, all: null }).empty![0], 'Custody account not found');
   assert.equal(holdingsSlice.isEmpty({ ...d, dates: [] }), true);
   const failing = { ...api, account: async () => { throw new PvApiError(500, 'boom'); } } as unknown as PvApi;
-  await assert.rejects(holdingsSlice.load(failing, { acct: 2018, stmt: null }), (e: unknown) => e instanceof PvApiError && e.status === 500);
+  await assert.rejects(holdingsSlice.load(failing, { acct: 2018, stmt: null, pc: false, all: null }), (e: unknown) => e instanceof PvApiError && e.status === 500);
 });
 
 test('shell: PV copy only while the portfolio slice is active; Whitfield copy unchanged', async () => {
@@ -112,7 +112,7 @@ test('shell: PV copy only while the portfolio slice is active; Whitfield copy un
   const pv = (slice: Parameters<typeof buildModel>[7] extends infer P ? P extends { slice: infer S } ? S : never : never) => ({
     user: null, slice, signIn: { pending: false, error: null, notice: null, submit: noop }, signOut: noop, run: async () => {}, goPv: noop,
   });
-  const ctx = { acct: 2018, stmt: null };
+  const ctx = { acct: 2018, stmt: null, pc: false, all: null };
   const loading = buildShell('portfolio', 'Loading', noop, null, pv({ screen: 'portfolio', ctx, gate: null, dataState: 'Loading', data: null, preview: true, fetch: false, retry: noop }));
   assert.equal(loading.loadingMsg, 'Loading custody holdings…');
   assert.equal(loading.crumb, 'Portfolio Viewer / Custody holdings / Account 2018');
@@ -124,5 +124,5 @@ test('shell: PV copy only while the portfolio slice is active; Whitfield copy un
   assert.equal(m.show.portfolio, true);
   assert.ok(m.portfolio);
   assert.equal(m.crumb, 'Portfolio Viewer / Custody holdings / 01012-01 · Prof J Castellan');
-  assert.deepEqual(m.nav[m.nav.length - 1].items.map(i => i.label), ['Holdings', 'Admin']);
+  assert.deepEqual(m.nav[m.nav.length - 1].items.map(i => i.label), ['Holdings', 'Position check', 'Admin']);
 });

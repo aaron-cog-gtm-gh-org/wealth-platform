@@ -6,5 +6,5 @@
 - Roles: any signed-in role (`Holdings.aspx` has no `RequiredRoles`).
 - Shared plumbing added additively for later specs:
   - `PvSliceDef.copy?(data, ctx)` → `{ meta?: [crumb, title, subtitle], loading?, empty?: [title, body, cta], error?: [title, body, action] }`, used by `buildShell` only while that slice is active.
-  - `PvModelInput.slice.ctx` (the URL context) and `PvModelInput.goPvContext(patch)` (navigate keeping the screen, setting/clearing context keys).
+  - `PvModelInput.slice.ctx` (the URL context). The picker navigates with spec 006's `goPv('portfolio', { stmt })`.
   - visual-diff: `['select', <selector>, <value>]` step; API route keys may include a query string (`'GET /accounts/2018/holdings?date=2026-10-02'`), which wins over the path-only key.

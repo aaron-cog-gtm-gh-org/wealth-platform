@@ -65,6 +65,16 @@ Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format
 
 The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.
 
+## Spec 006 decisions (Position check)
+
+Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Updated, `#,##0.####` quantities), Q17 (OPS/ADMIN) and Q18 by rendering the spec 004 API unchanged. Explicit divergences (details in `specs/006-position-check/spec.md`):
+- **D-006-1** Position check is the `exceptions` screen only with PV context (`pc=1`, `acct` or `all`); `?screen=exceptions` stays the mockup ops queue.
+- **D-006-2** Run check / Check all / View are URLs (`?acct=&stmt=`, `?all=`) instead of postbacks.
+- **D-006-3** Edit preselects the row's current status when it is OPEN/CHASED/RESOLVED/WRITEOFF (legacy always showed OPEN, so a note-only edit reset the status).
+- **D-006-4** A failed save keeps the row in edit mode with a message (legacy error page).
+- **D-006-5** A derived KPI strip summarises the check.
+- **D-006-6** `GET /api/pv/position-check/dates` serves the all-account date list.
+
 ## Spec 005 decisions (Holdings → PortfolioDetail)
 
 `Holdings.aspx?acct=` becomes `?screen=portfolio&acct=<ACCT_ID>[&stmt=yyyy-mm-dd]`; without `acct` the Whitfield Portfolio detail is unchanged. Q2–Q5, Q8 and Q13 come unchanged from the server; Q14 formats (`dd-MMM-yyyy`, `#,##0.####`, `#,##0.0000`, `#,##0.00`) are preserved with half-away-from-zero rounding, and the GBP total is an exact decimal sum. Explicit divergences, none of which changes a domain result:
@@ -75,4 +85,4 @@ The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`
 - **D-005-5** The statement's `23G` function and file name are displayed (selection still follows Q8).
 - **D-005-6** Account type and base currency are shown next to Acct No / Client / Safe Code.
 
-Shared plumbing added additively for later specs: optional `PvSliceDef.copy`, `slice.ctx`, `PvModelInput.goPvContext`, and the visual-diff `select` step plus query-aware API routes (`specs/005-holdings-portfolio/contracts/holdings-view.md`).
+Shared plumbing added additively for later specs: optional `PvSliceDef.copy` (takes precedence over the static `PV_TEXT`), `slice.ctx`, and the visual-diff `select` step plus query-aware API routes (`specs/005-holdings-portfolio/contracts/holdings-view.md`).

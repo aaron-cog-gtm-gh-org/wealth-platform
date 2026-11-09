@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PvApiError, createPvClient } from '../api/pv';
-import type { PvAdminStats } from '../api/pv-types';
 import type { PvContext } from '../model/pv/context';
 import { pvContextKey } from '../model/pv/context';
+import { saveReconNote } from '../model/pv/position-check';
+import type { PvPositionCheckData } from '../model/pv/position-check';
 import { pvSliceFor, resolvePvSlice } from '../model/pv/slice';
-import type { PvSliceStatus } from '../model/pv/slice';
+import type { PvOp, PvSliceStatus } from '../model/pv/slice';
 import type { DataState, Screen } from '../types';
 import { isTokenExpired, readStoredSession, tokenExp, writeStoredSession } from './session';
 import type { StoredPvSession } from './session';
@@ -18,7 +19,7 @@ export const SIGN_IN_MESSAGES = {
   expired: 'Your session has expired. Sign in again.',
 } as const;
 
-export type PvOp = 'reloadArchive';
+export type { PvOp };
 
 function initialAuth(): { auth: StoredPvSession | null; expired: boolean } {
   const s = readStoredSession();
@@ -88,13 +89,14 @@ export function usePv(screen: Screen, ctx: PvContext, forced: DataState | null) 
   const run = useCallback(async (op: PvOp) => {
     if (!tokenRef.current) return;
     try {
-      const next: PvAdminStats = op === 'reloadArchive' ? await api.reloadArchive() : (undefined as never);
+      const next = op === 'reloadArchive' ? await api.reloadArchive()
+        : await saveReconNote(api, current.kind === 'ready' ? (current.data as PvPositionCheckData) : null, op);
       setStatus({ key, s: { kind: 'ready', data: next } });
     } catch (e) {
       if (e instanceof PvApiError && (e.status === 401 || e.status === 403)) fail(key, e);
       throw e;
     }
-  }, [api, key, fail]);
+  }, [api, key, fail, current]);
 
   return {
     user,

@@ -49,6 +49,15 @@ const ERR: Record<Screen, [string, string, string]> = {
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
 };
 
+/** Shell text for screens while a PV slice drives them (spec 006: `exceptions` with PV context is PositionCheck.aspx). */
+const PV_TEXT: Partial<Record<Screen, { meta: [string, string, string]; empty: [string, string, string]; err: [string, string, string] }>> = {
+  exceptions: {
+    meta: ['Portfolio Viewer / Operations / Position check', 'Position check', 'Expected positions (previous MT535 + settled MT54x) against the custodian statement'],
+    empty: ['No statements to check', 'There are no custody accounts or no MT535 statements in the archive index, so there is nothing to reconcile. Ask an administrator to reload the archive.', 'Open settlement exceptions'],
+    err: ['Couldn’t run the position check', 'The Portfolio Viewer service did not return accounts, statement dates or check results. No notes were changed. Retry, or check the service health page.', 'Open health check'],
+  },
+};
+
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
 
 /** Business date the seeded book is valued at. */
@@ -66,13 +75,14 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
   const copy = slice ? PV_SLICES[screen]?.copy?.(slice.data, slice.ctx ?? null) ?? null : null;
-  const [crumb, title, subtitle] = copy?.meta ?? META[screen];
-  const empty = copy?.empty ?? EMPTY[screen], err = copy?.error ?? ERR[screen];
+  const pvText = slice ? (copy ? { meta: copy.meta ?? META[screen], empty: copy.empty ?? EMPTY[screen], err: copy.error ?? ERR[screen] } : PV_TEXT[screen]) : undefined;
+  const [crumb, title, subtitle] = pvText?.meta ?? META[screen];
+  const emptyText = pvText?.empty ?? EMPTY[screen], errText = pvText?.err ?? ERR[screen];
 
   const nav = NAV_GROUPS.map(g => ({
     label: g.label,
     items: g.items.map(([id, label, badge]) => {
-      const active = id === screen;
+      const active = id === screen && !pvText;
       return {
         id,
         label,
@@ -91,8 +101,8 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   if (pv && pvUser && pvItems.length) nav.push({
     label: 'Portfolio Viewer',
     items: pvItems.map(p => {
-      const active = p.screen === screen;
-      return { id: p.screen, label: p.label, badge: null, onClick: () => pv.goPv(p.screen), bar: active ? '#005daa' : 'transparent', bg: active ? '#eaf1fa' : 'transparent', fg: active ? '#00427a' : INK, weight: active ? 600 : 500, badgeBg: '#e6eef8', badgeFg: '#00498a' };
+      const active = p.screen === screen && !!slice;
+      return { id: p.screen, label: p.label, badge: null, onClick: () => pv.goPv(p.screen, p.params), bar: active ? '#005daa' : 'transparent', bg: active ? '#eaf1fa' : 'transparent', fg: active ? '#00427a' : INK, weight: active ? 600 : 500, badgeBg: '#e6eef8', badgeFg: '#00498a' };
     }),
   });
 
@@ -135,12 +145,12 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     },
     loadingMsg: copy?.loading ?? 'Loading ' + title.toLowerCase() + '…',
     skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
-    emptyTitle: empty[0],
-    emptyBody: empty[1],
-    emptyCta: empty[2],
-    errTitle: err[0],
-    errBody: err[1],
-    errAction: err[2],
+    emptyTitle: emptyText[0],
+    emptyBody: emptyText[1],
+    emptyCta: emptyText[2],
+    errTitle: errText[0],
+    errBody: errText[1],
+    errAction: errText[2],
     errRef: 'Ref ' + screen.toUpperCase() + '-503-7f2a · 14:47:12 ET',
   };
 }

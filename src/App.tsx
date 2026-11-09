@@ -16,7 +16,8 @@ import { Admin } from './screens/Admin';
 import { CustodyHoldings } from './screens/CustodyHoldings';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
 import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
-import type { PvContext } from './model/pv/context';
+import type { PvContext, PvContextPatch } from './model/pv/context';
+import { PositionCheck } from './screens/PositionCheck';
 import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import { Workspace } from './workspace/Workspace';
@@ -71,26 +72,21 @@ function LegacyApp() {
 
   const setState: SetUiState = useCallback(patch => setUi(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) })), []);
 
-  const navigate = useCallback((screen: Screen, keepPvContext: boolean) => {
+  const navigate = useCallback((screen: Screen, keepPvContext: boolean, patch: PvContextPatch = {}) => {
     const q = new URLSearchParams(window.location.search);
     q.set('screen', screen);
     if (!keepPvContext) PV_CONTEXT_KEYS.forEach(k => q.delete(k));
+    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, v); }
     window.history.pushState(null, '', '?' + q.toString());
     setLoc(readLocation());
   }, []);
   const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
-  const goPv = useCallback((screen: Screen) => navigate(screen, true), [navigate]);
-  const goPvContext = useCallback((patch: Partial<PvContext>) => {
-    const q = new URLSearchParams(window.location.search);
-    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, String(v)); }
-    window.history.pushState(null, '', '?' + q.toString());
-    setLoc(readLocation());
-  }, []);
+  const goPv = useCallback((screen: Screen, patch?: PvContextPatch) => navigate(screen, true, patch), [navigate]);
 
   const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, goPvContext });
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -201,7 +197,9 @@ function LegacyApp() {
 
             {show.alts && <Alternatives m={m} />}
 
-            {show.exceptions && <SettlementExceptions m={m} />}
+            {show.exceptions && !m.posCheck && <SettlementExceptions m={m} />}
+
+            {show.exceptions && m.posCheck && <PositionCheck m={m} />}
 
             {show.home && <ClientHome m={m} />}
 

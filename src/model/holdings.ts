@@ -105,7 +105,7 @@ export const holdingsSlice: PvSliceDef<PvHoldingsSlice> = {
 };
 
 /** Holdings.aspx(.cs) view: header labels, statement-date picker, grid and GBP total. */
-export function buildPvHoldings(d: PvHoldingsSlice, goPvContext?: (patch: Partial<PvContext>) => void) {
+export function buildPvHoldings(d: PvHoldingsSlice, onStmt?: (stmt: IsoDate) => void) {
   const a = d.account;
   const h = d.holdings;
   const st = h?.statement ?? null;
@@ -128,7 +128,7 @@ export function buildPvHoldings(d: PvHoldingsSlice, goPvContext?: (patch: Partia
         ...d.dates.map(v => ({ value: v, label: fmtStmtDate(v) })),
       ],
       note: d.dates.length ? (selected === d.dates[0] ? `Latest of ${d.dates.length} statements` : `${d.dates.length} statements on file`) : 'No statements on file',
-      onChange: (v: string) => { if (v && v !== selected) goPvContext?.({ stmt: v }); },
+      onChange: (v: string) => { if (v && v !== selected) onStmt?.(v); },
     },
     statement: st ? { date: fmtStmtDate(st.statementDate), fn: st.function ?? dash, file: st.fileName ?? dash, seq: st.fileSeq } : null,
     message,
