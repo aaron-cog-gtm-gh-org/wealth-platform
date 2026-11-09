@@ -17,7 +17,7 @@
 | --- | --- | --- | --- |
 | D1 | `SettlementReader` compares `custAcct` to the padded-to-7 safe code exactly; confirmations sent unpadded are dropped | Compare with leading zeros stripped | 2 confirmations |
 | D2 | CANC removes PREV only within the same day folder | CANC removes PREV across the whole archive | 1 cancellation |
-| D3 | `ToAmount` uses `int.Parse` (overflow > 2^31) and assumes 2 dp | Shared decimal parser | none today |
+| D3 | `ToAmount` uses `int.Parse` (overflow > 2^31) and divides any fraction by 100 (`GBP11524,8` → 11524.08); a confirmation without `19A::SETT` shows 0 | Shared decimal parser: `GBP11524,8` = 11524.8; no `19A` → `amount: null` (the UI shows a dash) | 240 one-digit-fraction + 176 no-amount confirmations in the golden settlements window (amounts only; quantities and position checks unaffected) |
 Other PV quirks are preserved as-is (they are correct, just unusual): highest file seq wins;
 function text (`NEWM/DUPL`, `RPLC`) is kept and displayed but not used for selection; zero-diff rows
 hidden with no tolerance; previous statement = latest strictly earlier date; settlements window
@@ -29,7 +29,10 @@ hidden with no tolerance; previous statement = latest strictly earlier date; set
   (120 accounts × each date), Settlements (each account, full range 2026-04-01..2026-10-31),
   Position Check (each account × date) and Check All (26 dates), and saves normalized JSON goldens.
   `compare.mjs` requests the same data from `/api/custody` and reports diffs, classifying each one
-  against `expected-divergences.json` (D1, D2 and their downstream rows).
+  against `expected-divergences.json` (D1, D2 and their downstream rows; D3 as one exact rule per
+  affected confirmation, acctId + SEME + PV amount + API amount, so a new amount diff is never absorbed).
+  PV shows a recon note's "Updated" as a date only, so `compare.mjs` reduces the API's `updatedAt`
+  timestamp to its Europe/London date before diffing.
 - **Rationale**: This tests the running system rather than our reading of its code (Constitution IV),
   and it is language-agnostic.
 

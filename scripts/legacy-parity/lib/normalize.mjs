@@ -30,6 +30,16 @@ export function isoDate(s) {
   throw new Error(`not a PV date: ${JSON.stringify(s)}`);
 }
 
+const LONDON_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/** API ISO timestamp -> the Europe/London calendar date PV displays (PV shows recon-note "Updated" as a date only) */
+export function londonDate(ts) {
+  if (ts === null || ts === undefined) return null;
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) throw new Error(`not a timestamp: ${JSON.stringify(ts)}`);
+  return LONDON_DATE.format(d);
+}
+
 export const compactDate = (iso) => iso.replace(/-/g, '');
 /** ISO -> dd/MM/yyyy, the format PV's Settlements query string expects */
 export const ukDate = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;

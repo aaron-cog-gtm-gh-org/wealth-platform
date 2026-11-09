@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { buildReport, fetchApiSnapshot } from '../compare.mjs';
 import { classify, diffSnapshots } from '../lib/diff.mjs';
-import { isoDate, num } from '../lib/normalize.mjs';
+import { isoDate, londonDate, num } from '../lib/normalize.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const GOLDEN_FILE = path.join(HERE, '..', 'golden', 'pv-golden.json.gz');
@@ -17,7 +17,7 @@ const golden = JSON.parse(gunzipSync(readFileSync(GOLDEN_FILE)).toString('utf8')
 const expected = JSON.parse(readFileSync(path.join(HERE, '..', 'expected-divergences.json'), 'utf8'));
 const clone = () => structuredClone(golden);
 
-/** Applies the intended new behaviour (D1 + D2) to a copy of the golden, as the new API should produce it. */
+/** Applies the intended new behaviour (D1 + D2 + D3) to a copy of the golden, as the new API should produce it. */
 function simulateNewBehaviour() {
   const g = clone();
   const settlementsOf = (acctId) => g.settlements.find((s) => s.acctId === acctId).settlements;
@@ -37,6 +37,9 @@ function simulateNewBehaviour() {
   const rows = settlementsOf(d2.acctId);
   rows.splice(rows.findIndex((r) => r.seme === d2.seme), 1);
   dropRow(d2.acctId, '2026-07-17', d2.isin);
+  for (const rule of expected.divergences.find((d) => d.id === 'D3').expect) {
+    settlementsOf(rule.acctId).find((row) => row.seme === rule.key).amount = rule.api;
+  }
   return g;
 }
 
@@ -63,11 +66,11 @@ test('identical snapshots produce no diffs; every expected rule is reported as n
   assert.equal(result.notObserved.length, expected.divergences.reduce((n, d) => n + d.expect.length, 0));
 });
 
-test('D1 + D2 behaviour is fully explained and every expected rule is observed', () => {
+test('D1 + D2 + D3 behaviour is fully explained and every expected rule is observed', () => {
   const result = classify(diffSnapshots(golden, simulateNewBehaviour()), expected);
   assert.equal(result.unexplained.length, 0, JSON.stringify(result.unexplained, null, 1));
   assert.equal(result.notObserved.length, 0, JSON.stringify(result.notObserved));
-  assert.deepEqual(result.byDivergence, { D1: 6, D2: 3 });
+  assert.deepEqual(result.byDivergence, { D1: 6, D2: 3, D3: 416 });
 });
 
 test('an unrelated mutation is unexplained', () => {
@@ -135,7 +138,7 @@ test('fetchApiSnapshot maps the custody contract to the golden shape', async () 
   const snap = await fetchApiSnapshot(golden, 'http://api.test', { fetchImpl });
   const report = buildReport({ golden, api: snap, expected, goldenPath: 'g', apiLabel: 'fake', tolerance: 0.005 });
   const unexplained = report.diffs.filter((r) => !r.divergence);
-  assert.equal(report.summary.expectedDiffs, 9);
+  assert.equal(report.summary.expectedDiffs, 425);
   assert.ok(unexplained.length >= 1 && unexplained.every((r) => r.dataset === 'holdings'
     && r.acctId === api.holdings[5].acctId && r.date === api.holdings[5].statementDate), JSON.stringify(unexplained.filter((r) => r.date !== api.holdings[5].statementDate || r.acctId !== api.holdings[5].acctId).slice(0, 3)));
 });
@@ -169,4 +172,30 @@ test('normalizers convert PV display formats', () => {
   assert.equal(num('-210'), -210);
   assert.equal(num(''), null);
   assert.throws(() => num('abc'));
+});
+
+test('londonDate reduces API timestamps to the Europe/London calendar date PV displays', () => {
+  assert.equal(londonDate('2026-07-21T09:14:00.000Z'), '2026-07-21');
+  assert.equal(londonDate('2026-07-20T23:30:00.000Z'), '2026-07-21');
+  assert.equal(londonDate('2026-01-20T23:30:00.000Z'), '2026-01-20');
+  assert.equal(londonDate('2026-07-21'), '2026-07-21');
+  assert.equal(londonDate(null), null);
+  assert.throws(() => londonDate('soon'));
+});
+
+test('D3 rules are exactly PV ToAmount vs exact parsing of the archived 19A amount', () => {
+  const pvToAmount = (raw) => {
+    if (raw === null) return 0;
+    const [int, frac = ''] = raw.slice(3).split(',');
+    return Number(int) + (frac.length ? Number(frac) / 100 : 0);
+  };
+  const rules = expected.divergences.find((d) => d.id === 'D3').expect;
+  assert.equal(rules.length, 416);
+  assert.equal(new Set(rules.map((r) => `${r.acctId}:${r.key}`)).size, 416);
+  for (const rule of rules) {
+    assert.deepEqual([rule.dataset, rule.kind, rule.field], ['settlements', 'changed', 'amount']);
+    assert.ok(rule.raw === null || /^[A-Z]{3}\d+,\d$/.test(rule.raw), rule.raw);
+    assert.equal(rule.legacy, Math.round(pvToAmount(rule.raw) * 100) / 100, rule.key);
+    assert.equal(rule.api, rule.raw === null ? null : Number(rule.raw.slice(3).replace(',', '.')), rule.key);
+  }
 });

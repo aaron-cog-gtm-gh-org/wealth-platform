@@ -7,7 +7,7 @@ golden snapshot captured from the **running** legacy Portfolio Viewer.
 | --- | --- |
 | `capture.mjs` | Playwright: logs into PV and captures every screen into `golden/pv-golden.json.gz` + `golden/manifest.json` |
 | `compare.mjs` | Fetches the same keys from the API, diffs, classifies, writes `report/report.json` + `report/report.md` |
-| `expected-divergences.json` | Intentional diffs (D1, D2 and their downstream position-check rows) with the archive messages behind them |
+| `expected-divergences.json` | Intentional diffs (D1, D2 and their downstream position-check rows; D3 one rule per affected settlement amount) with the archive messages behind them |
 | `lib/normalize.mjs`, `lib/diff.mjs` | PV display → contract values; pure diff/classify/render logic |
 | `test/compare.test.mjs` | Golden-vs-mutated-golden tests (run by `npm run test:unit` / `npm run test:parity`) |
 
