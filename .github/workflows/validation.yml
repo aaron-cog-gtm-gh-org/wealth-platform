@@ -26,6 +26,7 @@ jobs:
       - run: npm run qa -- validate-cases
       - run: npm run build
       - run: npm run test:unit
+      - run: npm run test:domain
       - run: npm run db:up && npm run db:wait
       - run: npm run test:backend
       - run: npm run test:db
