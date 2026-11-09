@@ -35,7 +35,8 @@ The picker lists every statement date on file for the account, newest first. Cho
 1. **Given** a resend for the date (`_002`, `_003`), **Then** the highest file sequence is shown, whatever its `23G` function (RPLC, NEWM/DUPL) (Q8). The statement's function and file name are shown next to the picker.
 2. **Given** a `stmt` that is a valid date but has no statement on file, **Then** the header and picker are shown with "No statement on file for this date." and no rows (legacy text).
 3. **Given** a statement with no holdings (`17B::ACTI//N`), **Then** "No holdings on statement." is shown and no rows (legacy text).
-4. **Given** a malformed `stmt`, **Then** it is ignored and the latest statement is shown (legacy `TryParseExact` fallback).
+4. **Given** a legacy `stmt=20261002`, **Then** the 02-OCT-2026 statement is shown, exactly as for `stmt=2026-10-02` (D-005-1).
+5. **Given** a malformed `stmt`, **Then** it is ignored and the latest statement is shown (legacy `TryParseExact` fallback).
 
 ### User Story 3 - Whitfield default view and four DataStates (Priority: P1)
 Without a PV account context (`?screen=portfolio`, or `acct` missing or not a positive integer) the screen is today's Whitfield Portfolio detail, pixel-identical. With `acct`, all four DataStates are reachable: `?screen=portfolio&acct=<id>&state=Populated|Loading|Empty|Error`.
@@ -61,7 +62,7 @@ Without a PV account context (`?screen=portfolio`, or `acct` missing or not a po
 - **FR-001**: Register a `portfolio` PV slice (`needs: 'acct'`) that loads the account, its statement dates and the selected (or latest) statement only through `/api/pv` (`GET /accounts/:id`, `/statement-dates`, `/holdings?date=`).
 - **FR-002**: Set `screen: 'portfolio'` on the `Holdings.aspx` row of `PV_PAGES`, so signed-in users of every role get a "Holdings" item in the Portfolio Viewer nav group.
 - **FR-003**: Build the custody holdings view model in `src/model/` and expose it from `buildScreens` as `portfolio` (null unless the slice is ungated and Populated). The browser does no domain computation; display formatting and the GBP total use exact decimal-string arithmetic.
-- **FR-004**: The statement-date picker navigates by URL (`stmt=yyyy-mm-dd`), keeping `acct`.
+- **FR-004**: The statement-date picker navigates by URL (`stmt=yyyy-mm-dd`), keeping `acct`. Incoming `stmt` accepts ISO or legacy `yyyyMMdd` (D-005-1).
 - **FR-005**: PV-specific breadcrumb, subtitle, loading, empty and error copy are used only while the PV slice is active; the Whitfield copy is unchanged.
 - **FR-006**: `scripts/visual-diff.mjs` gains app-only cases `portfolio-pv-{Populated,Loading,Empty,Error}` and flows for date selection, the empty-statement message, the not-on-file message, an unknown account, and sign-in from a deep link. The mockup cases are unchanged.
 - **FR-007**: The existing screens' default view, mockup diff, unit/domain/backend/db tests, `qa:test` and the workspace keep passing.
@@ -80,7 +81,7 @@ Without a PV account context (`?screen=portfolio`, or `acct` missing or not a po
 
 ## Divergences (explicit)
 
-- **D-005-1 `stmt` is ISO.** Legacy took `stmt=yyyyMMdd`; the shared PV context (spec 010) takes `stmt=yyyy-mm-dd`. A legacy compact value is malformed and therefore falls back to the latest statement, which is also what legacy did with a malformed value.
+- **D-005-1 `stmt` accepts ISO as well as the legacy form.** Legacy parsed `stmt` with `TryParseExact(…, "yyyyMMdd")` and its own redirect wrote that form, so bookmarks carry it. The shared PV context accepts both `stmt=yyyy-mm-dd` and legacy `stmt=yyyyMMdd` (exact, a real calendar date) and normalises them to ISO; the picker writes ISO. Anything else is malformed and falls back to the latest statement, as legacy did.
 - **D-005-2 Missing or unknown account.** Legacy redirected to `ClientSearch.aspx`. Without `acct` the Whitfield Portfolio detail is shown (constitution V); an unknown `acct` shows the Empty state "Custody account not found".
 - **D-005-3 Requested date not on file stays visible in the picker.** Legacy left the drop-down on its first (latest) item while saying "No statement on file for this date.", which misreports the selection. The picker shows the requested date marked "not on file".
 - **D-005-4 Quantity type column.** Legacy parsed but did not display `QtyType`; it is shown so FAMT face amounts are not read as units.

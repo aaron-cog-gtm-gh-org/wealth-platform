@@ -5,6 +5,7 @@ import type { PvApi } from './pv/slice';
 import { MSG_NO_HOLDINGS, MSG_NO_STATEMENT, buildPvHoldings, fmtMoney, fmtPx, fmtQty, fmtStmtDate, holdingsSlice, sumDecimals } from './holdings';
 import type { PvHoldingsSlice } from './holdings';
 import { PREVIEW_HOLDINGS } from './pv/preview-holdings';
+import { parsePvContext, parseStmtParam } from './pv/context';
 
 test('WebUtil formats (Q14): half away from zero, grouping, negative zero without sign', () => {
   assert.equal(fmtQty('13000'), '13,000');
@@ -125,4 +126,16 @@ test('shell: PV copy only while the portfolio slice is active; Whitfield copy un
   assert.ok(m.portfolio);
   assert.equal(m.crumb, 'Portfolio Viewer / Custody holdings / 01012-01 · Prof J Castellan');
   assert.deepEqual(m.nav[m.nav.length - 1].items.map(i => i.label), ['Holdings', 'Settlements', 'Position check', 'Message browser', 'Admin']);
+});
+
+test('D-005-1: ?stmt= accepts ISO and legacy yyyyMMdd (Holdings.aspx TryParseExact), normalised to ISO', () => {
+  assert.equal(parseStmtParam('2026-10-02'), '2026-10-02');
+  assert.equal(parseStmtParam('20261002'), '2026-10-02');
+  assert.equal(parseStmtParam(' 20261002 '), '2026-10-02');
+  for (const bad of ['20260230', '2026102', '202610021', '02/10/2026', '2026-1-2', '', null]) assert.equal(parseStmtParam(bad), null, String(bad));
+  assert.equal(parsePvContext('?screen=portfolio&acct=2018&stmt=20261002').stmt, '2026-10-02');
+  assert.equal(parsePvContext('?acct=2018&stmt=20261302').stmt, null, 'malformed → latest statement, as legacy');
+  const calls: string[] = [];
+  buildPvHoldings(slice({ requested: '2026-10-02', holdings: { ...PREVIEW_HOLDINGS, stmtDate: '2026-10-02', statement: { ...PREVIEW_HOLDINGS.statement!, statementDate: '2026-10-02' } } }), s => calls.push(s)).picker.onChange('2026-09-25');
+  assert.deepEqual(calls, ['2026-09-25'], 'the picker keeps writing ISO');
 });

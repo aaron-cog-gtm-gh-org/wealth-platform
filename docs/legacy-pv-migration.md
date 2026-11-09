@@ -77,8 +77,8 @@ Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Up
 
 ## Spec 005 decisions (Holdings → PortfolioDetail)
 
-`Holdings.aspx?acct=` becomes `?screen=portfolio&acct=<ACCT_ID>[&stmt=yyyy-mm-dd]`; without `acct` the Whitfield Portfolio detail is unchanged. Q2–Q5, Q8 and Q13 come unchanged from the server; Q14 formats (`dd-MMM-yyyy`, `#,##0.####`, `#,##0.0000`, `#,##0.00`) are preserved with half-away-from-zero rounding, and the GBP total is an exact decimal sum. Explicit divergences, none of which changes a domain result:
-- **D-005-1** `stmt` is ISO (`yyyy-mm-dd`, shared PV context); a legacy `yyyyMMdd` value is malformed and falls back to the latest statement, as legacy did for malformed values.
+`Holdings.aspx?acct=` becomes `?screen=portfolio&acct=<ACCT_ID>[&stmt=yyyy-mm-dd|yyyyMMdd]`; without `acct` the Whitfield Portfolio detail is unchanged. Q2–Q5, Q8 and Q13 come unchanged from the server; Q14 formats (`dd-MMM-yyyy`, `#,##0.####`, `#,##0.0000`, `#,##0.00`) are preserved with half-away-from-zero rounding, and the GBP total is an exact decimal sum. Explicit divergences, none of which changes a domain result:
+- **D-005-1** `stmt` accepts ISO `yyyy-mm-dd` and the legacy `Holdings.aspx` form `yyyyMMdd` (exact), normalised to ISO by `parseStmtParam` in the shared PV context; the picker writes ISO. Anything else falls back to the latest statement, as legacy did for malformed values.
 - **D-005-2** No `acct` → Whitfield Portfolio detail; unknown `acct` → Empty "Custody account not found" (legacy redirected to `ClientSearch.aspx`).
 - **D-005-3** A requested date not on file stays selected in the picker, marked "(not on file)" (legacy showed the latest date while saying "No statement on file for this date.").
 - **D-005-4** Quantity type (UNIT/FAMT) is displayed.

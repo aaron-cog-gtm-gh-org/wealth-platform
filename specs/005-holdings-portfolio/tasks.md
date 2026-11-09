@@ -16,6 +16,8 @@
 ## Phase 3: User Story 2 – statement picker (P1)
 - [x] T010 [US2] Picker options, not-on-file option (D-005-3), legacy messages, function/file display; onChange → `goPv('portfolio', { stmt })`
 
+- [x] T010a [US2] D-005-1: `parseStmtParam` accepts ISO and legacy `yyyyMMdd` in src/model/pv/context.ts; unit test + `flow-portfolio-pv-legacy-stmt`
+
 ## Phase 4: User Story 3 – DataStates and regression (P1)
 - [x] T011 [US3] Update src/model/pv/pv.test.ts for the new nav entry and registered slice; add holdings tests to `test:unit`
 - [x] T012 [US3] visual-diff: `portfolio-pv-*` × 4, flows (select date, empty statement, not on file, unknown account, sign-in from deep link); `select` step and query-aware routes; admin baselines kept (the extra "Holdings" nav row stays within `BASELINE_MAX`, ≤0.04%)

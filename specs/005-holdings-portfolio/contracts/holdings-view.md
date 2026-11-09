@@ -1,6 +1,6 @@
 # Contract: custody holdings on `portfolio` (spec 005)
 
-- URL: `?screen=portfolio&acct=<ACCT_ID>[&stmt=<yyyy-mm-dd>][&state=Populated|Loading|Empty|Error]`. Without a valid `acct` the Whitfield Portfolio detail is shown.
+- URL: `?screen=portfolio&acct=<ACCT_ID>[&stmt=<yyyy-mm-dd | legacy yyyyMMdd>][&state=Populated|Loading|Empty|Error]`. `parseStmtParam` (src/model/pv/context.ts) normalises `stmt` to ISO; the picker writes ISO. Without a valid `acct` the Whitfield Portfolio detail is shown.
 - API (spec 004, unchanged): `GET /api/pv/accounts/:id`, `/accounts/:id/statement-dates`, `/accounts/:id/holdings?date=`.
 - Model: `m.portfolio` (`PvHoldingsView`) is non-null only for an ungated, Populated PV slice; App renders `CustodyHoldings` then, else `PortfolioDetail`.
 - Roles: any signed-in role (`Holdings.aspx` has no `RequiredRoles`).
