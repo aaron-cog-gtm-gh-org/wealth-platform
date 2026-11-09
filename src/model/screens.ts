@@ -10,6 +10,8 @@ import type { PvAdminStats } from '../api/pv-types';
 import { buildSettlements } from './settlements';
 import type { SettlementsData } from './settlements';
 import type { PvModelInput } from './pv/slice';
+import { buildPositionCheck } from './pv/position-check';
+import type { PvPositionCheckData } from './pv/position-check';
 
 function buildMockScreens(st: UiState, setState: SetUiState, go: (s: Screen) => void, data: Data) {
   const D = { holdings: data.holdings, total: data.totalValue, accounts: data.accounts, alloc: data.allocation, SRC: data.PRICE_SOURCE, COLORS: CLASS_COLORS, classes: data.ASSET_CLASSES };
@@ -223,6 +225,7 @@ function buildPvScreens(st: UiState, setState: SetUiState, pv: PvModelInput | nu
     /** Live empty window: the account header and date form stay above the Empty panel (D-007-4). */
     settlementsRange: pv && s && !s.gate && s.screen === 'settlements' && s.dataState === 'Empty' && (s.data as SettlementsData | null)?.kind === 'list'
       ? buildSettlements(s.data as SettlementsData, st, setState, pv.setPvContext) : null,
+    posCheck: ready?.screen === 'exceptions' ? buildPositionCheck(ready.data as PvPositionCheckData, st, setState, pv!.run, pv!.goPv) : null,
   };
 }
 

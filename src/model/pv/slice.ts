@@ -1,8 +1,9 @@
 import type { createPvClient } from '../../api/pv';
-import type { PvAdminStats, PvUser } from '../../api/pv-types';
+import type { PvAdminStats, PvSaveNote, PvUser } from '../../api/pv-types';
 import type { DataState, Screen } from '../../types';
 import { canAccess, pvPageForScreen } from './access';
-import type { PvContext, PvContextKey } from './context';
+import type { PvContext, PvContextPatch } from './context';
+import { positionCheckSlice } from './position-check';
 import { PREVIEW_ADMIN_STATS } from './preview';
 import { settlementsSlice } from '../settlements';
 
@@ -15,6 +16,8 @@ export type PvApi = ReturnType<typeof createPvClient>;
  */
 export interface PvSliceDef<T> {
   needs: 'none' | 'acct' | 'acct+stmt';
+  /** Optional context test that replaces `needs` (spec 006: `exceptions` is PV only with `pc`/`acct`/`all`). */
+  active?: (ctx: PvContext) => boolean;
   load: (api: PvApi, ctx: PvContext) => Promise<T>;
   isEmpty: (data: T) => boolean;
   /** Fixed synthetic data rendered for `?state=Populated` without a session (design preview / visual-diff). */
@@ -49,12 +52,14 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
   settlements: settlementsSlice as PvSliceDef<unknown>,
+  exceptions: positionCheckSlice as PvSliceDef<unknown>,
 };
 
 /** The PV slice that drives `screen` for this URL context, or null (existing behaviour). */
 export function pvSliceFor(screen: Screen, ctx: PvContext): PvSliceDef<unknown> | null {
   const def = PV_SLICES[screen];
   if (!def) return null;
+  if (def.active) return def.active(ctx) ? def : null;
   if (def.needs !== 'none' && ctx.acct === null) return null;
   if (def.needs === 'acct+stmt' && ctx.stmt === null) return null;
   return def;
@@ -85,15 +90,18 @@ export function resolvePvSlice(screen: Screen, def: PvSliceDef<unknown>, forced:
   }
 }
 
+/** Slice mutations run through `pv.run` (spec 010 Admin reload; spec 006 RECON_NOTE save). */
+export type PvOp = 'reloadArchive' | { kind: 'saveReconNote'; acctId: number; note: PvSaveNote };
+
 /** What `buildModel` needs from the shell's PV state (`src/pv/usePv.ts` provides it). Null = no PV at all. */
 export interface PvModelInput {
   user: PvUser | null;
   slice: (PvResolved & { screen: Screen; retry: () => void }) | null;
   signIn: { pending: boolean; error: string | null; notice: string | null; submit: (username: string, password: string) => void };
   signOut: () => void;
-  run: (op: 'reloadArchive') => Promise<void>;
-  /** Navigate to a PV screen keeping `acct`/`stmt`. */
-  goPv: (s: Screen) => void;
+  run: (op: PvOp) => Promise<void>;
+  /** Navigate to a PV screen keeping the PV context, with optional context changes. */
+  goPv: (s: Screen, patch?: PvContextPatch) => void;
   /** Update PV URL context keys (null removes one) and reload the slice (spec 007). */
-  setPvContext?: (patch: Partial<Record<PvContextKey, string | null>>) => void;
+  setPvContext?: (patch: PvContextPatch) => void;
 }

@@ -2,7 +2,7 @@ import { PvApiError } from '../api/pv';
 import type { IsoDate, PvAccount, PvSettlements } from '../api/pv-types';
 import type { SetUiState, UiState } from '../types';
 import { parseDateInput } from './pv/context';
-import type { PvContextKey } from './pv/context';
+import type { PvContextPatch } from './pv/context';
 import type { PvSliceDef } from './pv/slice';
 import { PREVIEW_SETTLEMENTS, PREVIEW_SETTLEMENTS_ACCOUNT } from './pv/preview-settlements';
 
@@ -60,7 +60,7 @@ const dayCount = (from: IsoDate, to: IsoDate) => Math.round((Date.parse(to + 'T0
 
 export const DATE_FORMAT_MSG = 'Enter dates as yyyy-mm-dd.';
 
-type SetPvContext = (patch: Partial<Record<PvContextKey, string | null>>) => void;
+type SetPvContext = (patch: PvContextPatch) => void;
 
 export function buildSettlements(d: SettlementsData, st: UiState, setState: SetUiState, setPvContext: SetPvContext | undefined) {
   if (d.kind === 'pick') {

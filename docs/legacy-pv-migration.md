@@ -65,6 +65,16 @@ Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format
 
 The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.
 
+## Spec 006 decisions (Position check)
+
+Spec 006 preserves Q11, Q12, Q14 (`dd-MMM-yyyy` statement dates, `dd/MM/yyyy` Updated, `#,##0.####` quantities), Q17 (OPS/ADMIN) and Q18 by rendering the spec 004 API unchanged. Explicit divergences (details in `specs/006-position-check/spec.md`):
+- **D-006-1** Position check is the `exceptions` screen only with PV context (`pc=1`, `acct` or `all`); `?screen=exceptions` stays the mockup ops queue.
+- **D-006-2** Run check / Check all / View are URLs (`?acct=&stmt=`, `?all=`) instead of postbacks.
+- **D-006-3** Edit preselects the row's current status when it is OPEN/CHASED/RESOLVED/WRITEOFF (legacy always showed OPEN, so a note-only edit reset the status).
+- **D-006-4** A failed save keeps the row in edit mode with a message (legacy error page).
+- **D-006-5** A derived KPI strip summarises the check.
+- **D-006-6** `GET /api/pv/position-check/dates` serves the all-account date list.
+
 ## Spec 007 decisions (Settlements screen)
 
 `Settlements.aspx` becomes the new `?screen=settlements` and does not reuse ActivityStatus, which is the retail client portal. Q9, Q10, Q14, Q15 (default window) and Q18 are preserved. The server applies them and the screen keeps the API order.

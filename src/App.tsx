@@ -16,7 +16,8 @@ import { Admin } from './screens/Admin';
 import { Settlements, SettlementsRange } from './screens/Settlements';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
 import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
-import type { PvContext, PvContextKey } from './model/pv/context';
+import type { PvContext, PvContextPatch } from './model/pv/context';
+import { PositionCheck } from './screens/PositionCheck';
 import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import { Workspace } from './workspace/Workspace';
@@ -71,16 +72,17 @@ function LegacyApp() {
 
   const setState: SetUiState = useCallback(patch => setUi(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) })), []);
 
-  const navigate = useCallback((screen: Screen, keepPvContext: boolean) => {
+  const navigate = useCallback((screen: Screen, keepPvContext: boolean, patch: PvContextPatch = {}) => {
     const q = new URLSearchParams(window.location.search);
     q.set('screen', screen);
     if (!keepPvContext) PV_CONTEXT_KEYS.forEach(k => q.delete(k));
+    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, v); }
     window.history.pushState(null, '', '?' + q.toString());
     setLoc(readLocation());
   }, []);
   const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
-  const goPv = useCallback((screen: Screen) => navigate(screen, true), [navigate]);
-  const setPvContext = useCallback((patch: Partial<Record<PvContextKey, string | null>>) => {
+  const goPv = useCallback((screen: Screen, patch?: PvContextPatch) => navigate(screen, true, patch), [navigate]);
+  const setPvContext = useCallback((patch: PvContextPatch) => {
     const q = new URLSearchParams(window.location.search);
     Object.entries(patch).forEach(([k, v]) => (v ? q.set(k, v) : q.delete(k)));
     window.history.pushState(null, '', '?' + q.toString());
@@ -202,7 +204,9 @@ function LegacyApp() {
 
             {show.alts && <Alternatives m={m} />}
 
-            {show.exceptions && <SettlementExceptions m={m} />}
+            {show.exceptions && !m.posCheck && <SettlementExceptions m={m} />}
+
+            {show.exceptions && m.posCheck && <PositionCheck m={m} />}
 
             {show.home && <ClientHome m={m} />}
 

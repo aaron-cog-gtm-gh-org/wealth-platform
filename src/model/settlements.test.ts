@@ -21,10 +21,10 @@ test('date inputs: ISO, legacy dd/MM/yyyy, invalid (D-007-1)', () => {
   assert.equal(parseDateInput('2026-09-01'), '2026-09-01');
   assert.equal(parseDateInput(' 01/09/2026 '), '2026-09-01');
   for (const bad of ['31/02/2026', '1/9/2026', '2026-9-1', '2026-02-30', '', null, '09/01/26']) assert.equal(parseDateInput(bad), null, String(bad));
-  assert.deepEqual(parsePvContext('?acct=2001&from=01/09/2026&to=2026-09-30'), { acct: 2001, stmt: null, from: '2026-09-01', to: '2026-09-30' });
-  assert.deepEqual(parsePvContext('?acct=2001&from=junk'), { acct: 2001, stmt: null }, 'invalid dates are ignored (legacy Page_Load)');
+  assert.deepEqual(parsePvContext('?acct=2001&from=01/09/2026&to=2026-09-30'), { acct: 2001, stmt: null, pc: false, all: null, from: '2026-09-01', to: '2026-09-30' });
+  assert.deepEqual(parsePvContext('?acct=2001&from=junk'), { acct: 2001, stmt: null, pc: false, all: null }, 'invalid dates are ignored (legacy Page_Load)');
   assert.notEqual(pvContextKey(parsePvContext('?acct=1&from=2026-01-01')), pvContextKey(parsePvContext('?acct=1')));
-  assert.equal(pvContextKey({ acct: 1, stmt: null }), '1|', 'key unchanged without a window');
+  assert.equal(pvContextKey({ acct: 1, stmt: null, pc: false, all: null }), '1|||', 'key unchanged without a window');
 });
 
 test('legacy formats (Q14)', () => {
@@ -41,7 +41,7 @@ test('legacy formats (Q14)', () => {
 
 test('settlements slice is registered, needs no context, nav for every role', () => {
   assert.equal(PV_SLICES.settlements, settlementsSlice);
-  assert.ok(pvSliceFor('settlements', { acct: null, stmt: null }));
+  assert.ok(pvSliceFor('settlements', { acct: null, stmt: null, pc: false, all: null }));
   for (const role of ['ADVISER', 'OPS', 'ADMIN']) assert.ok(pvNavFor(role).some(p => p.screen === 'settlements'), role);
 });
 
@@ -52,12 +52,12 @@ test('slice load: account + window, picker, 404 → picker, other errors rethrow
     settlements: async (id: number, r: unknown) => { calls.push(['settlements', id, r]); return PREVIEW_SETTLEMENTS; },
     accounts: async () => ({ accounts: [PREVIEW_SETTLEMENTS_ACCOUNT] }),
   } as unknown as PvApi;
-  const d = await settlementsSlice.load(api, { acct: 2001, stmt: null, from: '2026-09-01' });
+  const d = await settlementsSlice.load(api, { acct: 2001, stmt: null, pc: false, all: null, from: '2026-09-01' });
   assert.equal(d.kind, 'list');
   assert.deepEqual(calls[calls.length - 1], ['settlements', 2001, { from: '2026-09-01', to: undefined }]);
-  assert.deepEqual(await settlementsSlice.load(api, { acct: null, stmt: null }), { kind: 'pick', accounts: [PREVIEW_SETTLEMENTS_ACCOUNT], notFound: null });
-  assert.equal(((await settlementsSlice.load(api, { acct: 9999, stmt: null })) as { notFound: number }).notFound, 9999);
-  await assert.rejects(settlementsSlice.load(api, { acct: 500, stmt: null }), (e: PvApiError) => e.status === 500);
+  assert.deepEqual(await settlementsSlice.load(api, { acct: null, stmt: null, pc: false, all: null }), { kind: 'pick', accounts: [PREVIEW_SETTLEMENTS_ACCOUNT], notFound: null });
+  assert.equal(((await settlementsSlice.load(api, { acct: 9999, stmt: null, pc: false, all: null })) as { notFound: number }).notFound, 9999);
+  await assert.rejects(settlementsSlice.load(api, { acct: 500, stmt: null, pc: false, all: null }), (e: PvApiError) => e.status === 500);
   assert.equal(settlementsSlice.isEmpty(list), false);
   assert.equal(settlementsSlice.isEmpty({ ...list, settlements: { ...PREVIEW_SETTLEMENTS, items: [] } }), true);
   assert.equal(settlementsSlice.isEmpty({ kind: 'pick', accounts: [], notFound: null }), true);
