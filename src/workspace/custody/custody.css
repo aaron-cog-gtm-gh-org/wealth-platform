@@ -11,7 +11,7 @@
 .cu-links { display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .cu-links a { font-weight: 600; white-space: nowrap; }
 .cu-caption { caption-side: top; text-align: left; padding: 10px 14px 6px; font-weight: 600; color: var(--navy); }
-.cu-note { max-width: 260px; overflow-wrap: anywhere; }
+.cu-note { min-width: 200px; max-width: 320px; overflow-wrap: break-word; }
 .cu-diff--neg { color: var(--bad); font-weight: 600; }
 .cu-diff--pos { color: var(--warn); font-weight: 600; }
 .cu-raw { margin: 0; padding: 12px 14px; max-height: 480px; overflow: auto; background: #0f1b2d; color: #e6edf6; font: 12px/18px 'IBM Plex Mono', monospace; white-space: pre; border-radius: 0 0 6px 6px; }

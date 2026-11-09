@@ -44,9 +44,9 @@ Each child opens one PR into `feature/legacy-pv-integration` and runs the full g
 - [X] T025 [P] {C4} `server/custody/api.int.test.ts` covering every contract route incl. 400/404 cases; add to `test:int`
 
 ## Phase 8: Polish & Verification (Wave 3)
-- [ ] T026 {C6} `e2e/custody/*.spec.ts` + `playwright.custody.config.ts` (outside `qa/tests`) for every acceptance scenario; `npm run test:e2e:custody`
-- [ ] T027 {C6} Live parity run (PV :8080 vs new :3001) → `specs/001-custody-portfolio-viewer/parity-report.md`; 0 unexplained diffs (SC-002)
-- [ ] T028 {C6} Recorded side-by-side walkthrough PV vs Custody area
+- [x] T026 {C6} `e2e/custody/*.spec.ts` + `playwright.custody.config.ts` (outside `qa/tests`) for every acceptance scenario; `npm run test:e2e:custody`
+- [x] T027 {C6} Live parity run (PV :8080 vs new :3001) → `specs/001-custody-portfolio-viewer/parity-report.md`; 0 unexplained diffs (SC-002)
+- [x] T028 {C6} Recorded side-by-side walkthrough PV vs Custody area
 - [ ] T029 {parent} Full gate set, `/speckit:converge`, final recorded E2E, PR to `main`
 
 ## Dependencies

@@ -115,7 +115,7 @@
 .ws-notice--info { background: #eef4fb; border-color: #c9dbef; color: #00406f; }
 
 /* Tables */
-.ws-table-wrap { overflow-x: auto; }
+.ws-table-wrap { overflow-x: auto; position: relative; }
 .ws-table { width: 100%; border-collapse: collapse; }
 .ws-table th, .ws-table td { padding: 8px 12px; text-align: left; border-top: 1px solid var(--line-2); vertical-align: middle; }
 .ws-table thead th { background: #f8f9fb; color: var(--mute); font-size: 11.5px; font-weight: 600; border-top: 0; white-space: nowrap; }

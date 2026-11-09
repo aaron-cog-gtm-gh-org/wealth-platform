@@ -22,6 +22,7 @@
     "lint": "eslint .",
     "qa": "node qa/tooling/qa.mjs",
     "qa:test": "node --test qa/tooling/test/*.test.mjs",
+    "test:e2e:custody": "playwright test -c playwright.custody.config.ts",
     "typecheck:qa": "tsc -p tsconfig.qa.json",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
