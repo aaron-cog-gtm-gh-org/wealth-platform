@@ -22,25 +22,25 @@ Each child opens one PR into `feature/legacy-pv-integration` and runs the full g
 - [ ] T011 [P] [US1] {C2} `server/custody/domain/holdings.ts` + test: highest file_seq per date, dates newest first, UNKNOWN INSTRUMENT fallback, GBP total
 - [X] T012 [US1] {C4} `server/custody/parse-archive.ts`: parse pending messages with T003 into statements/lines/confirmations; record `custody_archive_loads`; called from `setup.ts`
 - [X] T013 [US1] {C4} `repository.ts` + `routes.ts`: `/accounts`, `/accounts/:id/statements`, `/accounts/:id/statements/:date`, `/statement-dates`; mount in `server/app.ts`
-- [ ] T014 [US1] {C5} `src/workspace/custody/` area shell (view tabs, deep links `view/acct/date`), register `custody` in `src/workspace/model.ts` + `Workspace.tsx`; Holdings view with account picker, date picker, captioned table and total
+- [x] T014 [US1] {C5} `src/workspace/custody/` area shell (view tabs, deep links `view/acct/date`), register `custody` in `src/workspace/model.ts` + `Workspace.tsx`; Holdings view with account picker, date picker, captioned table and total
 
 ## Phase 4: US2 Position check (P1)
 - [ ] T015 [P] [US2] {C2} `server/custody/domain/position-check.ts` + test: previous = latest strictly earlier; window (prev+1, stmt]; expected = prev + net; omit zero diff; NEW when no note; sorted by ISIN; ports `PositionCheckTests.cs` cases
 - [X] T016 [US2] {C4} `/accounts/:id/position-check/:date`, `/position-check/:date`, `/operators`, `PUT /recon-notes` with validation (`validation.ts`) and `wf_audit` event
-- [ ] T017 [US2] {C5} Position check view (breaks table, status + note editor with operator select, save → reload persists) and Check-all view
+- [x] T017 [US2] {C5} Position check view (breaks table, status + note editor with operator select, save → reload persists) and Check-all view
 
 ## Phase 5: US3 Settlements (P2)
 - [ ] T018 [P] [US3] {C2} `server/custody/domain/settlements.ts` + test: cancellations applied across all day folders (D2), safe match ignoring leading zeros (D1), inclusive dates, newest first
 - [X] T019 [US3] {C4} `/accounts/:id/settlements` with default 90-day window and from ≤ to validation
-- [ ] T020 [US3] {C5} Settlements view with date range filter, empty state "No settlements in period."
+- [x] T020 [US3] {C5} Settlements view with date range filter, empty state "No settlements in period."
 
 ## Phase 6: US4 Client search (P2)
 - [X] T021 [US4] {C4} `/clients`, `/clients/:id`
-- [ ] T022 [US4] {C5} Client search + client summary views with links into Holdings / Settlements / Position check
+- [x] T022 [US4] {C5} Client search + client summary views with links into Holdings / Settlements / Position check
 
 ## Phase 7: US5 Messages + Archive (P3)
 - [X] T023 [US5] {C4} `/messages`, `/messages/:fileName`, `/archive/status`, `POST /archive/reload` (transactional re-load)
-- [ ] T024 [US5] {C5} Messages view (filters, raw viewer) + Archive view (counts, parse errors, reload)
+- [x] T024 [US5] {C5} Messages view (filters, raw viewer) + Archive view (counts, parse errors, reload)
 - [X] T025 [P] {C4} `server/custody/api.int.test.ts` covering every contract route incl. 400/404 cases; add to `test:int`
 
 ## Phase 8: Polish & Verification (Wave 3)
