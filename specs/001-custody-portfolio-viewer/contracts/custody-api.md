@@ -11,7 +11,7 @@
 | GET `/accounts/:acctId/position-check/:date` | – | `{ statementDate, previousStatementDate \| null, message \| null, rows: [{ isin, instrument, prevQty, netSettled, expected, stmtQty, diff, status, note, updatedBy, updatedAt }] }` sorted by ISIN |
 | GET `/position-check/:date` | – | `{ statementDate, accounts: [{ acctId, acctNo, clientName, breaks, newBreaks, previousStatementDate }] }` (accounts with a statement on the date) |
 | GET `/statement-dates` | – | `{ dates: string[] }` all distinct, newest first |
-| PUT `/recon-notes` | `{ acctId:int, isin:12 chars, stmtDate, status: NEW\|O\|CHASED\|C\|RESOLVED\|WRITEOFF, note: ≤500, operator: active OPS/ADMIN username }`; unknown fields rejected | `{ note: {...} }`; writes `wf_audit` action `Recon note updated` |
+| PUT `/recon-notes` | `{ acctId:int, isin:12 chars, stmtDate, status: OPEN\|CHASED\|RESOLVED\|WRITEOFF, note: ≤500, operator: active OPS/ADMIN username }`; unknown fields rejected | `{ note: {...} }`; writes `wf_audit` action `Recon note updated` |
 | GET `/operators` | – | `{ operators: [{ username, fullName, role }] }` |
 | GET `/messages` | `family` (MT535\|MT54x), `date`, `safe` (leading zeros ignored), `page` (50/page) | `{ total, page, files: [{ fileName, family, mtType, msgDate, safeCode, sizeBytes, parseStatus }] }` sorted by rel_path |
 | GET `/messages/:fileName` | – | `{ fileName, relPath, family, raw }` (only ingested files; never builds paths from input) |

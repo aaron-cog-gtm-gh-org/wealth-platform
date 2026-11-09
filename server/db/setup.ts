@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { loadArchive } from '../custody/load-archive';
 import { dbConfig, getConnectionString, maintenanceConnectionString } from './pool';
 import { splitSqlScript } from './sql-script';
 
 const DIR = fileURLToPath(new URL('.', import.meta.url));
-const DEFAULT_FILES = ['schema.sql', 'seed.sql', 'workflow-seed.sql'];
+const DEFAULT_FILES = ['schema.sql', 'seed.sql', 'workflow-seed.sql', 'custody-schema.sql', 'custody-seed.sql'];
 
 export function databaseName(databaseUrl: string) {
   const name = decodeURIComponent(new URL(databaseUrl).pathname.slice(1));
@@ -32,6 +33,12 @@ export async function setupDatabase(databaseUrl = dbConfig, files = DEFAULT_FILE
       const statements = splitSqlScript(readFileSync(DIR + file, 'utf8'));
       for (const sql of statements) await client.query(sql);
       console.log(`${file}: ${statements.length} statements`);
+    }
+    if (files.includes('custody-schema.sql')) {
+      const started = Date.now();
+      const archive = await loadArchive(client);
+      console.log(`custody archive: ${archive.mt535} MT535 + ${archive.mt54x} MT54x files `
+        + `(${archive.inserted} inserted, ${archive.updated} updated, ${archive.removed} removed) in ${Date.now() - started} ms`);
     }
     await client.query('COMMIT');
   } catch (error) {
