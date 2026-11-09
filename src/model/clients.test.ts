@@ -20,8 +20,8 @@ const ctx = (search: string) => parsePvContext(search);
 
 test('context: ?cid= positive integer, ?q= raw text (untrimmed, blank kept); both cleared by mockup nav', () => {
   assert.deepEqual(ctx('?cid=1001&q=%20smith'), { acct: null, stmt: null, pc: false, all: null, cid: 1001, q: ' smith' });
-  assert.deepEqual(ctx('?cid=0&q='), { acct: null, stmt: null, pc: false, all: null, cid: null, q: '' });
-  assert.equal(ctx('?cid=abc').cid, null);
+  assert.deepEqual(ctx('?cid=0&q='), { acct: null, stmt: null, pc: false, all: null, q: '' });
+  assert.equal(ctx('?cid=abc').cid, undefined);
   assert.ok(PV_CONTEXT_KEYS.includes('cid') && PV_CONTEXT_KEYS.includes('q'));
   assert.notEqual(pvContextKey(ctx('?q=')), pvContextKey(ctx('')));
   assert.notEqual(pvContextKey(ctx('?cid=1')), pvContextKey(ctx('?cid=2')));

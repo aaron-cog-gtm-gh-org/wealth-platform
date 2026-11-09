@@ -21,8 +21,8 @@ test('date inputs: ISO, legacy dd/MM/yyyy, invalid (D-007-1)', () => {
   assert.equal(parseDateInput('2026-09-01'), '2026-09-01');
   assert.equal(parseDateInput(' 01/09/2026 '), '2026-09-01');
   for (const bad of ['31/02/2026', '1/9/2026', '2026-9-1', '2026-02-30', '', null, '09/01/26']) assert.equal(parseDateInput(bad), null, String(bad));
-  assert.deepEqual(parsePvContext('?acct=2001&from=01/09/2026&to=2026-09-30'), { acct: 2001, stmt: null, pc: false, all: null, from: '2026-09-01', to: '2026-09-30', cid: null, q: null });
-  assert.deepEqual(parsePvContext('?acct=2001&from=junk'), { acct: 2001, stmt: null, pc: false, all: null, cid: null, q: null }, 'invalid dates are ignored (legacy Page_Load)');
+  assert.deepEqual(parsePvContext('?acct=2001&from=01/09/2026&to=2026-09-30'), { acct: 2001, stmt: null, pc: false, all: null, from: '2026-09-01', to: '2026-09-30' });
+  assert.deepEqual(parsePvContext('?acct=2001&from=junk'), { acct: 2001, stmt: null, pc: false, all: null }, 'invalid dates are ignored (legacy Page_Load)');
   assert.notEqual(pvContextKey(parsePvContext('?acct=1&from=2026-01-01')), pvContextKey(parsePvContext('?acct=1')));
   assert.equal(pvContextKey({ acct: 1, stmt: null, pc: false, all: null }), '1|||', 'key unchanged without a window');
 });

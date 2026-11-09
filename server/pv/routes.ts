@@ -1,6 +1,6 @@
 // /api/pv/* - Portfolio Viewer data API (spec 004). Replaces PV.Data/SqlHelper; all SQL parameterized.
 import express, { Router, type NextFunction, type Request, type Response } from 'express';
-import { findArchiveFile } from '../../src/domain/archive/archive-index';
+import { findArchiveFile, findArchiveFileByName } from '../../src/domain/archive/archive-index';
 import { getSettlements, toAmount } from '../../src/domain/archive/settlements';
 import { addDays, isIsoDate, type IsoDate } from '../../src/domain/date';
 import { Decimal, sumDecimals } from '../../src/domain/decimal';
@@ -158,9 +158,11 @@ pvRouter.get('/archive/files', ops, json(async req => {
 }));
 pvRouter.get('/archive/files/raw', ops, async (req, res, next) => {
   try {
-    const entry = typeof req.query.path === 'string' ? findArchiveFile(getIndex(), req.query.path) : null;
+    const { path, file } = req.query;
+    const entry = typeof path === 'string' ? findArchiveFile(getIndex(), path)
+      : typeof file === 'string' ? findArchiveFileByName(getIndex(), file) : null;
     if (!entry) throw new HttpError(404, 'File not in archive index.');
-    res.type('text/plain').set('Content-Disposition', `inline; filename="${entry.fileName}"`).send(readArchiveBytes(archiveRoot(), entry.path));
+    res.type('text/plain').set({ 'Content-Disposition': `inline; filename="${entry.fileName}"`, 'X-Archive-Path': entry.path }).send(readArchiveBytes(archiveRoot(), entry.path));
   } catch (e) { next(e); }
 });
 

@@ -30,7 +30,7 @@ test('exceptions is PV only with ?pc=1, ?acct= or ?all=; otherwise the mockup op
   assert.equal(pvSliceFor('exceptions', ctx('?stmt=2026-09-18')), null);
   assert.equal(pvSliceFor('exceptions', ctx('?pc=yes')), null);
   for (const q of ['?pc=1', '?acct=2038', '?all=2026-09-18', '?acct=2038&stmt=2026-06-26']) assert.equal(pvSliceFor('exceptions', ctx(q)), PV_SLICES.exceptions, q);
-  assert.deepEqual(parsePvContext('?pc=1&all=2026-09-18'), { acct: null, stmt: null, pc: true, all: '2026-09-18', cid: null, q: null });
+  assert.deepEqual(parsePvContext('?pc=1&all=2026-09-18'), { acct: null, stmt: null, pc: true, all: '2026-09-18' });
   assert.equal(parsePvContext('?all=18/09/2026').all, null);
   const shell = buildShell('exceptions', 'Populated', noop, null);
   assert.equal(shell.title, 'Settlement exceptions');

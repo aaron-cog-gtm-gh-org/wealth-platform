@@ -50,6 +50,11 @@ export function createPvClient(opts: PvClientOptions = {}) {
     checkAll: (date: IsoDate) => json<PvCheckAll>('GET', `/position-check/all${qs({ date })}`),
     archiveFiles: (f: { type?: 'MT535' | 'MT54x'; safe?: string; date?: IsoDate } = {}) => json<PvArchiveFiles>('GET', `/archive/files${qs(f)}`),
     archiveRaw: async (path: string) => (await send('GET', `/archive/files/raw${qs({ path })}`)).text(),
+    /** MessageBrowser.aspx?file=: raw text by file name, resolved through the archive index on the server. */
+    archiveFileByName: async (fileName: string) => {
+      const res = await send('GET', `/archive/files/raw${qs({ file: fileName })}`);
+      return { fileName, path: res.headers.get('X-Archive-Path') ?? fileName, raw: await res.text() };
+    },
     adminStats: () => json<PvAdminStats>('GET', '/admin/stats'),
     reloadArchive: () => json<PvAdminStats>('POST', '/admin/archive/reload'),
   };

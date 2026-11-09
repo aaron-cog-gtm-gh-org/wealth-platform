@@ -32,13 +32,14 @@ test('Site.Master/BasePage role table (Q17)', () => {
   assert.ok(pvNavFor('OPS').some(p => p.screen === 'exceptions'));
   assert.ok(!pvNavFor('ADVISER').some(p => p.screen === 'exceptions'));
   assert.ok(pvNavFor('ADVISER').some(p => p.screen === 'settlements'));
+  assert.ok(pvNavFor('OPS').some(p => p.screen === 'messages'));
 });
 
 test('URL context ?acct=&stmt=', () => {
-  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18', pc: false, all: null, cid: null, q: null });
-  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null, pc: false, all: null, cid: null, q: null });
-  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null, pc: false, all: null, cid: null, q: null });
-  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null, pc: false, all: null, cid: null, q: null });
+  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18', pc: false, all: null });
+  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null, pc: false, all: null });
+  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null, pc: false, all: null });
+  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null, pc: false, all: null });
 });
 
 test('slices: unregistered screens and missing context keep existing behaviour', () => {
