@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Decimal } from '../decimal';
-import { buildArchiveIndex, findArchiveFile, makeEntry, statementKey } from './archive-index';
+import { buildArchiveIndex, findArchiveFile, findArchiveFileByName, makeEntry, statementKey } from './archive-index';
 import { getSettlements, toAmount } from './settlements';
 import { memorySource } from './source';
 import { fin } from '../swift/__fixtures__/legacy';
@@ -62,6 +62,9 @@ describe('buildArchiveIndex (Q7)', () => {
     expect(makeEntry('mt535/odd.txt', 1, 'MT535')).toMatchObject({ safeCode: null, date: '0001-01-01' });
     expect(findArchiveFile(idx, 'mt54x/20260420/MT547_11521_20260420_001.txt')?.msgType).toBe('MT54x');
     expect(findArchiveFile(idx, '../package.json')).toBeNull();
+    expect(findArchiveFileByName(idx, 'MT547_11521_20260420_001.txt')?.path).toBe('mt54x/20260420/MT547_11521_20260420_001.txt');
+    expect(findArchiveFileByName(idx, 'mt54x/20260420/MT547_11521_20260420_001.txt')).toBeNull();
+    expect(findArchiveFileByName(idx, '../package.json')).toBeNull();
   });
   it('uses the injected clock', () => {
     let t = 0;

@@ -59,6 +59,17 @@ const ADMIN_EXPECT = {
   Empty: ['Archive is empty'],
   Error: ['Couldn’t load archive status', 'Retry'],
 };
+// Message Browser (spec 009): synthetic archive rows + one raw MT535 from the synthetic archive.
+const MSG_FILE = (safe, size) => ({ path: `mt535/MT535_${safe}_20260918_001.txt`, fileName: `MT535_${safe}_20260918_001.txt`, msgType: 'MT535', date: '2026-09-18', safeCode: safe, size });
+const MSG_FILES = [MSG_FILE('10024', 304), MSG_FILE('10049', 2782), MSG_FILE('10226', 4854)];
+const MSG_RAW = readFileSync('archive/mt535/MT535_10024_20260918_001.txt', 'utf8');
+const OPS_SESSION = { token: PV_TOKEN('OPS'), user: PV_USER('OPS') };
+const MSG_EXPECT = {
+  Populated: ['Message browser', 'Message type', 'Safe code', '118 files', 'MT535 · 18/09/2026 · all safe codes', 'MT535_10049_20260918_001.txt', '1–50 of 118', 'Raw message', 'mt535/MT535_10049_20260918_001.txt', ':97A::SAFE//0010049'],
+  Loading: ['Loading message browser…'],
+  Empty: ['No files match', 'Clear filters'],
+  Error: ['Couldn’t load the message archive', 'Retry'],
+};
 const APP_ONLY = [
   ...STATES.map(state => ({ name: `admin-${state}`, screen: 'admin', state, expect: ADMIN_EXPECT[state] })),
   { name: 'flow-admin-reload-confirm', screen: 'admin', steps: [['click', 'Reload archive']], expect: ['Reload the archive index?', 'Cancel'] },
@@ -70,6 +81,20 @@ const APP_ONLY = [
   { name: 'flow-admin-forbidden', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [200, { token: PV_TOKEN('OPS'), user: PV_USER('OPS') }] }, steps: SIGN_IN, expect: ['Not authorised for this page', 'Admin requires the ADMIN role. You are signed in as LBRENNAN (OPS).'] },
   { name: 'flow-admin-expired', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [401, { error: 'Session expired.' }] }, expect: ['Your session has expired. Sign in again.', 'Sign in to Portfolio Viewer'] },
   { name: 'flow-admin-signout', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [200, PV_STATS] }, steps: [['click', 'Sign out']], expect: ['Sign in to Portfolio Viewer'] },
+  ...STATES.map(state => ({ name: `messages-${state}`, screen: 'messages', state, expect: MSG_EXPECT[state] })),
+  { name: 'flow-messages-list', screen: 'messages', url: '?screen=messages', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 1, files: [MSG_FILES[0]] }] },
+    steps: [['select', 'select[name=type]', '535'], ['fill', 'input[name=date]', '2026-09-18'], ['fill', 'input[name=safe]', '0010024'], ['click', 'List']],
+    expect: ['1 file', 'MT535 · 18/09/2026 · safe code 0010024', 'MT535_10024_20260918_001.txt', '304', 'LBRENNAN · OPS'] },
+  { name: 'flow-messages-legacy-date', screen: 'messages', url: '?screen=messages&type=535&date=18/09/2026', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 3, files: MSG_FILES }] }, expect: ['3 files', 'MT535 · 18/09/2026 · all safe codes', 'MT535_10226_20260918_001.txt'] },
+  { name: 'flow-messages-iso-date', screen: 'messages', url: '?screen=messages&type=535&date=2026-09-18', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 3, files: MSG_FILES }] }, expect: ['3 files', 'MT535 · 18/09/2026 · all safe codes', 'MT535_10226_20260918_001.txt'] },
+  { name: 'flow-messages-invalid-date', screen: 'messages', url: '?screen=messages&type=535&date=31/02/2026', session: OPS_SESSION, expect: ['Enter date as yyyy-mm-dd or dd/MM/yyyy.', '“31/02/2026” is not a date.'] },
+  { name: 'flow-messages-open-file', screen: 'messages', url: '?screen=messages&type=535&date=2026-09-18', session: OPS_SESSION,
+    api: { 'GET /archive/files': [200, { count: 3, files: MSG_FILES }], 'GET /archive/files/raw': [200, MSG_RAW, { 'X-Archive-Path': MSG_FILES[0].path }] },
+    steps: [['click', 'MT535_10024_20260918_001.txt']], expect: ['Raw message', 'mt535/MT535_10024_20260918_001.txt', ':97A::SAFE//0010024', 'Close'] },
+  { name: 'flow-messages-not-found', screen: 'messages', url: '?screen=messages&file=..%2Fpackage.json', session: OPS_SESSION, api: { 'GET /archive/files/raw': [404, { error: 'File not in archive index.' }] }, expect: ['File not found.', '../package.json'] },
+  { name: 'flow-messages-next-page', screen: 'messages', steps: [['click', 'Next ›']], expect: ['51–100 of 118'] },
+  { name: 'flow-messages-clear-filters', screen: 'messages', url: '?screen=messages&type=535&safe=99999', session: OPS_SESSION, api: { 'GET /archive/files': [200, { count: 0, files: [] }] }, steps: [['click', 'Clear filters']], expect: ['Choose a message type, date or safe code, then select List.'] },
+  { name: 'flow-messages-forbidden', screen: 'messages', url: '?screen=messages&type=535', session: { token: PV_TOKEN('ADVISER'), user: PV_USER('ADVISER') }, expect: ['Not authorised for this page', 'Message browser requires the'] },
 ].map(c => ({ ...c, appOnly: true }));
 const APP_ONLY_SCREENS = [...new Set(APP_ONLY.map(c => c.screen))];
 
@@ -93,6 +118,7 @@ async function shoot(url, setup, steps = [], expect = []) {
     if (kind === 'click') await page.getByText(target, { exact: true }).nth(arg ?? 0).click();
     else if (kind === 'hover') await page.getByText(target, { exact: true }).nth(arg ?? 0).hover();
     else if (kind === 'fill') await page.locator(target).first().fill(arg);
+    else if (kind === 'select') await page.locator(target).first().selectOption(arg);
   }
   if (!steps.some(s => s[0] === 'hover')) await page.mouse.move(0, HEIGHT - 1);
   await page.waitForTimeout(400);
@@ -112,6 +138,7 @@ function pvSetup({ api = {}, session }) {
       const r = route.request(), key = `${r.method()} ${new URL(r.url()).pathname.replace(/^\/api\/pv/, '')}`;
       const hit = api[key];
       if (!hit) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: `harness: no route for ${key}` }) });
+      if (typeof hit[1] === 'string') return route.fulfill({ status: hit[0], contentType: 'text/plain', headers: hit[2] ?? {}, body: hit[1] });
       await route.fulfill({ status: hit[0], contentType: 'application/json', body: JSON.stringify(hit[1]) });
     });
   };

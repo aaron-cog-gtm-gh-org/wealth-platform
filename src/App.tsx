@@ -13,8 +13,9 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
+import { Messages } from './screens/Messages';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
-import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
+import { PV_CONTEXT_KEYS, PV_SCREEN_KEYS, parsePvContext } from './model/pv/context';
 import type { PvContext } from './model/pv/context';
 import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
@@ -74,6 +75,13 @@ function LegacyApp() {
     const q = new URLSearchParams(window.location.search);
     q.set('screen', screen);
     if (!keepPvContext) PV_CONTEXT_KEYS.forEach(k => q.delete(k));
+    Object.entries(PV_SCREEN_KEYS).forEach(([s, keys]) => { if (s !== screen) keys?.forEach(k => q.delete(k)); });
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
+  }, []);
+  const setParams = useCallback((params: Record<string, string | null>) => {
+    const q = new URLSearchParams(window.location.search);
+    Object.entries(params).forEach(([k, v]) => { if (v === null) q.delete(k); else q.set(k, v); });
     window.history.pushState(null, '', '?' + q.toString());
     setLoc(readLocation());
   }, []);
@@ -83,7 +91,7 @@ function LegacyApp() {
   const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, setParams });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -171,7 +179,7 @@ function LegacyApp() {
               <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px", padding: "48px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", textAlign: "center" }}>
                 <div style={{ font: "600 15px Inter,sans-serif" }}>{emptyTitle}</div>
                 <div style={{ maxWidth: "460px", color: "rgba(25,25,25,.6)", textWrap: "pretty" }}>{emptyBody}</div>
-                <div style={{ marginTop: "6px", padding: "7px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
+                <div onClick={m.emptyAction} style={{ marginTop: "6px", padding: "7px 12px", background: "#005daa", color: "#fff", borderRadius: "6px", fontWeight: "600" }}>{emptyCta}</div>
               </div>
             </>)}
             {isError && (<>
@@ -207,6 +215,8 @@ function LegacyApp() {
             {m.pvGate === 'forbidden' && <PvForbidden m={m} />}
 
             {show.admin && <Admin m={m} />}
+
+            {show.messages && <Messages m={m} />}
           </div>
         </main>
       </div>

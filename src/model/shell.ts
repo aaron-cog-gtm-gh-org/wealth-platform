@@ -5,6 +5,7 @@ import type { DataState, Screen } from '../types';
 import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
 import type { PvModelInput } from './pv/slice';
+import { PV_SCREEN_KEYS } from './pv/context';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
   { label: 'Adviser', items: [['c360', 'Client 360'], ['portfolio', 'Portfolio detail'], ['orders', 'Rebalance & orders', '6'], ['alts', 'Alternatives']] },
@@ -22,6 +23,7 @@ const META: Record<Screen, [string, string, string]> = {
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
+  messages: ['Portfolio Viewer / Operations', 'Message browser', 'Raw SWIFT MT535 statements and MT54x confirmations from the custody archive'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -34,6 +36,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
+  messages: ['No files match', 'No archive files match the message type, date and safe code you entered. Clear the filters, or try another date or safe code.', 'Clear filters'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -46,6 +49,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
+  messages: ['Couldn’t load the message archive', 'The Portfolio Viewer service did not return the archive file list or the requested message. Nothing has changed. Retry, or check the archive status on Admin.', 'Open health check'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
@@ -135,6 +139,8 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     emptyTitle: EMPTY[screen][0],
     emptyBody: EMPTY[screen][1],
     emptyCta: EMPTY[screen][2],
+    /** Empty CTA for PV screens with URL filters (spec 009 "Clear filters"): removes the screen's keys. */
+    emptyAction: PV_SCREEN_KEYS[screen] && pv?.setParams ? () => pv.setParams!(Object.fromEntries(PV_SCREEN_KEYS[screen]!.map(k => [k, null]))) : undefined,
     errTitle: ERR[screen][0],
     errBody: ERR[screen][1],
     errAction: ERR[screen][2],

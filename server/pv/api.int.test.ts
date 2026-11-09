@@ -111,6 +111,23 @@ describe('archive files and admin', () => {
     for (const bad of ['../package.json', '/etc/passwd', `${list.files[0].path}/../../../../package.json`])
       assert.equal((await get(`/archive/files/raw?path=${encodeURIComponent(bad)}`)).response.status, 404, bad);
   });
+  test('raw by file name (MessageBrowser.aspx?file=) only through the index', async () => {
+    const raw = await get('/archive/files/raw?file=MT535_16598_20260424_001.txt');
+    assert.equal(raw.response.status, 200);
+    assert.equal(raw.response.headers.get('x-archive-path'), 'mt535/MT535_16598_20260424_001.txt');
+    assert.match(raw.body, /:97A::SAFE\/\/0016598/);
+    for (const bad of ['../package.json', 'mt535/MT535_16598_20260424_001.txt', '', 'MT535_99999_20260424_001.txt'])
+      assert.equal((await get(`/archive/files/raw?file=${encodeURIComponent(bad)}`)).response.status, 404, bad);
+  });
+  test('message browser filters: legacy safe trimming (Q16), date, type and roles', async () => {
+    const day = (await get('/archive/files?type=MT535&date=2026-09-18')).body;
+    assert.equal(day.count, 118);
+    assert.deepEqual((await get('/archive/files?type=MT535&date=2026-09-18&safe=0010024')).body.files.map((f: any) => f.fileName), ['MT535_10024_20260918_001.txt']);
+    assert.equal((await get('/archive/files?type=MT535&date=2026-09-18&safe=000')).body.count, 118);
+    assert.equal((await get('/archive/files?date=18/09/2026')).response.status, 400);
+    assert.equal((await get('/archive/files', 'JSMITH')).response.status, 403);
+    assert.equal((await get('/archive/files/raw?file=MT535_10024_20260918_001.txt', 'JSMITH')).response.status, 403);
+  });
   test('admin stats', async () => {
     const { body } = await get('/admin/stats', 'PVADMIN');
     assert.deepEqual([body.archive.mt535Count, body.archive.mt54xCount, body.archive.parseErrors, body.archive.statementAccounts, body.archive.confirmFolders],
