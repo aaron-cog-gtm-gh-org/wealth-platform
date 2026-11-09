@@ -32,5 +32,7 @@ export const rowByHeader = (page: Page, caption: string | RegExp, header: string
   tableByCaption(page, caption).locator('tbody tr').filter({ has: page.getByRole('rowheader', { name: header, exact: true }) });
 
 export const test = base.extend<{ fresh: void }>({
+  // Playwright requires a destructuring pattern for the fixtures argument.
+  // eslint-disable-next-line no-empty-pattern
   fresh: [async ({}, use) => { await resetData(); await use(); }, { auto: true }],
 });
