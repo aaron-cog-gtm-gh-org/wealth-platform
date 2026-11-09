@@ -54,6 +54,19 @@ test.describe('Settlements (US3)', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
+  test('US3-3 a rejected range is cleared when another account loads its period', async ({ page }) => {
+    await openCustody(page, { view: 'settlements', acct: 2001 });
+    await page.getByLabel('From', { exact: true }).fill('2026-08-01');
+    await page.getByLabel('To', { exact: true }).fill('2026-07-01');
+    await page.getByRole('button', { name: 'Show settlements' }).click();
+    await expect(page.getByRole('alert')).toHaveText('The From date must be on or before the To date.');
+
+    await page.getByLabel('Account', { exact: true }).selectOption('2145');
+    await expect(tableByCaption(page, 'Settlement confirmations for 01079-03, 11 Jul 2026 to 09 Oct 2026')).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByLabel('From', { exact: true })).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
   test('US3 an invalid range in a deep link is reported by the server', async ({ page }) => {
     await openCustody(page, { view: 'settlements', acct: 2001, from: '2026-08-01', to: '2026-07-01' });
     await expect(page.getByRole('alert')).toContainText(/from/i);

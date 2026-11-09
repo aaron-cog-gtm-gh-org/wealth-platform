@@ -62,7 +62,7 @@ export function SettlementsView() {
 
   // Show the period the server applied (the default window when none was chosen).
   useEffect(() => {
-    if (data.state.status === 'ready') { setFrom(data.state.data.from); setTo(data.state.data.to); }
+    if (data.state.status === 'ready') { setFrom(data.state.data.from); setTo(data.state.data.to); setFormError(null); }
   }, [data.state]);
 
   const submit = (e: FormEvent) => {
