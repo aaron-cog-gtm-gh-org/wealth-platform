@@ -5,7 +5,7 @@ import { dbConfig, getConnectionString, maintenanceConnectionString } from './po
 import { splitSqlScript } from './sql-script';
 
 const DIR = fileURLToPath(new URL('.', import.meta.url));
-const DEFAULT_FILES = ['schema.sql', 'seed.sql', 'workflow-seed.sql'];
+const DEFAULT_FILES = ['schema.sql', 'seed.sql', 'workflow-seed.sql', 'pv-schema.sql', 'pv-seed.sql'];
 
 export function databaseName(databaseUrl: string) {
   const name = decodeURIComponent(new URL(databaseUrl).pathname.slice(1));

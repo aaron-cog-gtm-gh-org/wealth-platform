@@ -7,6 +7,7 @@ import { getSettlementExceptions } from './repositories/operations';
 import { getActivity, getPayments } from './repositories/portal';
 import { workflowRouter } from './workflows/routes';
 import { HttpError } from './workflows/errors';
+import { pvRouter } from './pv/routes';
 
 type Handler = (req: Request) => Promise<unknown>;
 
@@ -56,6 +57,7 @@ export function createApp() {
   app.get('/api/ops/queues/:queue/settlement-exceptions', json(req => getSettlementExceptions(req.params.queue)));
   app.get('/api/portal/clients/:id/activity', json(req => getActivity(req.params.id)));
   app.get('/api/portal/clients/:id/payments', json(req => getPayments(req.params.id)));
+  app.use('/api/pv', pvRouter);
   app.use('/api', (_req: Request, res: Response) => res.status(404).json({ error: 'Not found.' }));
   app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof HttpError) {
