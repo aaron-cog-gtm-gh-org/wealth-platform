@@ -53,3 +53,14 @@ Source: [`aaron-cog-gtm-gh-org/legacy-wealth-platform`](https://github.com/aaron
 ## Legacy golden output
 
 `parity/legacy-golden/legacy-golden.json.gz` (from unmodified legacy PV.Core/PV.Data under Mono + SQL Server; see `parity/legacy-oracle/README.md`): 120 accounts × 26 statement dates (3,065 `PositionCheck.Run` calls), 7 diff rows, 30,645 holdings lines, settlements default-90d and full-range, Check All per date. Decimals are strings with legacy scale (compare numerically); settlement ties on settle date are ordered `folder, fileName`.
+
+## Spec 010 decisions (shell auth / roles / Admin)
+
+Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format. SHA1 is not carried forward; that decision is from spec 004. Explicit divergences, none of which change a catalogued domain quirk:
+- **D-010-1** Deep links survive sign-in, where legacy always went to `ClientSearch.aspx`.
+- **D-010-2** Not-authorised is an in-place panel, where legacy redirected to `ClientSearch.aspx?err=1`.
+- **D-010-3** The archive root path is not shown on Admin.
+- **D-010-4** The reload confirmation is inline and keeps the legacy prompt text.
+- **D-010-5** An expired session says so, where legacy silently redirected to Login.
+
+The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.

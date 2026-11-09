@@ -12,6 +12,11 @@ import { SettlementExceptions } from './screens/SettlementExceptions';
 import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
+import { Admin } from './screens/Admin';
+import { PvForbidden, PvSignIn } from './screens/PvGate';
+import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
+import type { PvContext } from './model/pv/context';
+import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import { Workspace } from './workspace/Workspace';
 import { isWorkspaceLocation, workspaceHref } from './workspace/model';
@@ -21,13 +26,15 @@ interface Location {
   screen: Screen;
   /** Forced via `?state=` for design review; otherwise derived from the API request. */
   dataState: DataState | null;
+  /** `?acct=&stmt=` PV deep-link context (spec 010). */
+  ctx: PvContext;
 }
 
 function readLocation(): Location {
   const q = new URLSearchParams(window.location.search);
   const screen = SCREENS.find(s => s === q.get('screen')) ?? 'c360';
   const dataState = DATA_STATES.find(s => s === q.get('state')) ?? null;
-  return { screen, dataState };
+  return { screen, dataState, ctx: parsePvContext(q) };
 }
 
 function preventHashLinks(e: MouseEvent) {
@@ -63,16 +70,20 @@ function LegacyApp() {
 
   const setState: SetUiState = useCallback(patch => setUi(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) })), []);
 
-  const go = useCallback((screen: Screen) => {
+  const navigate = useCallback((screen: Screen, keepPvContext: boolean) => {
     const q = new URLSearchParams(window.location.search);
     q.set('screen', screen);
+    if (!keepPvContext) PV_CONTEXT_KEYS.forEach(k => q.delete(k));
     window.history.pushState(null, '', '?' + q.toString());
-    setLoc(l => ({ ...l, screen }));
+    setLoc(readLocation());
   }, []);
+  const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
+  const goPv = useCallback((screen: Screen) => navigate(screen, true), [navigate]);
 
+  const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
-  const dataState = loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load);
+  const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -94,6 +105,7 @@ function LegacyApp() {
             <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#ffd200", color: "#002d62", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "11px" }}>{userInitials}</div>
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "13px", whiteSpace: "nowrap" }}><span style={{ fontWeight: "600", color: "#fff" }}>{userName}</span><span>{userRole}</span></div>
           </div>
+          {m.pvSignedIn && <a href="#" onClick={m.pvSignOut} style={{ flex: "none", color: "#fff", fontWeight: "600", textDecoration: "underline" }}>Sign out</a>}
         </div>
       </header>
       <div style={{ flex: "1", display: "flex", minHeight: "0" }}>
@@ -189,6 +201,12 @@ function LegacyApp() {
             {show.activity && <ActivityStatus m={m} />}
 
             {show.money && <MoveMoney m={m} />}
+
+            {m.pvGate === 'signin' && <PvSignIn m={m} />}
+
+            {m.pvGate === 'forbidden' && <PvForbidden m={m} />}
+
+            {show.admin && <Admin m={m} />}
           </div>
         </main>
       </div>

@@ -1,4 +1,4 @@
-export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money'] as const;
+export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const DATA_STATES = ['Populated', 'Loading', 'Empty', 'Error'] as const;
@@ -18,6 +18,10 @@ export interface UiState {
   amount: string;
   bene: number;
   rail: Rail;
+  /** Admin (spec 010): reload confirmation open / reload in flight / last notice. */
+  adminConfirm: boolean;
+  adminBusy: boolean;
+  adminNotice: string | null;
 }
 
 export const INITIAL_UI_STATE: UiState = {
@@ -31,6 +35,9 @@ export const INITIAL_UI_STATE: UiState = {
   amount: '40000',
   bene: 0,
   rail: 'Wire',
+  adminConfirm: false,
+  adminBusy: false,
+  adminNotice: null,
 };
 
 export type SetUiState = (patch: Partial<UiState> | ((s: UiState) => Partial<UiState>)) => void;

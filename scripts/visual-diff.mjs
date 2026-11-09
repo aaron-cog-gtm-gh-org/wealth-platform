@@ -1,7 +1,10 @@
 // Screenshots every screen × data state of the app and the mockup, then pixel-diffs them.
-// Usage: node scripts/visual-diff.mjs [screen[:state] ...]
-// Env: APP_URL (default http://localhost:5173), MOCK_URL (mockup .dc.html served over http), CHROME (executable path), WIDTH, HEIGHT.
-import { mkdirSync, writeFileSync } from 'node:fs';
+// App-only screens (no mockup counterpart, e.g. Admin) are checked by text assertions and against
+// committed PNG baselines in scripts/visual-baselines/ instead.
+// Usage: node scripts/visual-diff.mjs [screen[:state] | flow-name | flows | app ...]
+// Env: APP_URL (default http://localhost:5173), MOCK_URL (mockup .dc.html served over http), CHROME (executable path), WIDTH, HEIGHT,
+//      UPDATE_BASELINES=1 (rewrite app-only baselines), BASELINE_MAX (allowed app-only diff ratio, default 0.005).
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
@@ -36,16 +39,52 @@ const FLOWS = [
   { name: 'flow-money-edit', screen: 'money', steps: [['click', 'Review payment'], ['click', 'Edit']] },
 ];
 
+// App-only cases (spec 010+). `expect`: text that must be visible. `api`: routed /api/pv responses
+// ({ 'POST /login': [status, body] }). `session`: sessionStorage pv.session to seed. Default URL is ?screen=&state=.
+const BASELINES = 'scripts/visual-baselines';
+const PV_TOKEN = (role, exp = 4102444800000) => `${Buffer.from(JSON.stringify({ userId: 1, username: 'PV' + role, role, exp })).toString('base64url')}.harness`;
+const PV_USER = role => ({ userId: role === 'OPS' ? 9 : 1, username: role === 'OPS' ? 'LBRENNAN' : 'PVADMIN', fullName: role === 'OPS' ? 'Lauren Brennan' : 'System Administrator', role });
+const PV_STATS = {
+  archive: { mt535Count: 1184, mt54xCount: 2642, statements: 1184, confirms: 2642, parseErrors: 0, parseErrorLog: [], loadedAt: '2026-11-09T14:47:12.000Z', loadMs: 1286, statementAccounts: 48, confirmFolders: 46 },
+  users: [
+    { userId: 7, username: 'JSMITH', fullName: 'James Smith', role: 'ADVISER', activeFlg: 'Y', lastLoginDt: '2026-11-06T09:12:41.000' },
+    { userId: 9, username: 'LBRENNAN', fullName: 'Lauren Brennan', role: 'OPS', activeFlg: 'Y', lastLoginDt: '2026-11-09T08:03:19.000' },
+    { userId: 1, username: 'PVADMIN', fullName: 'System Administrator', role: 'ADMIN', activeFlg: 'Y', lastLoginDt: '2026-11-09T09:41:57.000' },
+  ],
+};
+const SIGN_IN = [['fill', 'input[name=username]', 'pvadmin'], ['fill', 'input[name=password]', 'synthetic-pass'], ['click', 'Sign in']];
+const ADMIN_EXPECT = {
+  Populated: ['Archive index', 'MT535 files', 'Parse errors (2)', 'Last loaded', '09/11/2026 09:47:12', '1286 ms', 'Reload archive', 'Users (6)', 'LBRENNAN', 'Portfolio Viewer'],
+  Loading: ['Loading admin…'],
+  Empty: ['Archive is empty'],
+  Error: ['Couldn’t load archive status', 'Retry'],
+};
+const APP_ONLY = [
+  ...STATES.map(state => ({ name: `admin-${state}`, screen: 'admin', state, expect: ADMIN_EXPECT[state] })),
+  { name: 'flow-admin-reload-confirm', screen: 'admin', steps: [['click', 'Reload archive']], expect: ['Reload the archive index?', 'Cancel'] },
+  { name: 'flow-admin-reload', screen: 'admin', steps: [['click', 'Reload archive'], ['click', 'Reload']], expect: ['Archive reloaded.'] },
+  { name: 'flow-admin-signin', screen: 'admin', url: '?screen=admin', expect: ['Sign in to Portfolio Viewer', 'User ID', 'Password'] },
+  { name: 'flow-admin-signin-ok', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [200, { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }], 'GET /admin/stats': [200, PV_STATS] }, steps: SIGN_IN, expect: ['Archive index', 'No parse errors at the last load.', 'Users (3)', 'Sign out', 'PVADMIN · ADMIN'] },
+  { name: 'flow-admin-signin-invalid', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [401, { error: 'Invalid user name or password.' }] }, steps: SIGN_IN, expect: ['Invalid user ID or password.'] },
+  { name: 'flow-admin-signin-disabled', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [403, { error: 'Account disabled.' }] }, steps: SIGN_IN, expect: ['Your account has been disabled. Please contact Support (ext. 4417).'] },
+  { name: 'flow-admin-forbidden', screen: 'admin', url: '?screen=admin', api: { 'POST /login': [200, { token: PV_TOKEN('OPS'), user: PV_USER('OPS') }] }, steps: SIGN_IN, expect: ['Not authorised for this page', 'Admin requires the ADMIN role. You are signed in as LBRENNAN (OPS).'] },
+  { name: 'flow-admin-expired', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [401, { error: 'Session expired.' }] }, expect: ['Your session has expired. Sign in again.', 'Sign in to Portfolio Viewer'] },
+  { name: 'flow-admin-signout', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [200, PV_STATS] }, steps: [['click', 'Sign out']], expect: ['Sign in to Portfolio Viewer'] },
+].map(c => ({ ...c, appOnly: true }));
+const APP_ONLY_SCREENS = [...new Set(APP_ONLY.map(c => c.screen))];
+
 const args = process.argv.slice(2);
 const STATIC = SCREENS.flatMap(screen => STATES.map(state => ({ name: `${screen}-${state}`, screen, state })));
+const named = name => APP_ONLY.find(c => c.name === name);
 const cases = !args.length
-  ? [...STATIC, ...FLOWS]
-  : args.flatMap(a => a === 'flows' ? FLOWS : a.startsWith('flow-') ? FLOWS.filter(f => f.name === a) : (([screen, state = 'Populated']) => [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
+  ? [...STATIC, ...FLOWS, ...APP_ONLY]
+  : args.flatMap(a => a === 'flows' ? FLOWS : a === 'app' ? APP_ONLY : a.startsWith('flow-') ? [...FLOWS, ...APP_ONLY].filter(f => f.name === a)
+    : (([screen, state = 'Populated']) => APP_ONLY_SCREENS.includes(screen) ? [named(`${screen}-${state}`)].filter(Boolean) : [{ name: `${screen}-${state}`, screen, state }])(a.split(':')));
 
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: CHROME, headless: false, args: ['--headless=new', '--hide-scrollbars'] });
 
-async function shoot(url, setup, steps = []) {
+async function shoot(url, setup, steps = [], expect = []) {
   const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT }, deviceScaleFactor: 1 });
   if (setup) await setup(page);
   await page.goto(url, { waitUntil: 'networkidle' });
@@ -57,9 +96,25 @@ async function shoot(url, setup, steps = []) {
   }
   if (!steps.some(s => s[0] === 'hover')) await page.mouse.move(0, HEIGHT - 1);
   await page.waitForTimeout(400);
+  const missing = [];
+  for (const t of expect) if (!(await page.getByText(t, { exact: false }).first().isVisible().catch(() => false))) missing.push(t);
   const buf = await page.screenshot({ fullPage: true, animations: 'disabled' });
   await page.close();
-  return PNG.sync.read(buf);
+  const png = PNG.sync.read(buf);
+  png.missing = missing;
+  return png;
+}
+
+function pvSetup({ api = {}, session }) {
+  return async page => {
+    if (session) await page.addInitScript(s => sessionStorage.setItem('pv.session', s), JSON.stringify(session));
+    await page.route('**/api/pv/**', async route => {
+      const r = route.request(), key = `${r.method()} ${new URL(r.url()).pathname.replace(/^\/api\/pv/, '')}`;
+      const hit = api[key];
+      if (!hit) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: `harness: no route for ${key}` }) });
+      await route.fulfill({ status: hit[0], contentType: 'application/json', body: JSON.stringify(hit[1]) });
+    });
+  };
 }
 
 function pad(img, w, h) {
@@ -70,8 +125,33 @@ function pad(img, w, h) {
   return out;
 }
 
-let worst = 0;
-for (const { name, screen, state = 'Populated', steps } of cases) {
+let worst = 0, failures = 0;
+mkdirSync(BASELINES, { recursive: true });
+const BASELINE_MAX = Number(process.env.BASELINE_MAX ?? 0.005);
+for (const c of cases.filter(c => c.appOnly)) {
+  const { name, screen, state = 'Populated', steps, expect = [], url } = c;
+  const app = await shoot(`${APP_URL}/${url ?? `?screen=${screen}&state=${state}`}`, pvSetup(c), steps, expect);
+  writeFileSync(`${OUT}/${name}-app.png`, PNG.sync.write(app));
+  const file = `${BASELINES}/${name}.png`;
+  let note;
+  if (process.env.UPDATE_BASELINES === '1' || !existsSync(file)) {
+    writeFileSync(file, PNG.sync.write(app));
+    note = 'baseline written';
+  } else {
+    const base = PNG.sync.read(readFileSync(file));
+    const w = Math.max(base.width, app.width), h = Math.max(base.height, app.height);
+    const diff = new PNG({ width: w, height: h });
+    const n = pixelmatch(pad(base, w, h).data, pad(app, w, h).data, diff.data, w, h, { threshold: 0.1 });
+    writeFileSync(`${OUT}/${name}-diff.png`, PNG.sync.write(diff));
+    const ratio = n / (w * h);
+    if (ratio > BASELINE_MAX) failures++;
+    note = `${n.toString().padStart(8)} px  ${(ratio * 100).toFixed(3)}% vs baseline${ratio > BASELINE_MAX ? '  FAIL' : ''}${base.height !== app.height ? ` size base ${base.width}x${base.height} app ${app.width}x${app.height}` : ''}`;
+  }
+  if (app.missing.length) failures++;
+  console.log(`${name.padEnd(34)} ${note}  assertions ${expect.length - app.missing.length}/${expect.length}${app.missing.length ? `  MISSING ${JSON.stringify(app.missing)}` : ''}`);
+}
+
+for (const { name, screen, state = 'Populated', steps } of cases.filter(c => !c.appOnly)) {
   const mock = await shoot(MOCK_URL, page => page.route(MOCK_URL, async route => {
     const res = await route.fetch();
     const body = (await res.text())
@@ -94,3 +174,4 @@ for (const { name, screen, state = 'Populated', steps } of cases) {
 }
 await browser.close();
 console.log(`worst ${(worst * 100).toFixed(3)}%`);
+if (failures) { console.log(`${failures} app-only case(s) failed`); process.exitCode = 1; }
