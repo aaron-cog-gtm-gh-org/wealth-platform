@@ -1,6 +1,6 @@
 import type { Account, Bootstrap, Client, Order } from './api';
 
-export const AREAS = ['clients', 'portfolio', 'orders', 'money', 'rebalance', 'settlements'] as const;
+export const AREAS = ['clients', 'portfolio', 'orders', 'money', 'rebalance', 'settlements', 'custody'] as const;
 export type Area = (typeof AREAS)[number];
 
 export const AREA_LABELS: Record<Area, string> = {
@@ -10,6 +10,7 @@ export const AREA_LABELS: Record<Area, string> = {
   money: 'Move money',
   rebalance: 'Rebalance',
   settlements: 'Settlements',
+  custody: 'Custody',
 };
 
 /** Audit actions are namespaced by entity (`order.created`, `client.updated`, ...). */
@@ -20,6 +21,7 @@ export const AREA_AUDIT_PREFIXES: Record<Area, string[]> = {
   money: ['transfer'],
   rebalance: ['allocation', 'rebalance'],
   settlements: ['exception'],
+  custody: ['recon', 'custody'],
 };
 
 export function isWorkspaceLocation(search = window.location.search) {

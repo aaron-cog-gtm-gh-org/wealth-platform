@@ -64,6 +64,23 @@ The database check uses its own disposable PostgreSQL environment. Browser QA re
 
 All domain data is served by the API in `server/`, backed by PostgreSQL.
 
+### Custody (Portfolio Viewer) data
+
+`db:setup` also loads the Custody tables (`custody_*`):
+
+| Path | Contents |
+| --- | --- |
+| `server/db/custody-schema.sql` | Re-runnable DDL for reference, recon-note and archive tables |
+| `server/db/custody-seed.sql` | Portfolio Viewer reference data with PV IDs: 6 users, 50 clients, 120 accounts, 302 instruments, 13 recon notes |
+| `server/custody/archive/` | Custodian SWIFT archive, byte-for-byte: `mt535/*.txt` (3,073 statements of holdings) and `mt54x/<yyyyMMdd>/*.txt` (2,971 settlement confirmations) |
+| `server/custody/load-archive.ts` | Loads every archive file into `custody_messages` (type, safekeeping account without leading zeros, date, sequence and day folder from the path; raw text; `parse_status = 'pending'`) |
+
+The archive load inserts new files, rewrites changed ones as pending, removes files no longer on
+disk and leaves unchanged rows alone, so it can be re-run. Seed conversion notes are at the top of
+`custody-seed.sql`: recon statuses are stored verbatim (legacy `O`/`C` and `OPEN`), `ACCT_TYPE` is kept verbatim (including
+`'SIPP '`), and recon-note update times are PV server time (Europe/London). `POST /api/test/reset`
+re-applies `custody-seed.sql`, restoring the 13 recon notes.
+
 `npm run db:down` stops the local database container. `npm run db:reset` reloads the schema and all
 seed data. `npm run api:test` enables the loopback-only reset endpoint for local QA and should not
 be used as a production command.

@@ -15,6 +15,7 @@ import { OrdersArea } from './areas/Orders';
 import { MoneyArea } from './areas/Money';
 import { RebalanceArea } from './areas/Rebalance';
 import { SettlementsArea } from './areas/Settlements';
+import { CustodyArea } from './custody/CustodyArea';
 import './workspace.css';
 
 const SUBTITLES: Record<Area, string> = {
@@ -24,6 +25,7 @@ const SUBTITLES: Record<Area, string> = {
   money: 'Move cash between a client\u2019s own CAD accounts.',
   rebalance: 'Set target weights and preview drift. Previews never place trades.',
   settlements: 'Assign, annotate and resolve settlement exceptions.',
+  custody: 'Custodian holdings statements, settlement confirmations and weekly position reconciliation for the UK custody book.',
 };
 
 type Load = { state: 'loading' } | { state: 'error'; message: string } | { state: 'ready'; data: Bootstrap; at: Date };
@@ -180,6 +182,7 @@ export function Workspace() {
               {area === 'money' && <MoneyArea />}
               {area === 'rebalance' && <RebalanceArea />}
               {area === 'settlements' && <SettlementsArea />}
+              {area === 'custody' && <CustodyArea />}
             </div>
             <AuditFeed area={area} />
           </WorkspaceContext.Provider>

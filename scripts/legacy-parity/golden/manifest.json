@@ -1,0 +1,25 @@
+{
+  "format": "pv-golden/1",
+  "sha256": "05d07685d9c0131098d6dc933624a818e933f172d5a9e49423cbe9b7352b2f6d",
+  "stats": {
+    "clientSearches": 12,
+    "clients": 50,
+    "accounts": 120,
+    "statements": 3065,
+    "holdingLines": 30645,
+    "settlementAccounts": 120,
+    "settlements": 2950,
+    "positionChecks": 3065,
+    "positionCheckNoPrevious": 120,
+    "positionCheckBreaks": 7,
+    "checkAllDates": 26,
+    "checkAllRows": 3065
+  },
+  "archive": {
+    "mt535Count": 3073,
+    "mt54xCount": 2971,
+    "statements": 3073,
+    "confirmations": 2971,
+    "parseErrors": 0
+  }
+}
