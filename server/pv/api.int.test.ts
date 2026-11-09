@@ -59,6 +59,27 @@ describe('reference data and archive reads vs legacy golden', () => {
     assert.equal((await get('/clients/999999')).response.status, 404);
     assert.equal((await get('/accounts/abc')).response.status, 400);
   });
+  test('client summary (spec 008): accounts by ACCT_NO, latest statement (Q8) and Σ MktValGbp vs legacy golden, every client', async () => {
+    const byClient = new Map<number, any[]>();
+    for (const a of golden.accounts) byClient.set(a.clientId, [...(byClient.get(a.clientId) ?? []), a]);
+    const fix = (v: unknown) => (v == null ? null : Number(v).toFixed(2));
+    for (const [clientId, accts] of byClient) {
+      const { response, body } = await get(`/clients/${clientId}/summary`, 'JSMITH');
+      assert.equal(response.status, 200);
+      const want = accts.map(a => {
+        const d = a.statementDates[0] ?? null;
+        const lines = d ? a.positionChecks.find((p: any) => p.stmtDate === d)?.statement?.lines ?? [] : null;
+        return [a.acctId, a.acctNo, d, lines ? lines.reduce((t: number, l: any) => t + Number(l.mktValGbp), 0).toFixed(2) : null];
+      });
+      assert.deepEqual(body.accounts.map((a: any) => [a.acctId, a.acctNo, a.stmtDate, fix(a.mktValGbp)]), want, `client ${clientId}`);
+      const with_ = want.filter(w => w[3] !== null);
+      assert.equal(fix(body.totalMktValGbp), with_.length ? with_.reduce((t, w) => t + Number(w[3]), 0).toFixed(2) : null, `client ${clientId} total`);
+    }
+    const p = (await get('/clients/1001/summary')).body;
+    assert.deepEqual([p.clientRef, p.clientName, p.adviserName, p.statusCd, p.createdDt], ['C2017-0124', 'The Penhaligon Family Trust', 'James Smith', 'A', '2017-06-15']);
+    assert.equal((await get('/clients/999999/summary')).response.status, 404);
+    assert.equal((await get('/clients/abc/summary')).response.status, 400);
+  });
   test('statement dates, holdings and default 90-day settlements for every account', async () => {
     for (const a of golden.accounts) {
       assert.deepEqual((await get(`/accounts/${a.acctId}/statement-dates`)).body.dates, a.statementDates);

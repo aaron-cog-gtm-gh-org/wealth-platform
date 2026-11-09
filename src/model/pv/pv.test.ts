@@ -26,15 +26,16 @@ test('Site.Master/BasePage role table (Q17)', () => {
   }
   assert.equal(canAccess(['ADMIN'], 'admin'), false, 'exact, case-sensitive match');
   assert.equal(canAccess(null, null), false, 'no session, no access');
-  assert.deepEqual(pvNavFor('ADMIN').map(p => p.screen), ['admin']);
-  assert.deepEqual(pvNavFor('OPS'), []);
+  assert.ok(pvNavFor('ADMIN').some(p => p.screen === 'admin'));
+  assert.ok(!pvNavFor('OPS').some(p => p.screen === 'admin'));
+  assert.deepEqual(pvNavFor('ADMIN').map(p => p.page), PV_PAGES.filter(p => p.screen !== null).map(p => p.page), 'legacy nav order');
 });
 
 test('URL context ?acct=&stmt=', () => {
-  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18' });
-  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null });
-  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null });
-  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null });
+  assert.deepEqual(parsePvContext('?acct=2001&stmt=2026-09-18'), { acct: 2001, stmt: '2026-09-18', cid: null, q: null });
+  assert.deepEqual(parsePvContext('?acct=abc&stmt=18/09/2026'), { acct: null, stmt: null, cid: null, q: null });
+  assert.deepEqual(parsePvContext('?acct=0&stmt=2026-02-30'), { acct: null, stmt: null, cid: null, q: null });
+  assert.deepEqual(parsePvContext(''), { acct: null, stmt: null, cid: null, q: null });
 });
 
 test('slices: unregistered screens and missing context keep existing behaviour', () => {

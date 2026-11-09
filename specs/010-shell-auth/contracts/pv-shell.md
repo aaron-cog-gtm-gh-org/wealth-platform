@@ -32,6 +32,7 @@
 - `?acct=<positive int ACCT_ID>&stmt=<yyyy-mm-dd>` → `PvContext {acct, stmt}`. Malformed values become null.
 - Legacy `Holdings.aspx?acct=2001&date=…` becomes `?screen=<id>&acct=2001&stmt=2026-09-18`.
 - To add keys, extend `PvContext`, `parsePvContext` and `PV_CONTEXT_KEYS` additively.
+- Spec 008 added `?cid=<positive int CLIENT_ID>` and `?q=<raw search text>` (optional fields), plus an optional `PvSliceDef.active(ctx)` gate and `PvModelInput.openPv(screen, patch)` for navigation that sets context keys.
 
 ## 4. Slices (src/model/pv/slice.ts)
 ```ts

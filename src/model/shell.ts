@@ -4,6 +4,7 @@ import { SCREENS } from '../types';
 import type { DataState, Screen } from '../types';
 import { pvNavFor, pvPageForScreen, rolesLabel } from './pv/access';
 import { PREVIEW_USER } from './pv/preview';
+import { clientSummaryCopy } from './clients';
 import type { PvModelInput } from './pv/slice';
 
 const NAV_GROUPS: { label: string; items: [Screen, string, string?][] }[] = [
@@ -22,6 +23,7 @@ const META: Record<Screen, [string, string, string]> = {
   activity: ['Client portal / Activity', 'Activity and status', 'Times shown in Eastern Time'],
   money: ['Client portal / Move money', 'Move money', 'Payments are screened before they are sent'],
   admin: ['Portfolio Viewer / Administration', 'Admin', 'Custody message archive and Portfolio Viewer user accounts'],
+  clients: ['Portfolio Viewer / Client search', 'Client search', 'Custody clients by client name or client reference'],
 };
 
 const EMPTY: Record<Screen, [string, string, string]> = {
@@ -34,6 +36,7 @@ const EMPTY: Record<Screen, [string, string, string]> = {
   activity: ['No activity in the last 30 days', 'Try a longer date range, or check another account.', 'Change date range'],
   money: ['No payees yet', 'Add a payee to send money from your investment accounts.', 'Add a payee'],
   admin: ['Archive is empty', 'The archive index holds no MT535 statements or MT54x confirmations. Check that the custody archive share is mounted, then reload the archive.', 'Reload archive'],
+  clients: ['No custody clients on file', 'The Portfolio Viewer client register is empty, so a blank search returns nothing. Clients appear here once they are set up in the custody client register.', 'Search again'],
 };
 
 const ERR: Record<Screen, [string, string, string]> = {
@@ -46,6 +49,7 @@ const ERR: Record<Screen, [string, string, string]> = {
   activity: ['Activity didn’t load', 'We couldn’t reach the transactions service. Try again, or download your latest statement from Documents.', 'Go to Documents'],
   money: ['Payments are temporarily unavailable', 'We’re unable to send payments right now. Nothing has been sent or withdrawn. Try again in 15 minutes.', 'View pending payments'],
   admin: ['Couldn’t load archive status', 'The Portfolio Viewer service did not return the archive index or user list. Nothing has been reloaded or changed. Retry, or check the service health page.', 'Open health check'],
+  clients: ['Couldn’t search clients', 'The Portfolio Viewer service did not return search results. Nothing has changed. Retry, or search again in a minute.', 'Search again'],
 };
 
 export const CLIENT_PORTAL_SCREENS: Screen[] = ['home', 'activity', 'money'];
@@ -64,7 +68,9 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
   const gate = slice?.gate ?? null;
   const pvUser = pv?.user ?? (slice?.preview ? PREVIEW_USER : null);
   const isClientView = CLIENT_PORTAL_SCREENS.includes(screen);
-  const [crumb, title, subtitle] = META[screen];
+  const pvCopy = screen === 'c360' && slice ? clientSummaryCopy(slice.data) : null;
+  const [crumb, title, subtitle] = pvCopy?.meta ?? META[screen];
+  const empty = pvCopy?.empty ?? EMPTY[screen], err = pvCopy?.err ?? ERR[screen];
 
   const nav = NAV_GROUPS.map(g => ({
     label: g.label,
@@ -132,12 +138,12 @@ export function buildShell(screen: Screen, dataState: DataState, go: (s: Screen)
     },
     loadingMsg: 'Loading ' + title.toLowerCase() + '…',
     skeleton: [80, 65, 90, 55, 75, 60, 85, 70].map(w => ({ w: w + '%' })),
-    emptyTitle: EMPTY[screen][0],
-    emptyBody: EMPTY[screen][1],
-    emptyCta: EMPTY[screen][2],
-    errTitle: ERR[screen][0],
-    errBody: ERR[screen][1],
-    errAction: ERR[screen][2],
+    emptyTitle: empty[0],
+    emptyBody: empty[1],
+    emptyCta: empty[2],
+    errTitle: err[0],
+    errBody: err[1],
+    errAction: err[2],
     errRef: 'Ref ' + screen.toUpperCase() + '-503-7f2a · 14:47:12 ET',
   };
 }

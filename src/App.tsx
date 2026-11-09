@@ -13,9 +13,11 @@ import { ClientHome } from './screens/ClientHome';
 import { ActivityStatus } from './screens/ActivityStatus';
 import { MoveMoney } from './screens/MoveMoney';
 import { Admin } from './screens/Admin';
+import { ClientSearch } from './screens/ClientSearch';
+import { CustodyClient360 } from './screens/CustodyClient360';
 import { PvForbidden, PvSignIn } from './screens/PvGate';
 import { PV_CONTEXT_KEYS, parsePvContext } from './model/pv/context';
-import type { PvContext } from './model/pv/context';
+import type { PvContext, PvContextKey } from './model/pv/context';
 import { usePv } from './pv/usePv';
 import { DATA_STATES, INITIAL_UI_STATE, SCREENS } from './types';
 import { Workspace } from './workspace/Workspace';
@@ -79,11 +81,18 @@ function LegacyApp() {
   }, []);
   const go = useCallback((screen: Screen) => navigate(screen, false), [navigate]);
   const goPv = useCallback((screen: Screen) => navigate(screen, true), [navigate]);
+  const openPv = useCallback((screen: Screen, patch: Partial<Record<PvContextKey, string | null>>) => {
+    const q = new URLSearchParams(window.location.search);
+    q.set('screen', screen);
+    for (const [k, v] of Object.entries(patch)) { if (v == null) q.delete(k); else q.set(k, v); }
+    window.history.pushState(null, '', '?' + q.toString());
+    setLoc(readLocation());
+  }, []);
 
   const pv = usePv(loc.screen, loc.ctx, loc.dataState);
   const fetched: DataState = loadFailed ? 'Error' : data ? 'Populated' : 'Loading';
   const dataState = pv.slice ? pv.slice.dataState : loc.dataState && loc.dataState !== 'Populated' ? loc.dataState : fetched;
-  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv });
+  const m = buildModel(loc.screen, dataState, ui, setState, go, data, load, { ...pv, goPv, openPv });
   const { nav, crumb, title, subtitle, ctx, isClientView, showCtx, userInitials, userName, userRole, show, isLoading, isEmpty, isError, loadingMsg, skeleton, emptyTitle, emptyBody, emptyCta, errTitle, errBody, errAction, errRef } = m;
 
   return (
@@ -186,7 +195,7 @@ function LegacyApp() {
               </div>
             </>)}
 
-            {show.c360 && <Client360 m={m} />}
+            {show.c360 && (m.client360 ? <CustodyClient360 m={m} /> : <Client360 m={m} />)}
 
             {show.portfolio && <PortfolioDetail m={m} />}
 
@@ -207,6 +216,7 @@ function LegacyApp() {
             {m.pvGate === 'forbidden' && <PvForbidden m={m} />}
 
             {show.admin && <Admin m={m} />}
+            {show.clients && m.clientSearch && <ClientSearch key={m.clientSearch.query ?? ''} m={m} />}
           </div>
         </main>
       </div>

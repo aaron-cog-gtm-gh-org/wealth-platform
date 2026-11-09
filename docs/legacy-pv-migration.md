@@ -64,3 +64,12 @@ Spec 010 preserves Q17 roles (exact match) and the Q14 Admin `dd/MM/yyyy` format
 - **D-010-5** An expired session says so, where legacy silently redirected to Login.
 
 The shared plumbing is described in `specs/010-shell-auth/contracts/pv-shell.md`.
+
+## Spec 008 decisions (ClientSearch / ClientSummary → Client 360)
+
+Search keeps `usp_ClientSearch` semantics (spec 004 route); the summary keeps Q8 (latest statement by highest file sequence), Q14 (`dd-MMM-yyyy`, `#,##0.00`) and Q17 (any role; Position check link only for OPS/ADMIN). New screen `clients`; the custody summary is `c360` with `?cid=`, and `?screen=c360` alone stays the Whitfield mockup. Explicit divergences:
+- **D-008-1** The last search is kept in the URL (`?q=`) and re-queried, not cached in Session.
+- **D-008-2** An unknown client shows an in-place "Client not found" state, where legacy redirected to ClientSearch.
+- **D-008-3** Account rows also link to Position check (OPS/ADMIN); Holdings/Position check links carry the latest statement date.
+- **D-008-4** A numeric pager with Previous/Next replaces the postback pager (25 rows per page kept).
+- **D-008-5** Client 360 adds a KPI strip above the legacy fields.

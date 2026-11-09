@@ -2,8 +2,9 @@ import type { createPvClient } from '../../api/pv';
 import type { PvAdminStats, PvUser } from '../../api/pv-types';
 import type { DataState, Screen } from '../../types';
 import { canAccess, pvPageForScreen } from './access';
-import type { PvContext } from './context';
+import type { PvContext, PvContextKey } from './context';
 import { PREVIEW_ADMIN_STATS } from './preview';
+import { clientSearchSlice, clientSummarySlice } from '../clients';
 
 export type PvApi = ReturnType<typeof createPvClient>;
 
@@ -14,6 +15,8 @@ export type PvApi = ReturnType<typeof createPvClient>;
  */
 export interface PvSliceDef<T> {
   needs: 'none' | 'acct' | 'acct+stmt';
+  /** Optional extra context gate (spec 008: Client 360 is a PV screen only with `?cid=`). */
+  active?: (ctx: PvContext) => boolean;
   load: (api: PvApi, ctx: PvContext) => Promise<T>;
   isEmpty: (data: T) => boolean;
   /** Fixed synthetic data rendered for `?state=Populated` without a session (design preview / visual-diff). */
@@ -47,6 +50,8 @@ const adminSlice: PvSliceDef<PvAdminStats> = {
 // Specs 005–009: add `<screen>: <slice>` here (additively).
 export const PV_SLICES: Partial<Record<Screen, PvSliceDef<unknown>>> = {
   admin: adminSlice as PvSliceDef<unknown>,
+  clients: clientSearchSlice as PvSliceDef<unknown>,
+  c360: clientSummarySlice as PvSliceDef<unknown>,
 };
 
 /** The PV slice that drives `screen` for this URL context, or null (existing behaviour). */
@@ -55,6 +60,7 @@ export function pvSliceFor(screen: Screen, ctx: PvContext): PvSliceDef<unknown> 
   if (!def) return null;
   if (def.needs !== 'none' && ctx.acct === null) return null;
   if (def.needs === 'acct+stmt' && ctx.stmt === null) return null;
+  if (def.active && !def.active(ctx)) return null;
   return def;
 }
 
@@ -92,4 +98,6 @@ export interface PvModelInput {
   run: (op: 'reloadArchive') => Promise<void>;
   /** Navigate to a PV screen keeping `acct`/`stmt`. */
   goPv: (s: Screen) => void;
+  /** Navigate to a PV screen setting/clearing context keys, keeping the others (spec 008). */
+  openPv?: (s: Screen, patch: Partial<Record<PvContextKey, string | null>>) => void;
 }

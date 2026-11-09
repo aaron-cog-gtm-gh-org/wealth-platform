@@ -59,6 +59,40 @@ const ADMIN_EXPECT = {
   Empty: ['Archive is empty'],
   Error: ['Couldn’t load archive status', 'Retry'],
 };
+const C360_PV = '?screen=c360&cid=1001';
+const PV_ADVISER = { userId: 7, username: 'JSMITH', fullName: 'James Smith', role: 'ADVISER' };
+const ADVISER_SESSION = { token: PV_TOKEN('ADVISER'), user: PV_ADVISER };
+const OPS_SESSION = { token: PV_TOKEN('OPS'), user: PV_USER('OPS') };
+const SMITHS = Array.from({ length: 30 }, (_, i) => ({
+  clientId: 1100 + i, clientRef: `C20${18 + (i % 4)}-0${String(410 + i * 7)}`, clientName: `${['Mr', 'Mrs', 'Dr', 'Ms', 'Prof'][i % 5]} ${'ABCDEFGHJKLMNPRSTW'[i % 18]} Smith${i >= 18 ? 'son' : ''}`,
+  statusCd: i % 11 === 4 ? 'D' : 'A', adviserUsername: 'JSMITH', adviserName: 'James Smith', acctCount: 1 + (i % 4),
+})).sort((a, b) => a.clientName.toLowerCase().localeCompare(b.clientName.toLowerCase()));
+const PENHALIGON_ROW = { clientId: 1001, clientRef: 'C2017-0124', clientName: 'The Penhaligon Family Trust', statusCd: 'A', adviserUsername: 'JSMITH', adviserName: 'James Smith', acctCount: 2 };
+const acct = (acctId, acctNo, acctType, safeCode, openDt, closeDt, stmtDate, mktValGbp) =>
+  ({ acctId, acctNo, clientId: 1063, clientName: 'Dr T Okonjo', acctType, baseCcy: 'GBP', safeCode, openDt, closeDt, statusCd: closeDt ? 'C' : 'O', stmtDate, mktValGbp });
+const SUMMARY_1063 = {
+  clientId: 1063, clientRef: 'C2017-0306', clientName: 'Dr T Okonjo', statusCd: 'A', createdDt: '2017-06-01', adviserUsername: 'JSMITH', adviserName: 'James Smith',
+  accounts: [acct(2115, '01063-01', 'Stocks & Shares ISA', '15318', '2017-07-04', null, '2026-10-09', '188488.45'),
+    acct(2116, '01063-02', 'General Investment Account', '18792', '2019-01-11', '2026-08-21', '2026-08-21', '0.00')],
+  totalMktValGbp: '188488.45',
+};
+const SUMMARY_1001 = {
+  clientId: 1001, clientRef: 'C2017-0124', clientName: 'The Penhaligon Family Trust', statusCd: 'A', createdDt: '2017-06-15', adviserUsername: 'JSMITH', adviserName: 'James Smith',
+  accounts: [
+    { acctId: 2001, acctNo: '01001-01', clientId: 1001, clientName: 'The Penhaligon Family Trust', acctType: 'SIPP', baseCcy: 'GBP', safeCode: '16598', openDt: '2019-06-10', closeDt: null, statusCd: 'O', stmtDate: '2026-10-09', mktValGbp: '283880.39' },
+    { acctId: 2002, acctNo: '01001-02', clientId: 1001, clientName: 'The Penhaligon Family Trust', acctType: 'S&S ISA', baseCcy: 'GBP', safeCode: '15169', openDt: '2018-04-22', closeDt: null, statusCd: 'O', stmtDate: '2026-10-09', mktValGbp: '76295.23' },
+  ],
+  totalMktValGbp: '360175.62',
+};
+const CLIENTS_EXPECT = {
+  Populated: ['Find a custody client', 'All clients', 'Dr B Yeoman', 'Miss M Juniper', 'Active'],
+  Loading: ['Loading client search…'], Empty: ['No custody clients on file'], Error: ['Couldn’t search clients'],
+};
+const C360PV_EXPECT = {
+  Populated: ['The Penhaligon Family Trust', 'C2017-0124', '15-JUN-2017', 'Grand Total (GBP):', '360,175.62', '283,880.39', '09-OCT-2026', 'Position check'],
+  Loading: ['Loading client 360…'], Empty: ['Client not found'], Error: ['Couldn’t load client summary'],
+};
+const SEARCH = text => [['fill', 'input[name=q]', text], ['click', 'Search']];
 const APP_ONLY = [
   ...STATES.map(state => ({ name: `admin-${state}`, screen: 'admin', state, expect: ADMIN_EXPECT[state] })),
   { name: 'flow-admin-reload-confirm', screen: 'admin', steps: [['click', 'Reload archive']], expect: ['Reload the archive index?', 'Cancel'] },
@@ -71,6 +105,19 @@ const APP_ONLY = [
   { name: 'flow-admin-expired', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [401, { error: 'Session expired.' }] }, expect: ['Your session has expired. Sign in again.', 'Sign in to Portfolio Viewer'] },
   { name: 'flow-admin-signout', screen: 'admin', url: '?screen=admin', session: { token: PV_TOKEN('ADMIN'), user: PV_USER('ADMIN') }, api: { 'GET /admin/stats': [200, PV_STATS] }, steps: [['click', 'Sign out']], expect: ['Sign in to Portfolio Viewer'] },
 ].map(c => ({ ...c, appOnly: true }));
+APP_ONLY.push(
+  ...STATES.map(state => ({ name: `clients-${state}`, screen: 'clients', state, expect: CLIENTS_EXPECT[state] })),
+  ...STATES.map(state => ({ name: `c360pv-${state}`, screen: 'c360pv', state, url: `${C360_PV}&state=${state}`, expect: C360PV_EXPECT[state] })),
+  { name: 'flow-clients-search', screen: 'clients', url: '?screen=clients', session: ADVISER_SESSION, api: { 'GET /clients/search': [200, { clients: SMITHS }] }, steps: SEARCH('smith'), expect: ['Results for “smith”', '30 clients', '1–25 of 30 · sorted by client name', 'Dormant'] },
+  { name: 'flow-clients-page2', screen: 'clients', url: '?screen=clients&q=smith', session: ADVISER_SESSION, api: { 'GET /clients/search': [200, { clients: SMITHS }] }, steps: [['click', 'Next ›']], expect: ['26–30 of 30 · sorted by client name'] },
+  { name: 'flow-clients-no-results', screen: 'clients', url: '?screen=clients', session: ADVISER_SESSION, api: { 'GET /clients/search': [200, { clients: [] }] }, steps: SEARCH('zz'), expect: ['Results for “zz”', 'No clients found.'] },
+  { name: 'flow-clients-open-summary', screen: 'clients', url: '?screen=clients', session: OPS_SESSION, api: { 'GET /clients/search': [200, { clients: [PENHALIGON_ROW] }], 'GET /clients/1001/summary': [200, SUMMARY_1001] }, steps: [...SEARCH('penhal'), ['click', 'The Penhaligon Family Trust']], expect: ['Grand Total (GBP):', '360,175.62', 'Position check', 'LBRENNAN · OPS'] },
+  { name: 'flow-c360pv-adviser-closed', screen: 'c360pv', url: '?screen=c360&cid=1063', session: ADVISER_SESSION, api: { 'GET /clients/1063/summary': [200, SUMMARY_1063] }, expect: ['Dr T Okonjo', 'Closed', '21-AUG-2026', '0.00', '188,488.45', 'JSMITH · ADVISER'] },
+  { name: 'flow-c360pv-back-to-search', screen: 'c360pv', url: '?screen=c360&cid=1001&q=penhal', session: ADVISER_SESSION, api: { 'GET /clients/1001/summary': [200, SUMMARY_1001], 'GET /clients/search': [200, { clients: [PENHALIGON_ROW] }] }, steps: [['click', 'Back to search']], expect: ['Results for “penhal”', '1 client', 'The Penhaligon Family Trust'] },
+  { name: 'flow-c360pv-not-found', screen: 'c360pv', url: '?screen=c360&cid=999999', session: ADVISER_SESSION, api: { 'GET /clients/999999/summary': [404, { error: 'Not found' }] }, expect: ['Client not found'] },
+  { name: 'flow-c360pv-signin', screen: 'c360pv', url: C360_PV, expect: ['Sign in to Portfolio Viewer', 'Client 360 is part of Portfolio Viewer.'] },
+);
+APP_ONLY.forEach(c => { c.appOnly = true; });
 const APP_ONLY_SCREENS = [...new Set(APP_ONLY.map(c => c.screen))];
 
 const args = process.argv.slice(2);

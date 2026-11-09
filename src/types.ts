@@ -1,4 +1,4 @@
-export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin'] as const;
+export const SCREENS = ['c360', 'portfolio', 'orders', 'alts', 'exceptions', 'home', 'activity', 'money', 'admin', 'clients'] as const;
 export type Screen = (typeof SCREENS)[number];
 
 export const DATA_STATES = ['Populated', 'Loading', 'Empty', 'Error'] as const;
@@ -22,6 +22,8 @@ export interface UiState {
   adminConfirm: boolean;
   adminBusy: boolean;
   adminNotice: string | null;
+  /** Client search (spec 008): results grid page, 0-based. */
+  clientPage: number;
 }
 
 export const INITIAL_UI_STATE: UiState = {
@@ -38,6 +40,7 @@ export const INITIAL_UI_STATE: UiState = {
   adminConfirm: false,
   adminBusy: false,
   adminNotice: null,
+  clientPage: 0,
 };
 
 export type SetUiState = (patch: Partial<UiState> | ((s: UiState) => Partial<UiState>)) => void;

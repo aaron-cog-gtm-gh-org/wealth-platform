@@ -1,6 +1,6 @@
 // Client for /api/pv/* (spec 004). Screens pass a token getter; requests carry `Authorization: Bearer`.
 import type {
-  IsoDate, PvAccount, PvAdminStats, PvArchiveFiles, PvCheckAll, PvClient, PvClientSearchRow, PvHoldings, PvLoginResponse,
+  IsoDate, PvAccount, PvAdminStats, PvArchiveFiles, PvCheckAll, PvClient, PvClientSearchRow, PvClientSummary, PvHoldings, PvLoginResponse,
   PvPositionCheck, PvReconNote, PvSaveNote, PvSession, PvSettlements,
 } from './pv-types';
 
@@ -40,6 +40,7 @@ export function createPvClient(opts: PvClientOptions = {}) {
     account: (acctId: number) => json<PvAccount>('GET', acct(acctId)),
     searchClients: (q: string) => json<{ clients: PvClientSearchRow[] }>('GET', `/clients/search${qs({ q })}`),
     client: (clientId: number) => json<PvClient>('GET', `/clients/${encodeURIComponent(String(clientId))}`),
+    clientSummary: (clientId: number) => json<PvClientSummary>('GET', `/clients/${encodeURIComponent(String(clientId))}/summary`),
     statementDates: (acctId: number) => json<{ acctId: number; dates: IsoDate[] }>('GET', `${acct(acctId)}/statement-dates`),
     holdings: (acctId: number, date?: IsoDate) => json<PvHoldings>('GET', `${acct(acctId)}/holdings${qs({ date })}`),
     settlements: (acctId: number, range: { from?: IsoDate; to?: IsoDate } = {}) => json<PvSettlements>('GET', `${acct(acctId)}/settlements${qs(range)}`),
