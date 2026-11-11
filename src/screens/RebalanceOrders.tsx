@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import type { Model } from '../model';
 
 export function RebalanceOrders({ m }: { m: Model }) {
-  const { approve, approveBg, approveCursor, approveFg, approveLabel, approveNote, checkSummary, checkSummaryColor, checks, driftAfter, impact, tradeCountLabel, trades } = m;
+  const { approve, approveBg, approveBorder, approveCursor, approveFg, approveLabel, approveNote, checkSummary, checkSummaryColor, checks, driftAfter, impact, tradeCountLabel, trades } = m;
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 330px", gap: "12px", alignItems: "start" }}>
@@ -51,7 +51,7 @@ export function RebalanceOrders({ m }: { m: Model }) {
             </div>
           </div>
           <div style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: "6px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div onClick={approve} style={{ padding: "9px 12px", borderRadius: "6px", textAlign: "center", fontWeight: "600", fontSize: "13px", background: approveBg, color: approveFg, cursor: approveCursor }}>{approveLabel}</div>
+            <div onClick={approve} style={{ padding: "9px 12px", border: `1px solid ${approveBorder}`, borderRadius: "6px", textAlign: "center", fontWeight: "600", fontSize: "13px", background: approveBg, color: approveFg, cursor: approveCursor }}>{approveLabel}</div>
             <div style={{ fontSize: "11px", color: "rgba(25,25,25,.6)", textWrap: "pretty" }}>{approveNote}</div>
             <div style={{ display: "flex", gap: "6px" }}><div style={{ flex: "1", padding: "6px", textAlign: "center", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Save as draft</div><div style={{ flex: "1", padding: "6px", textAlign: "center", border: "1px solid #cfd5dd", borderRadius: "6px", fontWeight: "500" }}>Send proposal to client</div></div>
           </div>

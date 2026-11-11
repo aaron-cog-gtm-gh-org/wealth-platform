@@ -79,7 +79,7 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
     const impact = [['Sells', money(sells)], ['Buys', money(buys)], ['Net cash', sgn(sells - buys), sells - buys >= 0 ? green : red], ['Turnover', (Math.max(sells, buys) / D.total * 100).toFixed(2) + '% of AUA'], ['Est. trading costs', '$' + T.reduce((s, t, i) => s + (active[i] ? t[5] : 0), 0).toFixed(2)], ['Realized gains (taxable)', '$' + fmt(T.reduce((s, t, i) => s + (active[i] ? t[6] : 0), 0)), amber], ['Tracking error vs model', `${R.rebalance.proposal.trackingErrorBeforePct.toFixed(1)}% → ${R.rebalance.proposal.trackingErrorAfterPct.toFixed(1)}%`]].map(([k, v, c]) => ({ k, v, color: c || '#191919' }));
     const driftAfter = R.rebalance.drift.map(x => [x.assetClass, signedPts(x.beforePts), signedPts(x.afterPts)]).map(([cls, b, a]) => ({ cls, before: b + ' pts', after: a + ' pts', beforeColor: mute, afterColor: green }));
     const canApprove = !fails && !st.approved;
-    const approveBg = st.approved ? '#e3f5ec' : canApprove ? '#005daa' : '#e5e8ec'; const approveFg = st.approved ? '#00703f' : canApprove ? '#fff' : 'rgba(25,25,25,.45)'; const approveCursor = canApprove ? 'pointer' : 'default';
+    const approveBg = st.approved ? '#e3f5ec' : canApprove ? '#005daa' : '#e5e8ec'; const approveFg = st.approved ? '#00703f' : canApprove ? '#fff' : 'rgba(25,25,25,.45)'; const approveBorder = st.approved ? '#00703f' : canApprove ? '#00427a' : '#c3c9d1'; const approveCursor = canApprove ? 'pointer' : 'default';
     const approveLabel = st.approved ? `${nAct} orders sent to routing · 14:48 ET` : fails ? 'Resolve 1 failed check to approve' : `Approve and route ${nAct} orders`;
     const approveNote = st.approved ? 'Fills will book to the ledger as they arrive. Settlement instructions are created automatically (equities T+1, bonds T+1, funds T+2).' : 'Approval requires step-up authentication. Warnings are recorded in the audit trail with your ID.';
     const approve = () => { if (canApprove) setState({ approved: true }); };
@@ -165,6 +165,7 @@ export function buildScreens(st: UiState, setState: SetUiState, go: (s: Screen) 
     impact,
     driftAfter,
     approveBg,
+    approveBorder,
     approveFg,
     approveCursor,
     approveLabel,
